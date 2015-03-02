@@ -1,0 +1,19 @@
+{
+  "name": "sarine.viewer.3dfullinspection",
+  "version": "0.0.1",
+  "main": "dist/arine.viewer.3dfullinspection.js",
+  "ignore": [
+    ".git",
+    "node_modules",
+    "package.json",
+    "Gruntfile.js"
+  ],
+  "dependencies": {
+    "sarine.viewer": "https://github.com/SarineTechnologies/sarine.viewer.git#v0.0.7"
+  },
+  "exportsOverride": {
+        "sarine.*": {        
+          "coffee": "**/*.coffee"
+        }
+    }
+}
