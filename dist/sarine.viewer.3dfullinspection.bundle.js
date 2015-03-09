@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.0.2 -  Monday, March 9th, 2015, 3:17:28 PM 
+sarine.viewer.3dfullinspection - v0.0.4 -  Monday, March 9th, 2015, 3:56:50 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -78,13 +78,15 @@ sarine.viewer.3dfullinspection - v0.0.2 -  Monday, March 9th, 2015, 3:17:28 PM
     function FullInspection(options) {
       this.full_init = __bind(this.full_init, this);
       this.first_init = __bind(this.first_init, this);
+      this.convertElement = __bind(this.convertElement, this);
+      this.preloadAssets = __bind(this.preloadAssets, this);
+      this.resourcesPrefix = "http://dev.sarineplatform.com/qa2/content/viewers/atomic/v1/assets/";
       FullInspection.__super__.constructor.call(this, options);
       this.jsonsrc = options.jsonsrc;
     }
 
     FullInspection.prototype.preloadAssets = function(callback) {
-      var element, loaded, resource, resources, resourcesPrefix, totalScripts, triggerCallback, _i, _len, _results;
-      resourcesPrefix = "http://dev.sarineplatform.com/qa2/content/viewers/atomic/v1/assets/";
+      var element, loaded, resource, resources, totalScripts, triggerCallback, _i, _len, _results;
       resources = [
         {
           element: 'script',
@@ -123,10 +125,10 @@ sarine.viewer.3dfullinspection - v0.0.2 -  Monday, March 9th, 2015, 3:17:28 PM
           element.onload = element.onreadystatechange = function() {
             return triggerCallback(callback);
           };
-          element.src = resourcesPrefix + resource.src;
+          element.src = this.resourcesPrefix + resource.src;
           _results.push(element.type = "text/javascript");
         } else {
-          element.href = resourcesPrefix + resource.src;
+          element.href = this.resourcesPrefix + resource.src;
           element.rel = "stylesheet";
           element.type = "text/css";
           _results.push($(document.head).prepend(element));
@@ -136,7 +138,9 @@ sarine.viewer.3dfullinspection - v0.0.2 -  Monday, March 9th, 2015, 3:17:28 PM
     };
 
     FullInspection.prototype.convertElement = function() {
-      $.get("3dfullinspection.html", (function(_this) {
+      var url;
+      url = this.resourcesPrefix + "3dfullinspection.html";
+      $.get(url, (function(_this) {
         return function(innerHtml) {
           _this.conteiner = innerHtml;
           return _this.element.append(innerHtml);

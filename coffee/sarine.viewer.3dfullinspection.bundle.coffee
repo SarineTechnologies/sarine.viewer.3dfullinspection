@@ -1,5 +1,5 @@
 ###!
-sarine.viewer.3dfullinspection - v0.0.2 -  Monday, March 9th, 2015, 3:17:28 PM 
+sarine.viewer.3dfullinspection - v0.0.4 -  Monday, March 9th, 2015, 3:56:50 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 
@@ -35,15 +35,15 @@ class Viewer
 
 class FullInspection extends Viewer
 	constructor: (options) ->
+    @resourcesPrefix = "http://dev.sarineplatform.com/qa2/content/viewers/atomic/v1/assets/"
     super(options)
     {@jsonsrc} = options
 
 
 
-      
-  preloadAssets: (callback)->
 
-    resourcesPrefix = "http://dev.sarineplatform.com/qa2/content/viewers/atomic/v1/assets/"
+
+  preloadAssets: (callback)=>
     resources = [
       {element:'script',src:'jquery-ui.js'},
       {element:'script',src:'jquery.ui.ipad.altfix.js'},
@@ -65,11 +65,11 @@ class FullInspection extends Viewer
       if(resource.element == 'script')
         $(document.body).append(element)
         element.onload = element.onreadystatechange = ()-> triggerCallback(callback)
-        element.src = resourcesPrefix + resource.src
+        element.src = @resourcesPrefix + resource.src
         element.type="text/javascript"
 
       else
-        element.href = resourcesPrefix + resource.src
+        element.href = @resourcesPrefix + resource.src
         element.rel="stylesheet"
         element.type="text/css"
         $(document.head).prepend(element)
@@ -77,15 +77,15 @@ class FullInspection extends Viewer
 
 
 
-  convertElement : () ->
-
-    $.get "3dfullinspection.html", (innerHtml) =>
+  convertElement : () =>
+    url = @resourcesPrefix+"3dfullinspection.html"
+    $.get url, (innerHtml) =>
       @conteiner = innerHtml
       @element.append(innerHtml)
     @element
+
 	
 	first_init : () =>
-
     @first_init_defer = $.Deferred()
     stone = ""
     start = (metadata) =>
