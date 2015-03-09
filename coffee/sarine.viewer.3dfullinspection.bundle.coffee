@@ -1,5 +1,5 @@
 ###!
-sarine.viewer.3dfullinspection - v0.0.2 -  Wednesday, March 4th, 2015, 6:03:51 PM 
+sarine.viewer.3dfullinspection - v0.0.2 -  Monday, March 9th, 2015, 3:17:28 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 
@@ -40,18 +40,52 @@ class FullInspection extends Viewer
 
 
 
+      
+  preloadAssets: (callback)->
+
+    resourcesPrefix = "http://dev.sarineplatform.com/qa2/content/viewers/atomic/v1/assets/"
+    resources = [
+      {element:'script',src:'jquery-ui.js'},
+      {element:'script',src:'jquery.ui.ipad.altfix.js'},
+      {element:'script',src:'momentum.js'},
+      {element:'script',src:'mglass.js'},
+      {element:'link',src:'inspection.css'}
+    ]
+
+    loaded = 0
+    totalScripts = resources.map (elm)-> elm.element=='script'
+    triggerCallback = (callback) ->
+      loaded++
+      if(loaded == totalScripts.length-1 && callback!=undefined )
+        callback()
+
+    element
+    for resource in resources
+      element = document.createElement(resource.element)
+      if(resource.element == 'script')
+        $(document.body).append(element)
+        element.onload = element.onreadystatechange = ()-> triggerCallback(callback)
+        element.src = resourcesPrefix + resource.src
+        element.type="text/javascript"
+
+      else
+        element.href = resourcesPrefix + resource.src
+        element.rel="stylesheet"
+        element.type="text/css"
+        $(document.head).prepend(element)
+
+
+
 
   convertElement : () ->
-    #@canvas = $("<canvas>")
-    #@ctx = @canvas[0].getContext('2d')
-    #console.log "FullInspection: convertElement"
-    #@element.append(@canvas)
-    @canvas = $("<div class=inspect_stone><div class=viewport><img id=main-image /><img id=sprite-image /></div></div><div id='info_inspection' style='display:none;'></div>")
-    
-    @element.append(@canvas)
 
+    $.get "3dfullinspection.html", (innerHtml) =>
+      @conteiner = innerHtml
+      @element.append(innerHtml)
+    @element
 	
 	first_init : () =>
+
     @first_init_defer = $.Deferred()
     stone = ""
     start = (metadata) =>
@@ -71,12 +105,12 @@ class FullInspection extends Viewer
         num_focus_points: result.num_focus_points
         shooting_parameters: result.shooting_parameters
       )
-      start metadata
+      @preloadAssets ()-> start metadata
+
 
     .fail ->
-      $(".inspect_stone").addClass("no_stone")
+      $(".inspect-stone").addClass("no_stone")
 
-    
     @first_init_defer
 	full_init : () =>
     @full_init_defer = $.Deferred()
@@ -320,12 +354,10 @@ class FullInspection extends Viewer
 
       attrs =
         format: "jpg"
-        quality: config.image_quality,
-        height: config.image_size,
-        width: config.image_size
+        quality: trans.quality ? config.image_quality,
+        height:  trans.height ? config.image_size
 
-
-      @dest + "/" +  config.image_size + "_" + config.image_quality + "/img_" + @metadata.image_name(x, y, focus)+ ".jpg"
+      @dest + "/" +  attrs.height + "_" + attrs.quality + "/img_" + @metadata.image_name(x, y, focus)+ ".jpg"
 
 
 
@@ -346,8 +378,8 @@ class FullInspection extends Viewer
 
   class ViewerBI
     constructor: (options) ->
-      @widget = $(".inspect_stone")
-      @viewport = $(".inspect_stone > .viewport")
+      @widget = $(".inspect-stone")
+      @viewport = $(".inspect-stone > .viewport")
       @inited = false
       @first_hit = true
       @debug = options.debug
@@ -737,7 +769,7 @@ class FullInspection extends Viewer
       ).elasticmousedrag((e) =>
         return if @mouse_x == null || @mouse_y == null
         @stop()
-        zoom_factor = if $(@viewer.inspect_stone).hasClass('small') then 2 else 4
+        zoom_factor = 4
 
         delta_x = Math.round(Math.abs(e.clientX - @mouse_x) * zoom_factor / 100)
 
@@ -783,7 +815,7 @@ class FullInspection extends Viewer
       ).bind('low_quality',=>
         $('.low_quality').html('Low quality images loaded')
         @viewer.active = true
-        @enable_button($('.diamond_view'))
+        @enable_button($('.inspect-stone .buttons li'))
         @disable_button ".top"  if @viewer.metadata.vertical_angles.indexOf(90) is not -1
         @disable_button ".middle"  if @viewer.metadata.vertical_angles.indexOf(0) is not -1
         @disable_button ".bottom"  if @viewer.metadata.vertical_angles.indexOf(-90) is not -1
@@ -814,15 +846,15 @@ class FullInspection extends Viewer
       ).bind('xy',(e, data) =>
         $('.xy').html((if @viewer.metadata.multi_focus() then "#{@viewer.focus}:" else "") + "#{data.y}:#{data.x}")
         @update_focus_buttons()
-        @inactivate_button($('.diamond_view'))
-        @activate_button($(".diamond_view.#{@viewer.view_mode()}")) if @viewer.view_mode()
+        @inactivate_button($('.inspect-stone .buttons li'))
+        @activate_button($(".inspect-stone .buttons .#{@viewer.view_mode()}")) if @viewer.view_mode()
       ).bind('preload_xy', (e, data) =>
         $('.preload_xy').html("Preload center moved to #{data.y}:#{data.x}")
       )
 
-      $('.inspect_stone').css('background-color', "#" + @viewer.metadata.background)
+      $('.inspect-stone').css('background-color', "#" + @viewer.metadata.background)
       if @viewer.metadata.background != '000' && @viewer.metadata.background != '000000' && @viewer.metadata.background != 'black'
-        $('.inspect_stone').addClass('dark')
+        $('.inspect-stone').addClass('dark')
 
       if @viewer.debug
         $('.display').show()
@@ -837,7 +869,10 @@ class FullInspection extends Viewer
 
         return @stop()
 
-      $('.diamond_view:not(.magnify, .clickable, .focus_out, .focus_in)').click (e) =>
+      $('.inspect-stone .buttons li:not(.magnify, .clickable, .focus_out, .focus_in)').click (e) =>
+
+        return unless $(e.target).data('button')
+
         return false if !@viewer.active
 
 
@@ -885,12 +920,12 @@ class FullInspection extends Viewer
         if @viewer.inspection
           #bindScroll()
           @viewer.active = true
-          $('.inspect_stone').css("overflow", "hidden");
+          $('.inspect-stone').css("overflow", "hidden");
           $(document).unbind("mouseup");
 
           @viewer.MGlass.Delete()
           @inactivate_button $(".magnify")
-          $(".diamond_view:not(.magnify)").removeClass("disabled");
+          $(".inspect-stone .buttons li:not(.magnify)").removeClass("disabled");
           @update_focus_buttons()
         else
           @viewer.active = false
@@ -899,16 +934,16 @@ class FullInspection extends Viewer
             if !container.is(e.target) and container.has(e.target).length == 0
               setTimeout (()=> $(".magnify").click() ), 0
 
-          $(".diamond_view:not(.magnify)").addClass("disabled");
+          $(".inspect-stone .buttons li:not(.magnify)").addClass("disabled");
           $(".magnify").show();
           #unbindScroll()
-          $('.inspect_stone').css("overflow", "visible");
-          $('.inspect_stone').css("overflow", "visible");
+          $('.inspect-stone').css("overflow", "visible");
+          $('.inspect-stone').css("overflow", "visible");
           #@viewer.reset()
           if $('mglass_wrapper').length == 0
             image_source = @viewer.preloader.src(@viewer.x, @viewer.y, @viewer.focus,
               height: 0,
-              widht: 0,
+              width: 0,
               quality: 70
             )
             #image_source = @viewer.preloader.src @viewer.x, @viewer.y, @viewer.focus

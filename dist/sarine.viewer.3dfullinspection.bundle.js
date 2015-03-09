@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.0.2 -  Wednesday, March 4th, 2015, 6:03:51 PM 
+sarine.viewer.3dfullinspection - v0.0.2 -  Monday, March 9th, 2015, 3:17:28 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -82,9 +82,67 @@ sarine.viewer.3dfullinspection - v0.0.2 -  Wednesday, March 4th, 2015, 6:03:51 P
       this.jsonsrc = options.jsonsrc;
     }
 
+    FullInspection.prototype.preloadAssets = function(callback) {
+      var element, loaded, resource, resources, resourcesPrefix, totalScripts, triggerCallback, _i, _len, _results;
+      resourcesPrefix = "http://dev.sarineplatform.com/qa2/content/viewers/atomic/v1/assets/";
+      resources = [
+        {
+          element: 'script',
+          src: 'jquery-ui.js'
+        }, {
+          element: 'script',
+          src: 'jquery.ui.ipad.altfix.js'
+        }, {
+          element: 'script',
+          src: 'momentum.js'
+        }, {
+          element: 'script',
+          src: 'mglass.js'
+        }, {
+          element: 'link',
+          src: 'inspection.css'
+        }
+      ];
+      loaded = 0;
+      totalScripts = resources.map(function(elm) {
+        return elm.element === 'script';
+      });
+      triggerCallback = function(callback) {
+        loaded++;
+        if (loaded === totalScripts.length - 1 && callback !== void 0) {
+          return callback();
+        }
+      };
+      element;
+      _results = [];
+      for (_i = 0, _len = resources.length; _i < _len; _i++) {
+        resource = resources[_i];
+        element = document.createElement(resource.element);
+        if (resource.element === 'script') {
+          $(document.body).append(element);
+          element.onload = element.onreadystatechange = function() {
+            return triggerCallback(callback);
+          };
+          element.src = resourcesPrefix + resource.src;
+          _results.push(element.type = "text/javascript");
+        } else {
+          element.href = resourcesPrefix + resource.src;
+          element.rel = "stylesheet";
+          element.type = "text/css";
+          _results.push($(document.head).prepend(element));
+        }
+      }
+      return _results;
+    };
+
     FullInspection.prototype.convertElement = function() {
-      this.canvas = $("<div class=inspect_stone><div class=viewport><img id=main-image /><img id=sprite-image /></div></div><div id='info_inspection' style='display:none;'></div>");
-      return this.element.append(this.canvas);
+      $.get("3dfullinspection.html", (function(_this) {
+        return function(innerHtml) {
+          _this.conteiner = innerHtml;
+          return _this.element.append(innerHtml);
+        };
+      })(this));
+      return this.element;
     };
 
     FullInspection.prototype.first_init = function() {
@@ -125,10 +183,12 @@ sarine.viewer.3dfullinspection - v0.0.2 -  Wednesday, March 4th, 2015, 6:03:51 P
             num_focus_points: result.num_focus_points,
             shooting_parameters: result.shooting_parameters
           });
-          return start(metadata);
+          return _this.preloadAssets(function() {
+            return start(metadata);
+          });
         };
       })(this)).fail(function() {
-        return $(".inspect_stone").addClass("no_stone");
+        return $(".inspect-stone").addClass("no_stone");
       });
       return this.first_init_defer;
     };
@@ -522,18 +582,17 @@ sarine.viewer.3dfullinspection - v0.0.2 -  Wednesday, March 4th, 2015, 6:03:51 P
       };
 
       Preloader.prototype.src = function(x, y, focus, trans) {
-        var attrs;
+        var attrs, _ref, _ref1;
         if (trans == null) {
           trans = "";
         }
         x = Math.floor(x / this.density) * this.density;
         attrs = {
           format: "jpg",
-          quality: config.image_quality,
-          height: config.image_size,
-          width: config.image_size
+          quality: (_ref = trans.quality) != null ? _ref : config.image_quality,
+          height: (_ref1 = trans.height) != null ? _ref1 : config.image_size
         };
-        return this.dest + "/" + config.image_size + "_" + config.image_quality + "/img_" + this.metadata.image_name(x, y, focus) + ".jpg";
+        return this.dest + "/" + attrs.height + "_" + attrs.quality + "/img_" + this.metadata.image_name(x, y, focus) + ".jpg";
       };
 
       Preloader.prototype.fetch = function(x, y, focus) {
@@ -564,8 +623,8 @@ sarine.viewer.3dfullinspection - v0.0.2 -  Wednesday, March 4th, 2015, 6:03:51 P
     ViewerBI = (function() {
       function ViewerBI(options) {
         this.img_ready = __bind(this.img_ready, this);
-        this.widget = $(".inspect_stone");
-        this.viewport = $(".inspect_stone > .viewport");
+        this.widget = $(".inspect-stone");
+        this.viewport = $(".inspect-stone > .viewport");
         this.inited = false;
         this.first_hit = true;
         this.debug = options.debug;
@@ -1170,7 +1229,7 @@ sarine.viewer.3dfullinspection - v0.0.2 -  Wednesday, March 4th, 2015, 6:03:51 P
               return;
             }
             _this.stop();
-            zoom_factor = $(_this.viewer.inspect_stone).hasClass('small') ? 2 : 4;
+            zoom_factor = 4;
             delta_x = Math.round(Math.abs(e.clientX - _this.mouse_x) * zoom_factor / 100);
             if (delta_x > 0) {
               if (e.clientX > _this.mouse_x) {
@@ -1222,7 +1281,7 @@ sarine.viewer.3dfullinspection - v0.0.2 -  Wednesday, March 4th, 2015, 6:03:51 P
           return function() {
             $('.low_quality').html('Low quality images loaded');
             _this.viewer.active = true;
-            _this.enable_button($('.diamond_view'));
+            _this.enable_button($('.inspect-stone .buttons li'));
             if (_this.viewer.metadata.vertical_angles.indexOf(90) === !-1) {
               _this.disable_button(".top");
             }
@@ -1264,9 +1323,9 @@ sarine.viewer.3dfullinspection - v0.0.2 -  Wednesday, March 4th, 2015, 6:03:51 P
           return function(e, data) {
             $('.xy').html((_this.viewer.metadata.multi_focus() ? "" + _this.viewer.focus + ":" : "") + ("" + data.y + ":" + data.x));
             _this.update_focus_buttons();
-            _this.inactivate_button($('.diamond_view'));
+            _this.inactivate_button($('.inspect-stone .buttons li'));
             if (_this.viewer.view_mode()) {
-              return _this.activate_button($(".diamond_view." + (_this.viewer.view_mode())));
+              return _this.activate_button($(".inspect-stone .buttons ." + (_this.viewer.view_mode())));
             }
           };
         })(this)).bind('preload_xy', (function(_this) {
@@ -1274,9 +1333,9 @@ sarine.viewer.3dfullinspection - v0.0.2 -  Wednesday, March 4th, 2015, 6:03:51 P
             return $('.preload_xy').html("Preload center moved to " + data.y + ":" + data.x);
           };
         })(this));
-        $('.inspect_stone').css('background-color', "#" + this.viewer.metadata.background);
+        $('.inspect-stone').css('background-color', "#" + this.viewer.metadata.background);
         if (this.viewer.metadata.background !== '000' && this.viewer.metadata.background !== '000000' && this.viewer.metadata.background !== 'black') {
-          $('.inspect_stone').addClass('dark');
+          $('.inspect-stone').addClass('dark');
         }
         if (this.viewer.debug) {
           $('.display').show();
@@ -1291,8 +1350,11 @@ sarine.viewer.3dfullinspection - v0.0.2 -  Wednesday, March 4th, 2015, 6:03:51 P
             return _this.stop();
           };
         })(this));
-        $('.diamond_view:not(.magnify, .clickable, .focus_out, .focus_in)').click((function(_this) {
+        $('.inspect-stone .buttons li:not(.magnify, .clickable, .focus_out, .focus_in)').click((function(_this) {
           return function(e) {
+            if (!$(e.target).data('button')) {
+              return;
+            }
             if (!_this.viewer.active) {
               return false;
             }
@@ -1344,11 +1406,11 @@ sarine.viewer.3dfullinspection - v0.0.2 -  Wednesday, March 4th, 2015, 6:03:51 P
             var image_source;
             if (_this.viewer.inspection) {
               _this.viewer.active = true;
-              $('.inspect_stone').css("overflow", "hidden");
+              $('.inspect-stone').css("overflow", "hidden");
               $(document).unbind("mouseup");
               _this.viewer.MGlass.Delete();
               _this.inactivate_button($(".magnify"));
-              $(".diamond_view:not(.magnify)").removeClass("disabled");
+              $(".inspect-stone .buttons li:not(.magnify)").removeClass("disabled");
               _this.update_focus_buttons();
             } else {
               _this.viewer.active = false;
@@ -1361,14 +1423,14 @@ sarine.viewer.3dfullinspection - v0.0.2 -  Wednesday, March 4th, 2015, 6:03:51 P
                   }), 0);
                 }
               });
-              $(".diamond_view:not(.magnify)").addClass("disabled");
+              $(".inspect-stone .buttons li:not(.magnify)").addClass("disabled");
               $(".magnify").show();
-              $('.inspect_stone').css("overflow", "visible");
-              $('.inspect_stone').css("overflow", "visible");
+              $('.inspect-stone').css("overflow", "visible");
+              $('.inspect-stone').css("overflow", "visible");
               if ($('mglass_wrapper').length === 0) {
                 image_source = _this.viewer.preloader.src(_this.viewer.x, _this.viewer.y, _this.viewer.focus, {
                   height: 0,
-                  widht: 0,
+                  width: 0,
                   quality: 70
                 });
                 _this.viewer.MGlass = new MGlass('main-image', image_source, {
