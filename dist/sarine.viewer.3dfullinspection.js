@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.0.4 -  Monday, March 9th, 2015, 3:56:51 PM 
+sarine.viewer.3dfullinspection - v0.0.5 -  Thursday, March 12th, 2015, 1:27:34 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -20,7 +20,7 @@ sarine.viewer.3dfullinspection - v0.0.4 -  Monday, March 9th, 2015, 3:56:51 PM
       this.first_init = __bind(this.first_init, this);
       this.convertElement = __bind(this.convertElement, this);
       this.preloadAssets = __bind(this.preloadAssets, this);
-      this.resourcesPrefix = "http://dev.sarineplatform.com/qa2/content/viewers/atomic/v1/assets/";
+      this.resourcesPrefix = "http://dev.sarineplatform.com/qa4/content/viewers/atomic/v1/assets/";
       FullInspection.__super__.constructor.call(this, options);
       this.jsonsrc = options.jsonsrc;
     }
@@ -92,6 +92,7 @@ sarine.viewer.3dfullinspection - v0.0.4 -  Monday, March 9th, 2015, 3:56:51 PM
     FullInspection.prototype.first_init = function() {
       var descriptionPath, start, stone;
       this.first_init_defer = $.Deferred();
+      this.full_init_defer = $.Deferred();
       stone = "";
       start = (function(_this) {
         return function(metadata) {
@@ -110,8 +111,7 @@ sarine.viewer.3dfullinspection - v0.0.4 -  Monday, March 9th, 2015, 3:56:51 PM
           _this.UIlogic = new UI(_this.viewerBI, {
             auto_play: true
           });
-          _this.UIlogic.go();
-          return _this.first_init_defer.resolve(_this);
+          return _this.UIlogic.go();
         };
       })(this);
       descriptionPath = this.src + this.jsonsrc;
@@ -138,7 +138,7 @@ sarine.viewer.3dfullinspection - v0.0.4 -  Monday, March 9th, 2015, 3:56:51 PM
     };
 
     FullInspection.prototype.full_init = function() {
-      this.full_init_defer = $.Deferred();
+      this.viewerBI.preloader.go();
       return this.full_init_defer;
     };
 
@@ -600,20 +600,12 @@ sarine.viewer.3dfullinspection - v0.0.4 -  Monday, March 9th, 2015, 3:56:51 PM
       };
 
       ViewerBI.prototype.img_ready = function(trans, x, y, focus, src) {
-        var measure, totalTime;
         if (this.preloader.total() === this.preloader.loaded) {
-          this.first_init_defer.resolve(this);
-          console.log("3dFullInspection:Full_init");
-          window.performance.mark("inspection_full_download_end");
-          window.performance.measure("inspection_full_download", "inspection_full_download_start", "inspection_full_download_end");
-          measure = window.performance.getEntriesByName('inspection_full_download')[0];
-          totalTime = measure.duration;
-          $("#inspection_full_download>.value").html((totalTime / 1000).toFixed(3) + "s.");
+          this.full_init_defer.resolve(this);
         }
         if (this.first_hit) {
           this.first_hit = false;
           this.first_init_defer.resolve(this);
-          console.log("3dFullInspection:First_init");
         }
         this.widget.trigger('high_quality', {
           loaded: Math.floor(this.preloader.loaded / this.density),
@@ -989,8 +981,7 @@ sarine.viewer.3dfullinspection - v0.0.4 -  Monday, March 9th, 2015, 3:56:51 PM
         this.show(true);
         return this.load_stylesheet(small_css_url, this.sprite_size, (function(_this) {
           return function() {
-            _this.widget.trigger('low_quality');
-            return _this.preloader.go();
+            return _this.widget.trigger('low_quality');
           };
         })(this));
       };

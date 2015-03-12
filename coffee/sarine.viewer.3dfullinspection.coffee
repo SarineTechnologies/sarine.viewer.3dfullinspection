@@ -1,10 +1,10 @@
 ###!
-sarine.viewer.3dfullinspection - v0.0.4 -  Monday, March 9th, 2015, 3:56:51 PM 
+sarine.viewer.3dfullinspection - v0.0.5 -  Thursday, March 12th, 2015, 1:27:34 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 class FullInspection extends Viewer
 	constructor: (options) ->
-    @resourcesPrefix = "http://dev.sarineplatform.com/qa2/content/viewers/atomic/v1/assets/"
+    @resourcesPrefix = "http://dev.sarineplatform.com/qa4/content/viewers/atomic/v1/assets/"
     super(options)
     {@jsonsrc} = options
 
@@ -56,12 +56,13 @@ class FullInspection extends Viewer
 	
 	first_init : () =>
     @first_init_defer = $.Deferred()
+    @full_init_defer = $.Deferred()
     stone = ""
     start = (metadata) =>
       @viewerBI =  new ViewerBI(first_init: @first_init_defer, full_init:@full_init_defer, src:@src, x: 0, y: metadata.vertical_angles.indexOf(90), stone: stone, friendlyName: "temp", cdn_subdomain: false, metadata: metadata, debug: false)
       @UIlogic = new UI(@viewerBI, auto_play: true)
       @UIlogic.go()
-      @first_init_defer.resolve(@)
+
     descriptionPath = @src + @jsonsrc
 
     $.getJSON descriptionPath, (result) =>
@@ -82,8 +83,8 @@ class FullInspection extends Viewer
 
     @first_init_defer
 	full_init : () =>
-    @full_init_defer = $.Deferred()
 
+    @viewerBI.preloader.go()
     @full_init_defer
 	nextImage : ()->
     console.log "FullInspection: nextImage"
@@ -377,18 +378,13 @@ class FullInspection extends Viewer
 
     img_ready: (trans, x, y, focus, src) =>
       if @preloader.total() == @preloader.loaded
-        @first_init_defer.resolve(@)
-        console.log("3dFullInspection:Full_init")
-        window.performance.mark "inspection_full_download_end"
-        window.performance.measure "inspection_full_download", "inspection_full_download_start", "inspection_full_download_end"
-        measure = window.performance.getEntriesByName('inspection_full_download')[0]
-        totalTime = measure.duration
-        $("#inspection_full_download>.value").html((totalTime / 1000).toFixed(3) + "s.")
+        @full_init_defer.resolve(@)
+
 
       if(@first_hit)
         @first_hit = false
         @first_init_defer.resolve(@)
-        console.log("3dFullInspection:First_init")
+        
 
 
       @widget.trigger('high_quality',
@@ -624,7 +620,7 @@ class FullInspection extends Viewer
       @show(true)
       @load_stylesheet(small_css_url, @sprite_size, =>
         @widget.trigger('low_quality')
-        @preloader.go()
+
       )
 
   class UI
