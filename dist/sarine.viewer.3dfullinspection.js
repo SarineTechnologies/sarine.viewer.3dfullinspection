@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.0.5 -  Thursday, March 12th, 2015, 1:27:34 PM 
+sarine.viewer.3dfullinspection - v0.0.5 -  Thursday, March 19th, 2015, 1:06:21 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -20,14 +20,8 @@ sarine.viewer.3dfullinspection - v0.0.5 -  Thursday, March 12th, 2015, 1:27:34 P
       this.first_init = __bind(this.first_init, this);
       this.convertElement = __bind(this.convertElement, this);
       this.preloadAssets = __bind(this.preloadAssets, this);
-      this.resourcesPrefix = "http://dev.sarineplatform.com/qa4/content/viewers/atomic/v1/assets/";
-      FullInspection.__super__.constructor.call(this, options);
-      this.jsonsrc = options.jsonsrc;
-    }
-
-    FullInspection.prototype.preloadAssets = function(callback) {
-      var element, loaded, resource, resources, totalScripts, triggerCallback, _i, _len, _results;
-      resources = [
+      this.resourcesPrefix = "//dev.sarineplatform.com/qa4/content/viewers/atomic/v1/assets/";
+      this.resources = [
         {
           element: 'script',
           src: 'jquery-ui.js'
@@ -45,8 +39,14 @@ sarine.viewer.3dfullinspection - v0.0.5 -  Thursday, March 12th, 2015, 1:27:34 P
           src: 'inspection.css'
         }
       ];
+      FullInspection.__super__.constructor.call(this, options);
+      this.jsonsrc = options.jsonsrc;
+    }
+
+    FullInspection.prototype.preloadAssets = function(callback) {
+      var element, loaded, resource, totalScripts, triggerCallback, _i, _len, _ref, _results;
       loaded = 0;
-      totalScripts = resources.map(function(elm) {
+      totalScripts = this.resources.map(function(elm) {
         return elm.element === 'script';
       });
       triggerCallback = function(callback) {
@@ -56,9 +56,10 @@ sarine.viewer.3dfullinspection - v0.0.5 -  Thursday, March 12th, 2015, 1:27:34 P
         }
       };
       element;
+      _ref = this.resources;
       _results = [];
-      for (_i = 0, _len = resources.length; _i < _len; _i++) {
-        resource = resources[_i];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        resource = _ref[_i];
         element = document.createElement(resource.element);
         if (resource.element === 'script') {
           $(document.body).append(element);
@@ -82,8 +83,16 @@ sarine.viewer.3dfullinspection - v0.0.5 -  Thursday, March 12th, 2015, 1:27:34 P
       url = this.resourcesPrefix + "3dfullinspection.html";
       $.get(url, (function(_this) {
         return function(innerHtml) {
-          _this.conteiner = innerHtml;
-          return _this.element.append(innerHtml);
+          var compiled;
+          compiled = $(innerHtml);
+          if (_this.element.attr("menu") === "false") {
+            $(".buttons", compiled).remove();
+          }
+          if (_this.element.attr("coordinates") === "false") {
+            $(".stone_number", compiled).remove();
+          }
+          _this.conteiner = compiled;
+          return _this.element.append(compiled);
         };
       })(this));
       return this.element;
@@ -138,7 +147,21 @@ sarine.viewer.3dfullinspection - v0.0.5 -  Thursday, March 12th, 2015, 1:27:34 P
     };
 
     FullInspection.prototype.full_init = function() {
-      this.viewerBI.preloader.go();
+      if (this.element.attr("active") === "true") {
+        this.viewerBI.preloader.go();
+      }
+      if (this.element.attr("active") !== void 0) {
+        setInterval((function(_this) {
+          return function() {
+            if (_this.element.attr("active") === "true") {
+              _this.viewerBI.preloader.go();
+              return _this.viewerBI.show(true);
+            } else {
+              return _this.viewerBI.preloader.clear_queue();
+            }
+          };
+        })(this), 500);
+      }
       return this.full_init_defer;
     };
 
@@ -377,6 +400,7 @@ sarine.viewer.3dfullinspection - v0.0.5 -  Thursday, March 12th, 2015, 1:27:34 P
         this.stone = options.stone;
         this.cdn_subdomain = options.cdn_subdomain && window.location.protocol === 'http:' && !config.local;
         this.density = options.density || 1;
+        this.fetchTimer;
       }
 
       Preloader.prototype.cache_key = function() {
@@ -540,24 +564,40 @@ sarine.viewer.3dfullinspection - v0.0.5 -  Thursday, March 12th, 2015, 1:27:34 P
       };
 
       Preloader.prototype.fetch = function(x, y, focus) {
-        var old_x, old_y, src, _ref, _ref1;
+        var timeoutMl;
         if (focus == null) {
           focus = null;
         }
-        _ref = [this.x, x], old_x = _ref[0], this.x = _ref[1];
-        _ref1 = [this.y, y], old_y = _ref1[0], this.y = _ref1[1];
-        if (this.circle_distance(x, old_x, this.metadata.size_x) > 20 || y !== old_y) {
-          this.widget.trigger('preload_xy', {
-            x: x,
-            y: y
-          });
-          this.prioritize();
-        }
-        src = this.src(x, y, focus);
+        timeoutMl = 300;
         if (this.has(x, y, focus)) {
-          return this.callback(this.trans, x, y, focus, src);
+          timeoutMl = 0;
         }
-        return this.load_image(x, y, focus, src);
+        clearTimeout(this.fetchTimer);
+        return this.fetchTimer = setTimeout((function(_this) {
+          return function() {
+            var old_x, old_y, src, _ref, _ref1;
+            if (x !== _this.x && y !== _this.y) {
+              _this.x = x;
+              _this.y = y;
+              _this.fetch(x, y, focus);
+              return;
+            }
+            _ref = [_this.x, x], old_x = _ref[0], _this.x = _ref[1];
+            _ref1 = [_this.y, y], old_y = _ref1[0], _this.y = _ref1[1];
+            if (_this.circle_distance(x, old_x, _this.metadata.size_x) > 20 || y !== old_y) {
+              _this.widget.trigger('preload_xy', {
+                x: x,
+                y: y
+              });
+              _this.prioritize();
+            }
+            src = _this.src(x, y, focus);
+            if (_this.has(x, y, focus)) {
+              return _this.callback(_this.trans, x, y, focus, src);
+            }
+            return _this.load_image(x, y, focus, src);
+          };
+        })(this), timeoutMl);
       };
 
       return Preloader;

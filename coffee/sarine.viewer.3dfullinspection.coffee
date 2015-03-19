@@ -1,10 +1,17 @@
 ###!
-sarine.viewer.3dfullinspection - v0.0.5 -  Thursday, March 12th, 2015, 1:27:34 PM 
+sarine.viewer.3dfullinspection - v0.0.5 -  Thursday, March 19th, 2015, 1:06:21 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 class FullInspection extends Viewer
 	constructor: (options) ->
-    @resourcesPrefix = "http://dev.sarineplatform.com/qa4/content/viewers/atomic/v1/assets/"
+    @resourcesPrefix = "//dev.sarineplatform.com/qa4/content/viewers/atomic/v1/assets/"
+    @resources = [
+      {element:'script',src:'jquery-ui.js'},
+      {element:'script',src:'jquery.ui.ipad.altfix.js'},
+      {element:'script',src:'momentum.js'},
+      {element:'script',src:'mglass.js'},
+      {element:'link',src:'inspection.css'}
+    ]
     super(options)
     {@jsonsrc} = options
 
@@ -13,23 +20,16 @@ class FullInspection extends Viewer
 
 
   preloadAssets: (callback)=>
-    resources = [
-      {element:'script',src:'jquery-ui.js'},
-      {element:'script',src:'jquery.ui.ipad.altfix.js'},
-      {element:'script',src:'momentum.js'},
-      {element:'script',src:'mglass.js'},
-      {element:'link',src:'inspection.css'}
-    ]
 
     loaded = 0
-    totalScripts = resources.map (elm)-> elm.element=='script'
+    totalScripts = @resources.map (elm)-> elm.element=='script'
     triggerCallback = (callback) ->
       loaded++
       if(loaded == totalScripts.length-1 && callback!=undefined )
         callback()
 
     element
-    for resource in resources
+    for resource in @resources
       element = document.createElement(resource.element)
       if(resource.element == 'script')
         $(document.body).append(element)
@@ -48,9 +48,15 @@ class FullInspection extends Viewer
 
   convertElement : () =>
     url = @resourcesPrefix+"3dfullinspection.html"
+
+
     $.get url, (innerHtml) =>
-      @conteiner = innerHtml
-      @element.append(innerHtml)
+      compiled = $(innerHtml)
+      $(".buttons",compiled).remove() if(@element.attr("menu")=="false")
+      $(".stone_number",compiled).remove() if(@element.attr("coordinates")=="false")
+
+      @conteiner = compiled
+      @element.append(compiled)
     @element
 
 	
@@ -83,8 +89,16 @@ class FullInspection extends Viewer
 
     @first_init_defer
 	full_init : () =>
+    @viewerBI.preloader.go() if(@element.attr("active")=="true")
 
-    @viewerBI.preloader.go()
+    setInterval(=>
+      if(@element.attr("active") == "true")
+        @viewerBI.preloader.go()
+        @viewerBI.show(true)
+      else
+        @viewerBI.preloader.clear_queue()
+
+    ,500) unless @element.attr("active")==undefined
     @full_init_defer
 	nextImage : ()->
     console.log "FullInspection: nextImage"
@@ -235,6 +249,7 @@ class FullInspection extends Viewer
       @stone = options.stone
       @cdn_subdomain = options.cdn_subdomain && window.location.protocol == 'http:' && !config.local
       @density = options.density || 1
+      @fetchTimer
 
     cache_key: ->
       @trans
@@ -329,22 +344,30 @@ class FullInspection extends Viewer
 
       @dest + "/" +  attrs.height + "_" + attrs.quality + "/img_" + @metadata.image_name(x, y, focus)+ ".jpg"
 
-
-
-
-
     fetch: (x, y, focus = null) ->
       # Remember current position to prioritize preload better
-      [old_x, @x] = [@x, x]
-      [old_y, @y] = [@y, y]
 
-      if @circle_distance(x, old_x, @metadata.size_x) > 20 || y != old_y
-        @widget.trigger('preload_xy', x: x, y: y)
-        @prioritize()
-      src = @src(x, y, focus)
-      return @callback(@trans, x, y, focus, src) if @has(x, y, focus)
+      timeoutMl = 300
+      if @has(x, y, focus)
+        timeoutMl=0
+      clearTimeout @fetchTimer
+      @fetchTimer = setTimeout( =>
+        if(x != @x && y != @y)
+          @x = x
+          @y = y
+          @fetch(x,y,focus)
+          return
 
-      @load_image(x, y, focus, src)
+        [old_x, @x] = [@x, x]
+        [old_y, @y] = [@y, y]
+        if @circle_distance(x, old_x, @metadata.size_x) > 20 || y != old_y
+          @widget.trigger('preload_xy', x: x, y: y)
+          @prioritize()
+        src = @src(x, y, focus)
+        return @callback(@trans, x, y, focus, src) if @has(x, y, focus)
+
+        @load_image(x, y, focus, src)
+      ,timeoutMl)
 
   class ViewerBI
     constructor: (options) ->
@@ -510,6 +533,7 @@ class FullInspection extends Viewer
           return @load_from_sprite() if x % STRIDE_X == 0
         @load_from_sprite()
       @preloader.fetch(@x, @y, @focus)
+        
 
     sprite_info: (sprite_size = @sprite_size, x = @x, y = @y) ->
       sprite_prefix = "zoom_#{@size}_#{sprite_size}_#{config.sprite_quality}_"
