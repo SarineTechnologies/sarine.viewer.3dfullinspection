@@ -1,6 +1,6 @@
 {
   "name": "sarine.viewer.3dfullinspection",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "main": "dist/arine.viewer.3dfullinspection.js",
   "ignore": [
     ".git",
