@@ -1,5 +1,5 @@
 ###!
-sarine.viewer.3dfullinspection - v0.0.6 -  Thursday, March 19th, 2015, 1:15:48 PM 
+sarine.viewer.3dfullinspection - v0.0.6 -  Sunday, March 22nd, 2015, 11:39:11 AM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 class FullInspection extends Viewer
@@ -804,7 +804,7 @@ class FullInspection extends Viewer
       ).bind('low_quality',=>
         $('.low_quality').html('Low quality images loaded')
         @viewer.active = true
-        @enable_button($('.inspect-stone .buttons li'))
+        @enable_button($('.buttons li'))
         @disable_button ".top"  if @viewer.metadata.vertical_angles.indexOf(90) is not -1
         @disable_button ".middle"  if @viewer.metadata.vertical_angles.indexOf(0) is not -1
         @disable_button ".bottom"  if @viewer.metadata.vertical_angles.indexOf(-90) is not -1
@@ -835,8 +835,8 @@ class FullInspection extends Viewer
       ).bind('xy',(e, data) =>
         $('.xy').html((if @viewer.metadata.multi_focus() then "#{@viewer.focus}:" else "") + "#{data.y}:#{data.x}")
         @update_focus_buttons()
-        @inactivate_button($('.inspect-stone .buttons li'))
-        @activate_button($(".inspect-stone .buttons .#{@viewer.view_mode()}")) if @viewer.view_mode()
+        @inactivate_button($('.buttons li'))
+        @activate_button($(".buttons .#{@viewer.view_mode()}")) if @viewer.view_mode()
       ).bind('preload_xy', (e, data) =>
         $('.preload_xy').html("Preload center moved to #{data.y}:#{data.x}")
       )
@@ -858,7 +858,7 @@ class FullInspection extends Viewer
 
         return @stop()
 
-      $('.inspect-stone .buttons li:not(.magnify, .clickable, .focus_out, .focus_in)').click (e) =>
+      $('.buttons li:not(.magnify, .clickable, .focus_out, .focus_in)').click (e) =>
 
         return unless $(e.target).data('button')
 
@@ -914,7 +914,7 @@ class FullInspection extends Viewer
 
           @viewer.MGlass.Delete()
           @inactivate_button $(".magnify")
-          $(".inspect-stone .buttons li:not(.magnify)").removeClass("disabled");
+          $(".buttons li:not(.magnify)").removeClass("disabled");
           @update_focus_buttons()
         else
           @viewer.active = false
@@ -923,7 +923,7 @@ class FullInspection extends Viewer
             if !container.is(e.target) and container.has(e.target).length == 0
               setTimeout (()=> $(".magnify").click() ), 0
 
-          $(".inspect-stone .buttons li:not(.magnify)").addClass("disabled");
+          $(".buttons li:not(.magnify)").addClass("disabled");
           $(".magnify").show();
           #unbindScroll()
           $('.inspect-stone').css("overflow", "visible");

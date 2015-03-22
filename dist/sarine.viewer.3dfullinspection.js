@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.0.6 -  Thursday, March 19th, 2015, 1:15:48 PM 
+sarine.viewer.3dfullinspection - v0.0.6 -  Sunday, March 22nd, 2015, 11:39:11 AM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -1256,7 +1256,7 @@ sarine.viewer.3dfullinspection - v0.0.6 -  Thursday, March 19th, 2015, 1:15:48 P
           return function() {
             $('.low_quality').html('Low quality images loaded');
             _this.viewer.active = true;
-            _this.enable_button($('.inspect-stone .buttons li'));
+            _this.enable_button($('.buttons li'));
             if (_this.viewer.metadata.vertical_angles.indexOf(90) === !-1) {
               _this.disable_button(".top");
             }
@@ -1298,9 +1298,9 @@ sarine.viewer.3dfullinspection - v0.0.6 -  Thursday, March 19th, 2015, 1:15:48 P
           return function(e, data) {
             $('.xy').html((_this.viewer.metadata.multi_focus() ? "" + _this.viewer.focus + ":" : "") + ("" + data.y + ":" + data.x));
             _this.update_focus_buttons();
-            _this.inactivate_button($('.inspect-stone .buttons li'));
+            _this.inactivate_button($('.buttons li'));
             if (_this.viewer.view_mode()) {
-              return _this.activate_button($(".inspect-stone .buttons ." + (_this.viewer.view_mode())));
+              return _this.activate_button($(".buttons ." + (_this.viewer.view_mode())));
             }
           };
         })(this)).bind('preload_xy', (function(_this) {
@@ -1325,7 +1325,7 @@ sarine.viewer.3dfullinspection - v0.0.6 -  Thursday, March 19th, 2015, 1:15:48 P
             return _this.stop();
           };
         })(this));
-        $('.inspect-stone .buttons li:not(.magnify, .clickable, .focus_out, .focus_in)').click((function(_this) {
+        $('.buttons li:not(.magnify, .clickable, .focus_out, .focus_in)').click((function(_this) {
           return function(e) {
             if (!$(e.target).data('button')) {
               return;
@@ -1385,7 +1385,7 @@ sarine.viewer.3dfullinspection - v0.0.6 -  Thursday, March 19th, 2015, 1:15:48 P
               $(document).unbind("mouseup");
               _this.viewer.MGlass.Delete();
               _this.inactivate_button($(".magnify"));
-              $(".inspect-stone .buttons li:not(.magnify)").removeClass("disabled");
+              $(".buttons li:not(.magnify)").removeClass("disabled");
               _this.update_focus_buttons();
             } else {
               _this.viewer.active = false;
@@ -1398,7 +1398,7 @@ sarine.viewer.3dfullinspection - v0.0.6 -  Thursday, March 19th, 2015, 1:15:48 P
                   }), 0);
                 }
               });
-              $(".inspect-stone .buttons li:not(.magnify)").addClass("disabled");
+              $(".buttons li:not(.magnify)").addClass("disabled");
               $(".magnify").show();
               $('.inspect-stone').css("overflow", "visible");
               $('.inspect-stone').css("overflow", "visible");
