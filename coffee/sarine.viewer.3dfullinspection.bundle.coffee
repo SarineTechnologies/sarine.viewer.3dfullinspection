@@ -1,5 +1,5 @@
 ###!
-sarine.viewer.3dfullinspection - v0.0.8 -  Sunday, March 22nd, 2015, 12:56:55 PM 
+sarine.viewer.3dfullinspection - v0.0.8 -  Tuesday, March 24th, 2015, 2:10:56 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 
@@ -34,8 +34,8 @@ class Viewer
 @Viewer = Viewer
 
 class FullInspection extends Viewer
-	constructor: (options) ->
-    @resourcesPrefix = stones[0].viewersBaseUrl + "atomic/v1/assets/";
+  constructor: (options) ->
+    @resourcesPrefix = "//dev.sarineplatform.com/qa4/content/viewers/atomic/v1/assets/"
     @resources = [
       {element:'script',src:'jquery-ui.js'},
       {element:'script',src:'jquery.ui.ipad.altfix.js'},
@@ -90,8 +90,8 @@ class FullInspection extends Viewer
       @element.append(compiled)
     @element
 
-	
-	first_init : () =>
+  
+  first_init : () =>
     @first_init_defer = $.Deferred()
     @full_init_defer = $.Deferred()
     stone = ""
@@ -115,11 +115,28 @@ class FullInspection extends Viewer
       @preloadAssets ()-> start metadata
 
 
-    .fail ->
-      $(".inspect-stone").addClass("no_stone")
+
+    .fail =>
+      checkNdelete = () =>
+        if ($(".inspect-stone",@element).length)
+          $(".inspect-stone",@element).addClass("no_stone")
+          $(".buttons",@element).remove()
+          $(".stone_number",@element).remove()
+          $(".inspect-stone",@element).css("background", "url('"+@callbackPic+"') no-repeat center center rgb(123, 123, 123)")
+          $(".inspect-stone",@element).css("width", "480px")
+          $(".inspect-stone",@element).css("height", "480px")
+        else
+          setTimeout checkNdelete, 50
+      checkNdelete()
+
+      @first_init_defer.resolve(@)
 
     @first_init_defer
-	full_init : () =>
+  full_init : () =>
+
+    @full_init_defer.resolve(@) unless @viewerBI
+    return @full_init_defer unless @viewerBI
+
     @viewerBI.preloader.go() if(@element.attr("active")=="true")
 
     setInterval(=>
@@ -131,7 +148,7 @@ class FullInspection extends Viewer
 
     ,500) unless @element.attr("active")==undefined
     @full_init_defer
-	nextImage : ()->
+  nextImage : ()->
     console.log "FullInspection: nextImage"
   play: () ->
 

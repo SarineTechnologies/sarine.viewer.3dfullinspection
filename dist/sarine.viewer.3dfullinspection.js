@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.0.8 -  Sunday, March 22nd, 2015, 12:56:55 PM 
+sarine.viewer.3dfullinspection - v0.0.8 -  Tuesday, March 24th, 2015, 2:10:57 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -20,7 +20,7 @@ sarine.viewer.3dfullinspection - v0.0.8 -  Sunday, March 22nd, 2015, 12:56:55 PM
       this.first_init = __bind(this.first_init, this);
       this.convertElement = __bind(this.convertElement, this);
       this.preloadAssets = __bind(this.preloadAssets, this);
-      this.resourcesPrefix = stones[0].viewersBaseUrl + "atomic/v1/assets/";
+      this.resourcesPrefix = "//dev.sarineplatform.com/qa4/content/viewers/atomic/v1/assets/";
       this.resources = [
         {
           element: 'script',
@@ -140,13 +140,35 @@ sarine.viewer.3dfullinspection - v0.0.8 -  Sunday, March 22nd, 2015, 12:56:55 PM
             return start(metadata);
           });
         };
-      })(this)).fail(function() {
-        return $(".inspect-stone").addClass("no_stone");
-      });
+      })(this)).fail((function(_this) {
+        return function() {
+          var checkNdelete;
+          checkNdelete = function() {
+            if (($(".inspect-stone", _this.element).length)) {
+              $(".inspect-stone", _this.element).addClass("no_stone");
+              $(".buttons", _this.element).remove();
+              $(".stone_number", _this.element).remove();
+              $(".inspect-stone", _this.element).css("background", "url('" + _this.callbackPic + "') no-repeat center center rgb(123, 123, 123)");
+              $(".inspect-stone", _this.element).css("width", "480px");
+              return $(".inspect-stone", _this.element).css("height", "480px");
+            } else {
+              return setTimeout(checkNdelete, 50);
+            }
+          };
+          checkNdelete();
+          return _this.first_init_defer.resolve(_this);
+        };
+      })(this));
       return this.first_init_defer;
     };
 
     FullInspection.prototype.full_init = function() {
+      if (!this.viewerBI) {
+        this.full_init_defer.resolve(this);
+      }
+      if (!this.viewerBI) {
+        return this.full_init_defer;
+      }
       if (this.element.attr("active") === "true") {
         this.viewerBI.preloader.go();
       }
