@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.0.12 -  Wednesday, March 25th, 2015, 4:28:27 PM 
+sarine.viewer.3dfullinspection - v0.0.12 -  Monday, March 30th, 2015, 10:26:22 AM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -648,6 +648,7 @@ sarine.viewer.3dfullinspection - v0.0.12 -  Wednesday, March 25th, 2015, 4:28:27
         this.first_init_defer = options.first_init;
         this.full_init_defer = options.full_init;
         this.reset();
+        this.context = $('#main-canvas')[0].getContext("2d");
       }
 
       ViewerBI.prototype.reset = function() {
@@ -662,6 +663,7 @@ sarine.viewer.3dfullinspection - v0.0.12 -  Wednesday, March 25th, 2015, 4:28:27
       };
 
       ViewerBI.prototype.img_ready = function(trans, x, y, focus, src) {
+        var imageChanged;
         if (this.preloader.total() === this.preloader.loaded) {
           this.full_init_defer.resolve(this);
         }
@@ -675,13 +677,22 @@ sarine.viewer.3dfullinspection - v0.0.12 -  Wednesday, March 25th, 2015, 4:28:27
         });
         if (x === this.x && y === this.y && focus === this.focus && trans === this.trans) {
           this.widget.removeClass('sprite');
+          imageChanged = $('#main-image').attr('src') !== src;
           $('#main-image').attr({
             src: src
           });
-          return this.viewport.attr({
+          if (imageChanged) {
+            $('#main-image')[0].onload = function(img) {
+              return $('#main-canvas')[0].getContext("2d").drawImage(img.target, 0, 0, 480, 480);
+            };
+          }
+          this.viewport.attr({
             "class": this.flip_class()
           });
+        } else {
+          this.viewport;
         }
+        return this.viewport;
       };
 
       ViewerBI.prototype.left = function(delta) {
@@ -924,7 +935,10 @@ sarine.viewer.3dfullinspection - v0.0.12 -  Wednesday, March 25th, 2015, 4:28:27
           }).css({
             top: top,
             left: left
-          });
+          })[0].onload = function() {
+            return $('#main-canvas')[0].getContext("2d").drawImage(this, 0, 0, 480, 480, parseInt($(this).css("left").match(/\d+/g)[0]) * -1, parseInt($(this).css("top").match(/\d+/g)[0]) * -1, 480 * 4, 480 * 4);
+          };
+          $('#main-canvas')[0].getContext("2d").drawImage($('#sprite-image')[0], sprite_left * -1, sprite_top * -1, 120, 120, 0, 0, 480, 480);
           return this.viewport.attr({
             "class": this.flip_class()
           });
@@ -1430,7 +1444,7 @@ sarine.viewer.3dfullinspection - v0.0.12 -  Wednesday, March 25th, 2015, 4:28:27
                   width: 0,
                   quality: 70
                 });
-                _this.viewer.MGlass = new MGlass('main-image', image_source, {
+                _this.viewer.MGlass = new MGlass('main-canvas', image_source, {
                   background: _this.viewer.metadata.background
                 }, arguments.callee);
               }

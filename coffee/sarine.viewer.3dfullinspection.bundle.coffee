@@ -1,5 +1,5 @@
 ###!
-sarine.viewer.3dfullinspection - v0.0.12 -  Wednesday, March 25th, 2015, 4:28:27 PM 
+sarine.viewer.3dfullinspection - v0.0.12 -  Monday, March 30th, 2015, 10:26:22 AM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 
@@ -29,9 +29,9 @@ class Viewer
   convertElement : Error
   cancel : ()-> rm.cancel(@)
   loadImage : (src)-> rm.loadImage.apply(@,[src])
-  setTimeout : (fun,delay)-> rm.setTimeout.apply(@,[@delay])
+  setTimeout : (delay,callback)-> rm.setTimeout.apply(@,[@delay,callback]) 
     
-@Viewer = Viewer
+@Viewer = Viewer 
 
 class FullInspection extends Viewer
   constructor: (options) ->
@@ -66,18 +66,18 @@ class FullInspection extends Viewer
         $(document.body).append(element)
         element.onload = element.onreadystatechange = ()-> triggerCallback(callback)
         element.src = @resourcesPrefix + resource.src
-        element.type="text/javascript"
+        element.type= "text/javascript"
 
       else
         element.href = @resourcesPrefix + resource.src
-        element.rel="stylesheet"
-        element.type="text/css"
+        element.rel= "stylesheet"
+        element.type= "text/css"
         $(document.head).prepend(element)
 
 
 
 
-  convertElement : () =>
+  convertElement :() =>
     url = @resourcesPrefix+"3dfullinspection.html"
 
 
@@ -438,6 +438,7 @@ class FullInspection extends Viewer
       @first_init_defer = options.first_init
       @full_init_defer = options.full_init
       @reset()
+      @context = $('#main-canvas')[0].getContext("2d")
 
     reset: ->
       @stop()
@@ -462,8 +463,15 @@ class FullInspection extends Viewer
         loaded: Math.floor(@preloader.loaded / @density), total: Math.floor(@preloader.total() / @density))
       if x == @x && y == @y && focus == @focus && trans == @trans
         @widget.removeClass('sprite')
-        $('#main-image').attr(src: src)
+        imageChanged = ($('#main-image').attr('src') != src)
+        $('#main-image').attr(src: src);
+        if imageChanged
+          $('#main-image')[0].onload = (img)->
+            $('#main-canvas')[0].getContext("2d").drawImage(img.target,0,0,480,480)
         @viewport.attr(class: @flip_class())
+      else
+        @viewport
+      @viewport
 
     left: (delta = 1) ->
       @direction = 'left'
@@ -604,7 +612,9 @@ class FullInspection extends Viewer
       src = @get_sprite_image(info)
       if src
         @widget.addClass('sprite')
-        $('#sprite-image').attr(src: src).css(top: top, left: left)
+        $('#sprite-image').attr(src: src).css(top: top, left: left)[0].onload = ()-> 
+          $('#main-canvas')[0].getContext("2d").drawImage(this,0,0,480,480,parseInt($(this).css("left").match(/\d+/g)[0])*-1,parseInt($(this).css("top").match(/\d+/g)[0])*-1,480*4,480*4)
+        $('#main-canvas')[0].getContext("2d").drawImage($('#sprite-image')[0],sprite_left*-1,sprite_top*-1,120,120,0,0,480,480)
         @viewport.attr(class: @flip_class())
 
     get_sprite_image: (info) ->
@@ -634,13 +644,14 @@ class FullInspection extends Viewer
             img.cached = true
           else
             img.cached = false
-          img.onload = =>
+          img.onload = => 
             img.endLoadStamp = new Date()
             totalTime = (img.endLoadStamp.getTime() - img.startLoadStamp.getTime())
             if size == @size
               @widget.find('#sprite-image').css
                 width: (@metadata.sprite_num_x * sprite_size) * @size / sprite_size
                 height: (@metadata.sprite_num_y * sprite_size) * @size / sprite_size
+                #$('#main-canvas')[0].getContext("2d").drawImage(@widget.find('#sprite-image')[0],0,0,480,480,parseInt($(this).css("left").match(/\d+/g)[0])*-1,parseInt($(this).css("top").match(/\d+/g)[0])*-1,480*4,480*4)
             callback()
         else
           setTimeout(check, 50)
@@ -984,7 +995,7 @@ class FullInspection extends Viewer
               quality: 70
             )
             #image_source = @viewer.preloader.src @viewer.x, @viewer.y, @viewer.focus
-            @viewer.MGlass = new MGlass 'main-image', image_source, {background: @viewer.metadata.background}, arguments.callee
+            @viewer.MGlass = new MGlass 'main-canvas', image_source, {background: @viewer.metadata.background}, arguments.callee
 
           @inactivate_button $(".focus_out")
           @inactivate_button $(".focus_in")
