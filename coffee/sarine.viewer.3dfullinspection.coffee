@@ -1,5 +1,5 @@
 ###!
-sarine.viewer.3dfullinspection - v0.0.13 -  Monday, March 30th, 2015, 5:23:20 PM 
+sarine.viewer.3dfullinspection - v0.0.13 -  Tuesday, March 31st, 2015, 1:52:11 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 class FullInspection extends Viewer
@@ -26,7 +26,9 @@ class FullInspection extends Viewer
     triggerCallback = (callback) ->
       loaded++
       if(loaded == totalScripts.length-1 && callback!=undefined )
-        callback()
+        setTimeout( ()=> 
+          callback() 
+        ,500) 
 
     element
     for resource in @resources
@@ -56,6 +58,8 @@ class FullInspection extends Viewer
       $(".stone_number",compiled).remove() if(@element.attr("coordinates")=="false")
 
       @conteiner = compiled
+      @element.css {width:"100%", height:"100%"}
+      # compiled.find('canvas').attr({width:@element.width(), height: @element.height()})
       @element.append(compiled)
     @element
 
@@ -92,7 +96,7 @@ class FullInspection extends Viewer
           $(".buttons",@element).remove()
           $(".stone_number",@element).remove()
           $(".inspect-stone",@element).css("background", "url('"+@callbackPic+"') no-repeat center center rgb(123, 123, 123)")
-          $(".inspect-stone",@element).css("width", "480px")
+          $(".inspect-stone",@element).css("width", "480px") # @TODO: Change to dynamic
           $(".inspect-stone",@element).css("height", "480px")
         else
           setTimeout checkNdelete, 50
@@ -120,8 +124,9 @@ class FullInspection extends Viewer
   nextImage : ()->
     console.log "FullInspection: nextImage"
   play: () ->
-
+    @element.attr("active","true")
   stop: () ->
+    @element.attr("active","false")
 
   STRIDE_X = 4
   config =
@@ -340,7 +345,7 @@ class FullInspection extends Viewer
       img.onerror = img.onload
 
     total: ->
-      @totals[@cache_key()]
+      @totals[@cache_key()] 
 
     preload: (queue) ->
       return if queue.length == 0
@@ -349,7 +354,7 @@ class FullInspection extends Viewer
 
     has: (x, y, focus) ->
       focus ?= @metadata.default_focus(x, y)
-      @images[@cache_key()][@metadata.image_name(x, y, focus)] == true
+      @images[@cache_key()][@metadata.image_name(x, y, focus)] == true 
 
     src: (x, y, focus, trans = "") ->
       x = Math.floor(x / @density) * @density
@@ -363,7 +368,6 @@ class FullInspection extends Viewer
 
     fetch: (x, y, focus = null) ->
       # Remember current position to prioritize preload better
-
       timeoutMl = 300
       if @has(x, y, focus)
         timeoutMl=0
@@ -431,12 +435,14 @@ class FullInspection extends Viewer
       @widget.trigger('high_quality',
         loaded: Math.floor(@preloader.loaded / @density), total: Math.floor(@preloader.total() / @density))
       if x == @x && y == @y && focus == @focus && trans == @trans
+        className = @widget[0].className
         @widget.removeClass('sprite')
         imageChanged = ($('#main-image').attr('src') != src)
         $('#main-image').attr(src: src);
-        if imageChanged
+        if imageChanged || className != @widget[0].className 
           $('#main-image')[0].onload = (img)->
             $('#main-canvas')[0].getContext("2d").drawImage(img.target,0,0,480,480)
+          $('#main-canvas')[0].getContext("2d").drawImage($('#main-image')[0],0,0,480,480)
         @viewport.attr(class: @flip_class())
       else
         @viewport
@@ -590,7 +596,7 @@ class FullInspection extends Viewer
       match = info.css("background-image").match(/url\("?([^"]*)"?\)/)
       if match then match[1] else null
 
-    load_stylesheet: (href, sprite_size, callback) ->
+    load_stylesheet: (href, sprite_size, callback) -> #Polling for getting actual sprite image
       if config.local
         callback()
         return
@@ -602,7 +608,7 @@ class FullInspection extends Viewer
         )
         css_link.appendTo($('head'))
       size = @size
-      check = =>
+      check = => 
         info = @sprite_info(sprite_size, 0, 0)
         src = @get_sprite_image(info)
         if src?
@@ -810,8 +816,8 @@ class FullInspection extends Viewer
         @viewer.active = false
         @inactivate_button($('.button'))
         @disable_button($('.button'));
-        $('.player .pause').addClass('hidden')
-        $('.player .play').removeClass('hidden')
+        $('.player .pause').addClass('hidden') #Legacy
+        $('.player .play').removeClass('hidden') #Legacy
         $('.progress').stop(true).css(opacity: 100).show().addClass('active')
         $('.progress').find('.progress_bar').css('width', '0%')
         $('.progress').find('.progress_percent').html('0%')
@@ -841,7 +847,7 @@ class FullInspection extends Viewer
         #@activate_button($('.player .hand_tool'))
         @viewer.top_view()
         @update_focus_buttons()
-      ).bind('med_quality',=>
+      ).bind('med_quality',=> #Legacy with debug
         $('.med_quality').html('Medium quality images loaded')
 
       ).bind('high_quality',(e, data) =>
@@ -869,19 +875,19 @@ class FullInspection extends Viewer
         $('.preload_xy').html("Preload center moved to #{data.y}:#{data.x}")
       )
 
-      $('.inspect-stone').css('background-color', "#" + @viewer.metadata.background)
+      $('.inspect-stone').css('background-color', "#" + @viewer.metadata.background)  #Legacy instead of canvas
       if @viewer.metadata.background != '000' && @viewer.metadata.background != '000000' && @viewer.metadata.background != 'black'
         $('.inspect-stone').addClass('dark')
 
-      if @viewer.debug
+      if @viewer.debug  #Legacy
         $('.display').show()
 
-      $('.player .play').click =>
+      $('.player .play').click =>  #Legacy
 
 
         return @play()
 
-      $('.player .hand_tool, .player .pause').click =>
+      $('.player .hand_tool, .player .pause').click => #Legacy
 
 
         return @stop()
@@ -896,14 +902,14 @@ class FullInspection extends Viewer
         @viewer[$(e.target).data('button')]()
         return false
 
-      $('.small_link').click =>
+      $('.small_link').click => # Legacy
 
 
         @viewer.zoom_small()
         #  $('.magnify').hide()
         return false
 
-      $('.large_link').click =>
+      $('.large_link').click => # Legacy
         @enable_button('.magnify')
 
 
@@ -914,7 +920,6 @@ class FullInspection extends Viewer
       $('.focus_in').click =>
         return false if !@viewer.active
         return false if !@viewer.next_focus()?
-
 
         @viewer.change_focus(@viewer.next_focus())
         @update_focus_buttons()
@@ -937,7 +942,7 @@ class FullInspection extends Viewer
         if @viewer.inspection
           #bindScroll()
           @viewer.active = true
-          $('.inspect-stone').css("overflow", "hidden");
+          $('.inspect-stone').css("overflow", "hidden"); #Legacy
           $(document).unbind("mouseup");
 
           @viewer.MGlass.Delete()
@@ -954,8 +959,8 @@ class FullInspection extends Viewer
           $(".buttons li:not(.magnify)").addClass("disabled");
           $(".magnify").show();
           #unbindScroll()
-          $('.inspect-stone').css("overflow", "visible");
-          $('.inspect-stone').css("overflow", "visible");
+          $('.inspect-stone').css("overflow", "visible");#Legacy
+
           #@viewer.reset()
           if $('mglass_wrapper').length == 0
             image_source = @viewer.preloader.src(@viewer.x, @viewer.y, @viewer.focus,
