@@ -1,5 +1,5 @@
 ###!
-sarine.viewer.3dfullinspection - v0.20.0 -  Monday, April 6th, 2015, 6:49:24 PM 
+sarine.viewer.3dfullinspection - v0.20.0 -  Wednesday, April 29th, 2015, 9:32:40 AM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 class FullInspection extends Viewer
@@ -95,7 +95,7 @@ class FullInspection extends Viewer
           $(".inspect-stone",@element).addClass("no_stone")
           $(".buttons",@element).remove()
           $(".stone_number",@element).remove()
-          $(".inspect-stone",@element).css("background", "url('"+@callbackPic+"') no-repeat center center rgb(123, 123, 123)")
+          $(".inspect-stone",@element).css("background", "url('"+@callbackPic+"') no-repeat center center")
           $(".inspect-stone",@element).css("width", "480px") # @TODO: Change to dynamic
           $(".inspect-stone",@element).css("height", "480px")
         else
