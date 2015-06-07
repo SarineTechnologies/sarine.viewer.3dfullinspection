@@ -1,9 +1,15 @@
 ###!
-sarine.viewer.3dfullinspection - v0.21.0 -  Wednesday, April 29th, 2015, 9:48:18 AM 
+sarine.viewer.3dfullinspection - v0.21.0 -  Sunday, June 7th, 2015, 11:35:32 AM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 class FullInspection extends Viewer
+
+  isLocal = false
+  qs = undefined
+
   constructor: (options) -> 
+    qs = new queryString()
+    isLocal = qs.getValue("isLocal") == "true" 
     @resourcesPrefix = stones[0].viewersBaseUrl + "atomic/v1/assets/"
     @resources = [
       {element:'script',src:'jquery-ui.js'},
@@ -13,11 +19,8 @@ class FullInspection extends Viewer
       {element:'link',src:'inspection.css'}
     ]
     super(options)
-    {@jsonsrc} = options
-
-
-
-
+    {@jsonsrc, @src} = options
+   
 
   preloadAssets: (callback)=>
 
@@ -73,10 +76,18 @@ class FullInspection extends Viewer
       @UIlogic = new UI(@viewerBI, auto_play: true)
       @UIlogic.go()
 
-    descriptionPath = @src + @jsonsrc
+    ##TODO -new json end-point     
+    if !isLocal     
+      descriptionPath = @src + @jsonsrc 
+    else
+      localInspectionBaseUrl = @src.substr 0, @src.indexOf('ImageRepo') 
+      localStoneMeasureUrl = @src.slice @src.indexOf('ImageRepo/') + 10, @src.lastIndexOf('/')
+      localStoneMeasureUrlArr = localStoneMeasureUrl.split '/'
+      descriptionPath = localInspectionBaseUrl + 'GetLocalJson?stoneId=' + localStoneMeasureUrlArr[0] + "&measureId=" + localStoneMeasureUrlArr[1] + "&viewer=inspection"
 
-    $.getJSON descriptionPath, (result) =>
+    $.getJSON descriptionPath, (result) =>  
       stone = result.StoneId + "_" + result.MeasurementId
+      result = if isLocal then JSON.parse(result) else result
       metadata = new Metadata(
         size_x: result.number_of_x_images
         flip_from_y: result.number_of_y_images
@@ -364,7 +375,10 @@ class FullInspection extends Viewer
         quality: trans.quality ? config.image_quality,
         height:  trans.height ? config.image_size
 
-      @dest + "/" +  attrs.height + "_" + attrs.quality + "/img_" + @metadata.image_name(x, y, focus)+ ".jpg"
+      if !isLocal
+        @dest + "/" +  attrs.height + "_" + attrs.quality + "/img_" + @metadata.image_name(x, y, focus)+ ".jpg"
+      else
+        @dest + "/" +  "merge" + "/img_" + @metadata.image_name(x, y, focus)+ ".jpg"
 
     fetch: (x, y, focus = null) ->
       # Remember current position to prioritize preload better
@@ -438,8 +452,8 @@ class FullInspection extends Viewer
         className = @widget[0].className
         @widget.removeClass('sprite')
         imageChanged = ($('#main-image').attr('src') != src)
-        $('#main-image').attr(src: src);
         if imageChanged || className != @widget[0].className 
+          $('#main-image').attr(src: src)
           $('#main-image')[0].onload = (img)->
             $('#main-canvas')[0].getContext("2d").drawImage(img.target,0,0,480,480)
           $('#main-canvas')[0].getContext("2d").drawImage($('#main-image')[0],0,0,480,480)
@@ -676,10 +690,11 @@ class FullInspection extends Viewer
 
       @reset()
       @show(true)
-      @load_stylesheet(small_css_url, @sprite_size, =>
-        @widget.trigger('low_quality')
-
-      )
+      # TODO ?? 
+      if !isLocal
+        @load_stylesheet(small_css_url, @sprite_size, =>
+          @widget.trigger('low_quality')
+        )
 
   class UI
     constructor: (@viewer, options) ->
@@ -852,7 +867,7 @@ class FullInspection extends Viewer
 
       ).bind('high_quality',(e, data) =>
         $('.high_quality').html("#{data.loaded} / #{data.total}")
-
+        @viewer.active = true
         percent = Math.round(((data.loaded * 100.0) / data.total))
         progress = $('.progress')
         $(progress).find('.progress_bar').css('width', Math.min(percent, 98) + '%')
@@ -993,5 +1008,52 @@ class FullInspection extends Viewer
     
 
 @FullInspection = FullInspection
+
+### Query string hepler ###
+class window.queryString
+  constructor: (url) ->
+    __qsImpl = new queryStringImpl(url)
+
+    @getValue = (key) ->
+      result = __qsImpl.params[key]
+      if not result?
+        result = __qsImpl.canonicalParams[key.toLowerCase()]
+      return result
+  
+    @count = () ->
+      __qsImpl.count
+
+    @hasKey = (key) ->
+      return key of __qsImpl.params || key.toLowerCase() of __qsImpl.canonicalParams
+
+
+class queryStringImpl
+  constructor: (url)->
+    qsPart = queryStringImpl.getQueryStringPart(url)
+    [@params, @canonicalParams, @count] = queryStringImpl.initParams qsPart
+
+  @getQueryStringPart: (url) ->
+    if url?
+      index = url.indexOf '?'
+      return if index > 0 then url.substring index else ''
+    return window.location.search
+
+  @initParams: (qsPart) ->
+    params = {}
+    canonicalParams = {}
+    count = 0
+    a = /\+/g  #// Regex for replacing addition symbol with a space
+    r = /([^&=]+)=?([^&]*)/g
+    d = (s) -> 
+      decodeURIComponent(s.replace(a, " "))
+    q = qsPart.substring(1)
+
+    while (e = r.exec(q))
+      key = d(e[1])
+      value = d(e[2])
+      params[key] = value
+      canonicalParams[key.toLowerCase()] = value
+      count += 1
+    return [params, canonicalParams, count]
 
 
