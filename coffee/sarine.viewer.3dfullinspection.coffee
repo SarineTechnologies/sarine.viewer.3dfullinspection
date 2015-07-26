@@ -1,5 +1,5 @@
 ###!
-sarine.viewer.3dfullinspection - v0.23.0 -  Thursday, July 9th, 2015, 11:46:42 AM 
+sarine.viewer.3dfullinspection - v0.23.0 -  Thursday, July 23rd, 2015, 11:52:34 AM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 class FullInspection extends Viewer
@@ -10,7 +10,7 @@ class FullInspection extends Viewer
   constructor: (options) -> 
     qs = new queryString()
     isLocal = qs.getValue("isLocal") == "true" 
-    @resourcesPrefix = stones[0].viewersBaseUrl + "atomic/v1/assets/"
+    @resourcesPrefix = options.baseUrl + "atomic/v1/assets/"
     @resources = [
       {element:'script',src:'jquery-ui.js'},
       {element:'script',src:'jquery.ui.ipad.altfix.js'},
@@ -22,7 +22,7 @@ class FullInspection extends Viewer
     {@jsonsrc, @src} = options
    
 
-  preloadAssets: (callback)=>
+  preloadAssets: (callback)=> 
 
     loaded = 0
     totalScripts = @resources.map (elm)-> elm.element =='script'
