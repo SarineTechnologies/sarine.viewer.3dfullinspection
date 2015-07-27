@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.24.0 -  Sunday, July 26th, 2015, 9:53:32 AM 
+sarine.viewer.3dfullinspection - v0.24.0 -  Monday, July 27th, 2015, 1:48:56 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -76,10 +76,10 @@ sarine.viewer.3dfullinspection - v0.24.0 -  Sunday, July 26th, 2015, 9:53:32 AM
           element.onload = element.onreadystatechange = function() {
             return triggerCallback(callback);
           };
-          element.src = this.resourcesPrefix + resource.src;
+          element.src = this.resourcesPrefix + resource.src + cacheVersion;
           _results.push(element.type = "text/javascript");
         } else {
-          element.href = this.resourcesPrefix + resource.src;
+          element.href = this.resourcesPrefix + resource.src + cacheVersion;
           element.rel = "stylesheet";
           element.type = "text/css";
           _results.push($(document.head).prepend(element));
@@ -90,7 +90,7 @@ sarine.viewer.3dfullinspection - v0.24.0 -  Sunday, July 26th, 2015, 9:53:32 AM
 
     FullInspection.prototype.convertElement = function() {
       var url;
-      url = this.resourcesPrefix + "3dfullinspection.html";
+      url = this.resourcesPrefix + "3dfullinspection.html" + cacheVersion;
       $.get(url, (function(_this) {
         return function(innerHtml) {
           var compiled;

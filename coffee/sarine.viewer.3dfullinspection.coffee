@@ -1,5 +1,5 @@
 ###!
-sarine.viewer.3dfullinspection - v0.24.0 -  Sunday, July 26th, 2015, 9:53:32 AM 
+sarine.viewer.3dfullinspection - v0.24.0 -  Monday, July 27th, 2015, 1:48:56 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 class FullInspection extends Viewer
@@ -39,22 +39,22 @@ class FullInspection extends Viewer
       if(resource.element == 'script')
         $(document.body).append(element)
         element.onload = element.onreadystatechange = ()-> triggerCallback(callback)
-        element.src = @resourcesPrefix + resource.src
+        element.src = @resourcesPrefix + resource.src + cacheVersion
         element.type= "text/javascript"
 
       else
-        element.href = @resourcesPrefix + resource.src
+        element.href = @resourcesPrefix + resource.src + cacheVersion
         element.rel= "stylesheet"
         element.type= "text/css"
-        $(document.head).prepend(element)
+        $(document.head).prepend(element) 
 
 
 
 
   convertElement :() =>
-    url = @resourcesPrefix+"3dfullinspection.html"
+    url = @resourcesPrefix+"3dfullinspection.html" +  cacheVersion
 
-
+ 
     $.get url, (innerHtml) =>
       compiled = $(innerHtml)
       $(".buttons",compiled).remove() if(@element.attr("menu")=="false")
