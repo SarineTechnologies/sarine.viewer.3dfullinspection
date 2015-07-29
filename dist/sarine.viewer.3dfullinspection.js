@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.25.0 -  Tuesday, July 28th, 2015, 6:01:28 PM 
+sarine.viewer.3dfullinspection - v0.25.0 -  Wednesday, July 29th, 2015, 10:06:03 AM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -129,7 +129,8 @@ sarine.viewer.3dfullinspection - v0.25.0 -  Tuesday, July 28th, 2015, 6:01:28 PM
             friendlyName: "temp",
             cdn_subdomain: false,
             metadata: metadata,
-            debug: false
+            debug: false,
+            resourcesPrefix: _this.resourcesPrefix
           });
           _this.UIlogic = new UI(_this.viewerBI, {
             auto_play: true
@@ -677,6 +678,7 @@ sarine.viewer.3dfullinspection - v0.25.0 -  Tuesday, July 28th, 2015, 6:01:28 PM
         this.dest = options.src;
         this.first_init_defer = options.first_init;
         this.full_init_defer = options.full_init;
+        this.resourcesPrefix = options.resourcesPrefix;
         this.reset();
         this.context = $('#main-canvas')[0].getContext("2d");
       }
@@ -1480,7 +1482,7 @@ sarine.viewer.3dfullinspection - v0.25.0 -  Tuesday, July 28th, 2015, 6:01:28 PM
                 });
                 _this.viewer.MGlass = new MGlass('main-canvas', image_source, {
                   background: _this.viewer.metadata.background,
-                  innerHTML: '<div class="mglass_inner_html"><img src="http://d3oayecwxm3wp6.cloudfront.net/qa4/content/viewers/atomic/v1/assets/move_cursor.png" alt="move"/></div>'
+                  innerHTML: "<div class='mglass_inner_html'><div class='dummy'></div><div class='img-container'><img src='" + _this.viewer.resourcesPrefix + "move_cursor.png' alt='move'/></div></div>"
                 }, arguments.callee);
               }
               _this.inactivate_button($(".focus_out"));
