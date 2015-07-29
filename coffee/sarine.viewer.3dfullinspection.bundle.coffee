@@ -1,5 +1,5 @@
 ###!
-sarine.viewer.3dfullinspection - v0.25.0 -  Monday, July 27th, 2015, 1:54:38 PM 
+sarine.viewer.3dfullinspection - v0.25.0 -  Wednesday, July 29th, 2015, 11:51:19 AM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 
@@ -104,7 +104,7 @@ class FullInspection extends Viewer
     @full_init_defer = $.Deferred()
     stone = ""
     start = (metadata) =>
-      @viewerBI =  new ViewerBI(first_init: @first_init_defer, full_init:@full_init_defer, src:@src, x: 0, y: metadata.vertical_angles.indexOf(90), stone: stone, friendlyName: "temp", cdn_subdomain: false, metadata: metadata, debug: false)
+      @viewerBI =  new ViewerBI(first_init: @first_init_defer, full_init:@full_init_defer, src:@src, x: 0, y: metadata.vertical_angles.indexOf(90), stone: stone, friendlyName: "temp", cdn_subdomain: false, metadata: metadata, debug: false, resourcesPrefix : @resourcesPrefix)
       @UIlogic = new UI(@viewerBI, auto_play: true)
       @UIlogic.go()
 
@@ -456,6 +456,7 @@ class FullInspection extends Viewer
       @dest = options.src
       @first_init_defer = options.first_init
       @full_init_defer = options.full_init
+      @resourcesPrefix = options.resourcesPrefix     
       @reset()
       @context = $('#main-canvas')[0].getContext("2d")
 
@@ -1014,14 +1015,15 @@ class FullInspection extends Viewer
               height: 0,
               width: 0,
               quality: 70
-            )
-            #image_source = @viewer.preloader.src @viewer.x, @viewer.y, @viewer.focus
-            @viewer.MGlass = new MGlass 'main-canvas', image_source, {background: @viewer.metadata.background}, arguments.callee
+            ) 
+            #image_source = @viewer.preloader.src @viewer.x, @viewer.y, @viewer.focus     
+            @viewer.MGlass = new MGlass 'main-canvas', image_source, {
+              background: @viewer.metadata.background,innerHTML : "<div class='mglass_inner_html'><div class='dummy'></div><div class='img-container'><img src='#{@viewer.resourcesPrefix}move_cursor.png' alt='move'/></div></div>"}, arguments.callee
 
-          @inactivate_button $(".focus_out")
+          @inactivate_button $(".focus_out") 
           @inactivate_button $(".focus_in")
           @disable_button ".focus_out"
-          @disable_button ".focus_in"
+          @disable_button ".focus_in" 
 
           @activate_button $(".magnify")
 
