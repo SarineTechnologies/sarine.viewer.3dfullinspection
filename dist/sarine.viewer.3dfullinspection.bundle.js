@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.26.0 -  Wednesday, July 29th, 2015, 1:45:19 PM 
+sarine.viewer.3dfullinspection - v0.26.0 -  Wednesday, August 5th, 2015, 5:29:26 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -1274,19 +1274,27 @@ sarine.viewer.3dfullinspection - v0.26.0 -  Wednesday, July 29th, 2015, 1:45:19 
                 break;
               case 37:
                 _this.stop();
-                _this.viewer.left();
+                if (!_this.viewer.MGlass.isActive) {
+                  _this.viewer.left();
+                }
                 break;
               case 38:
                 _this.stop();
-                _this.viewer.up();
+                if (!_this.viewer.MGlass.isActive) {
+                  _this.viewer.up();
+                }
                 break;
               case 39:
                 _this.stop();
-                _this.viewer.right();
+                if (!_this.viewer.MGlass.isActive) {
+                  _this.viewer.right();
+                }
                 break;
               case 40:
                 _this.stop();
-                _this.viewer.down();
+                if (!_this.viewer.MGlass.isActive) {
+                  _this.viewer.down();
+                }
                 break;
               case 49:
                 _this.viewer.top_view();
