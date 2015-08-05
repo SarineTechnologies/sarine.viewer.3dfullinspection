@@ -1,5 +1,5 @@
 ###!
-sarine.viewer.3dfullinspection - v0.26.0 -  Wednesday, July 29th, 2015, 1:45:19 PM 
+sarine.viewer.3dfullinspection - v0.26.0 -  Wednesday, August 5th, 2015, 5:29:26 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 
@@ -809,10 +809,10 @@ class FullInspection extends Viewer
         switch e.keyCode
           when 32
             if $('.player .pause').data('active') then @stop() else @play()
-          when 37 then @stop(); @viewer.left();
-          when 38 then @stop(); @viewer.up()
-          when 39 then @stop(); @viewer.right()
-          when 40 then @stop(); @viewer.down()
+          when 37 then @stop(); if !@viewer.MGlass.isActive then @viewer.left()  
+          when 38 then @stop(); if !@viewer.MGlass.isActive then @viewer.up()
+          when 39 then @stop(); if !@viewer.MGlass.isActive then @viewer.right()
+          when 40 then @stop(); if !@viewer.MGlass.isActive then @viewer.down()
           when 49 then @viewer.top_view()
           when 50 then @viewer.middle_view()
           when 51 then @viewer.bottom_view()
