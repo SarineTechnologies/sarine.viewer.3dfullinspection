@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.27.0 -  Wednesday, August 5th, 2015, 5:32:46 PM 
+sarine.viewer.3dfullinspection - v0.27.0 -  Sunday, September 6th, 2015, 11:27:09 AM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -1213,25 +1213,33 @@ sarine.viewer.3dfullinspection - v0.27.0 -  Wednesday, August 5th, 2015, 5:32:46
                 break;
               case 37:
                 _this.stop();
-                if (!_this.viewer.MGlass.isActive) {
+                if (typeof _this.viewer.MGlass === 'undefined') {
+                  _this.viewer.left();
+                } else if (!_this.viewer.MGlass.isActive) {
                   _this.viewer.left();
                 }
                 break;
               case 38:
                 _this.stop();
-                if (!_this.viewer.MGlass.isActive) {
+                if (typeof _this.viewer.MGlass === 'undefined') {
+                  _this.viewer.up();
+                } else if (!_this.viewer.MGlass.isActive) {
                   _this.viewer.up();
                 }
                 break;
               case 39:
                 _this.stop();
-                if (!_this.viewer.MGlass.isActive) {
+                if (typeof _this.viewer.MGlass === 'undefined') {
+                  _this.viewer.right();
+                } else if (!_this.viewer.MGlass.isActive) {
                   _this.viewer.right();
                 }
                 break;
               case 40:
                 _this.stop();
-                if (!_this.viewer.MGlass.isActive) {
+                if (typeof _this.viewer.MGlass === 'undefined') {
+                  _this.viewer.down();
+                } else if (!_this.viewer.MGlass.isActive) {
                   _this.viewer.down();
                 }
                 break;

@@ -1,5 +1,5 @@
 ###!
-sarine.viewer.3dfullinspection - v0.27.0 -  Wednesday, August 5th, 2015, 5:32:46 PM 
+sarine.viewer.3dfullinspection - v0.27.0 -  Sunday, September 6th, 2015, 11:27:09 AM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 
@@ -803,16 +803,32 @@ class FullInspection extends Viewer
       @viewer.inited = true
       @update_focus_buttons()
       @mouse_x = null
-      @mouse_y = null
+      @mouse_y = null      
       
       $(window).keydown((e) =>
+        
         switch e.keyCode
           when 32
             if $('.player .pause').data('active') then @stop() else @play()
-          when 37 then @stop(); if !@viewer.MGlass.isActive then @viewer.left()  
-          when 38 then @stop(); if !@viewer.MGlass.isActive then @viewer.up()
-          when 39 then @stop(); if !@viewer.MGlass.isActive then @viewer.right()
-          when 40 then @stop(); if !@viewer.MGlass.isActive then @viewer.down()
+
+          # arrows  
+          when 37 
+            @stop()
+            if typeof @viewer.MGlass == 'undefined' then @viewer.left()  
+            else if !@viewer.MGlass.isActive then @viewer.left() 
+          when 38
+            @stop()
+            if typeof @viewer.MGlass == 'undefined' then @viewer.up()
+            else if !@viewer.MGlass.isActive then @viewer.up()
+          when 39
+            @stop()
+            if typeof @viewer.MGlass == 'undefined' then @viewer.right()
+            else if !@viewer.MGlass.isActive then @viewer.right()
+          when 40 
+            @stop()
+            if typeof @viewer.MGlass == 'undefined' then @viewer.down()
+            else if !@viewer.MGlass.isActive then @viewer.down() 
+ 
           when 49 then @viewer.top_view()
           when 50 then @viewer.middle_view()
           when 51 then @viewer.bottom_view()
