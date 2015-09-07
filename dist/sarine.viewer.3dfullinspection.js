@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.28.0 -  Sunday, September 6th, 2015, 11:34:19 AM 
+sarine.viewer.3dfullinspection - v0.28.0 -  Monday, September 7th, 2015, 11:15:27 AM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -733,6 +733,9 @@ sarine.viewer.3dfullinspection - v0.28.0 -  Sunday, September 6th, 2015, 11:34:1
         if (delta == null) {
           delta = 1;
         }
+        if (typeof this.MGlass !== 'undefined' && this.MGlass.isActive) {
+          return;
+        }
         this.direction = 'left';
         return this.move_horizontal(delta);
       };
@@ -740,6 +743,9 @@ sarine.viewer.3dfullinspection - v0.28.0 -  Sunday, September 6th, 2015, 11:34:1
       ViewerBI.prototype.right = function(delta) {
         if (delta == null) {
           delta = 1;
+        }
+        if (typeof this.MGlass !== 'undefined' && this.MGlass.isActive) {
+          return;
         }
         this.direction = 'right';
         return this.move_horizontal(delta);
@@ -765,6 +771,9 @@ sarine.viewer.3dfullinspection - v0.28.0 -  Sunday, September 6th, 2015, 11:34:1
         if (!this.active) {
           return;
         }
+        if (typeof this.MGlass !== 'undefined' && this.MGlass.isActive) {
+          return;
+        }
         prev_flip = this.flip();
         this.direction = 'up';
         this.y = this.metadata.inc_y(this.y, -delta);
@@ -782,6 +791,9 @@ sarine.viewer.3dfullinspection - v0.28.0 -  Sunday, September 6th, 2015, 11:34:1
           delta = 1;
         }
         if (!this.active) {
+          return;
+        }
+        if (typeof this.MGlass !== 'undefined' && this.MGlass.isActive) {
           return;
         }
         prev_flip = this.flip();
@@ -1244,13 +1256,25 @@ sarine.viewer.3dfullinspection - v0.28.0 -  Sunday, September 6th, 2015, 11:34:1
                 }
                 break;
               case 49:
-                _this.viewer.top_view();
+                if (typeof _this.viewer.MGlass === 'undefined') {
+                  _this.viewer.top_view();
+                } else if (!_this.viewer.MGlass.isActive) {
+                  _this.viewer.top_view();
+                }
                 break;
               case 50:
-                _this.viewer.middle_view();
+                if (typeof _this.viewer.MGlass === 'undefined') {
+                  _this.viewer.middle_view();
+                } else if (!_this.viewer.MGlass.isActive) {
+                  _this.viewer.middle_view();
+                }
                 break;
               case 51:
-                _this.viewer.bottom_view();
+                if (typeof _this.viewer.MGlass === 'undefined') {
+                  _this.viewer.bottom_view();
+                } else if (!_this.viewer.MGlass.isActive) {
+                  _this.viewer.bottom_view();
+                }
                 break;
               case 107:
                 if (!_this.viewer.active) {

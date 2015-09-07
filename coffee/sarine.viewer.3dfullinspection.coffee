@@ -1,5 +1,5 @@
 ###!
-sarine.viewer.3dfullinspection - v0.28.0 -  Sunday, September 6th, 2015, 11:34:19 AM 
+sarine.viewer.3dfullinspection - v0.28.0 -  Monday, September 7th, 2015, 11:15:27 AM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 class FullInspection extends Viewer
@@ -464,10 +464,12 @@ class FullInspection extends Viewer
       @viewport
 
     left: (delta = 1) ->
+      return if typeof @.MGlass != 'undefined' && @.MGlass.isActive
       @direction = 'left'
       @move_horizontal(delta)
 
     right: (delta = 1) ->
+      return if typeof @.MGlass != 'undefined' && @.MGlass.isActive
       @direction = 'right'
       @move_horizontal(delta)
 
@@ -480,6 +482,7 @@ class FullInspection extends Viewer
 
     up: (delta = 1) ->
       return if !@active
+      return if typeof @.MGlass != 'undefined' && @.MGlass.isActive
       prev_flip = @flip()
       @direction = 'up'
       @y = @metadata.inc_y(@y, -delta)
@@ -490,6 +493,7 @@ class FullInspection extends Viewer
       @show()
     down: (delta = 1) ->
       return if !@active
+      return if typeof @.MGlass != 'undefined' && @.MGlass.isActive
       prev_flip = @flip()
       @direction = 'down'
       @y = @metadata.inc_y(@y, delta)
@@ -797,9 +801,15 @@ class FullInspection extends Viewer
             if typeof @viewer.MGlass == 'undefined' then @viewer.down()
             else if !@viewer.MGlass.isActive then @viewer.down() 
  
-          when 49 then @viewer.top_view()
-          when 50 then @viewer.middle_view()
-          when 51 then @viewer.bottom_view()
+          when 49 
+            if typeof @viewer.MGlass == 'undefined' then @viewer.top_view()
+            else if !@viewer.MGlass.isActive then @viewer.top_view()
+          when 50
+            if typeof @viewer.MGlass == 'undefined' then @viewer.middle_view()
+            else if !@viewer.MGlass.isActive then @viewer.middle_view()
+          when 51
+            if typeof @viewer.MGlass == 'undefined' then @viewer.bottom_view()
+            else if !@viewer.MGlass.isActive then @viewer.bottom_view()
           when 107
             return false if !@viewer.active
             return false if !@viewer.next_focus()?
@@ -840,7 +850,7 @@ class FullInspection extends Viewer
             @viewer.down(delta_y)
           else
             @viewer.up(delta_y)
-          @mouse_y = e.clientY
+          @mouse_y = e.clientY      
       ).click(->
         this.focus()
       ).bind('reset',=>
