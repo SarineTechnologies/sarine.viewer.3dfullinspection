@@ -1,26 +1,32 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.20.0 -  Monday, April 6th, 2015, 6:49:24 PM 
+sarine.viewer.3dfullinspection - v0.29.0 -  Monday, September 7th, 2015, 11:45:29 AM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
 (function() {
-  var FullInspection,
+  var FullInspection, queryStringImpl,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   FullInspection = (function(_super) {
-    var Metadata, Preloader, STRIDE_X, UI, ViewerBI, config;
+    var Metadata, Preloader, STRIDE_X, UI, ViewerBI, config, isLocal, qs;
 
     __extends(FullInspection, _super);
+
+    isLocal = false;
+
+    qs = void 0;
 
     function FullInspection(options) {
       this.full_init = __bind(this.full_init, this);
       this.first_init = __bind(this.first_init, this);
       this.convertElement = __bind(this.convertElement, this);
       this.preloadAssets = __bind(this.preloadAssets, this);
-      this.resourcesPrefix = stones[0].viewersBaseUrl + "atomic/v1/assets/";
+      qs = new queryString();
+      isLocal = qs.getValue("isLocal") === "true";
+      this.resourcesPrefix = options.baseUrl + "atomic/v1/assets/";
       this.resources = [
         {
           element: 'script',
@@ -40,7 +46,7 @@ sarine.viewer.3dfullinspection - v0.20.0 -  Monday, April 6th, 2015, 6:49:24 PM
         }
       ];
       FullInspection.__super__.constructor.call(this, options);
-      this.jsonsrc = options.jsonsrc;
+      this.jsonsrc = options.jsonsrc, this.src = options.src;
     }
 
     FullInspection.prototype.preloadAssets = function(callback) {
@@ -70,10 +76,10 @@ sarine.viewer.3dfullinspection - v0.20.0 -  Monday, April 6th, 2015, 6:49:24 PM
           element.onload = element.onreadystatechange = function() {
             return triggerCallback(callback);
           };
-          element.src = this.resourcesPrefix + resource.src;
+          element.src = this.resourcesPrefix + resource.src + cacheVersion;
           _results.push(element.type = "text/javascript");
         } else {
-          element.href = this.resourcesPrefix + resource.src;
+          element.href = this.resourcesPrefix + resource.src + cacheVersion;
           element.rel = "stylesheet";
           element.type = "text/css";
           _results.push($(document.head).prepend(element));
@@ -84,7 +90,7 @@ sarine.viewer.3dfullinspection - v0.20.0 -  Monday, April 6th, 2015, 6:49:24 PM
 
     FullInspection.prototype.convertElement = function() {
       var url;
-      url = this.resourcesPrefix + "3dfullinspection.html";
+      url = this.resourcesPrefix + "3dfullinspection.html" + cacheVersion;
       $.get(url, (function(_this) {
         return function(innerHtml) {
           var compiled;
@@ -107,7 +113,7 @@ sarine.viewer.3dfullinspection - v0.20.0 -  Monday, April 6th, 2015, 6:49:24 PM
     };
 
     FullInspection.prototype.first_init = function() {
-      var descriptionPath, start, stone;
+      var descriptionPath, localInspectionBaseUrl, localStoneMeasureUrl, localStoneMeasureUrlArr, start, stone;
       this.first_init_defer = $.Deferred();
       this.full_init_defer = $.Deferred();
       stone = "";
@@ -123,7 +129,8 @@ sarine.viewer.3dfullinspection - v0.20.0 -  Monday, April 6th, 2015, 6:49:24 PM
             friendlyName: "temp",
             cdn_subdomain: false,
             metadata: metadata,
-            debug: false
+            debug: false,
+            resourcesPrefix: _this.resourcesPrefix
           });
           _this.UIlogic = new UI(_this.viewerBI, {
             auto_play: true
@@ -131,11 +138,19 @@ sarine.viewer.3dfullinspection - v0.20.0 -  Monday, April 6th, 2015, 6:49:24 PM
           return _this.UIlogic.go();
         };
       })(this);
-      descriptionPath = this.src + this.jsonsrc;
+      if (!isLocal) {
+        descriptionPath = this.src + this.jsonsrc;
+      } else {
+        localInspectionBaseUrl = this.src.substr(0, this.src.indexOf('ImageRepo'));
+        localStoneMeasureUrl = this.src.slice(this.src.indexOf('ImageRepo/') + 10, this.src.lastIndexOf('/'));
+        localStoneMeasureUrlArr = localStoneMeasureUrl.split('/');
+        descriptionPath = localInspectionBaseUrl + 'GetLocalJson?stoneId=' + localStoneMeasureUrlArr[0] + "&measureId=" + localStoneMeasureUrlArr[1] + "&viewer=inspection";
+      }
       $.getJSON(descriptionPath, (function(_this) {
         return function(result) {
           var metadata;
           stone = result.StoneId + "_" + result.MeasurementId;
+          result = isLocal ? JSON.parse(result) : result;
           metadata = new Metadata({
             size_x: result.number_of_x_images,
             flip_from_y: result.number_of_y_images,
@@ -156,7 +171,7 @@ sarine.viewer.3dfullinspection - v0.20.0 -  Monday, April 6th, 2015, 6:49:24 PM
               $(".inspect-stone", _this.element).addClass("no_stone");
               $(".buttons", _this.element).remove();
               $(".stone_number", _this.element).remove();
-              $(".inspect-stone", _this.element).css("background", "url('" + _this.callbackPic + "') no-repeat center center rgb(123, 123, 123)");
+              $(".inspect-stone", _this.element).css("background", "url('" + _this.callbackPic + "') no-repeat center center");
               $(".inspect-stone", _this.element).css("width", "480px");
               return $(".inspect-stone", _this.element).css("height", "480px");
             } else {
@@ -594,7 +609,11 @@ sarine.viewer.3dfullinspection - v0.20.0 -  Monday, April 6th, 2015, 6:49:24 PM
           quality: (_ref = trans.quality) != null ? _ref : config.image_quality,
           height: (_ref1 = trans.height) != null ? _ref1 : config.image_size
         };
-        return this.dest + "/" + attrs.height + "_" + attrs.quality + "/img_" + this.metadata.image_name(x, y, focus) + ".jpg";
+        if (!isLocal) {
+          return this.dest + "/" + attrs.height + "_" + attrs.quality + "/img_" + this.metadata.image_name(x, y, focus) + ".jpg";
+        } else {
+          return this.dest + "/" + "merge" + "/img_" + this.metadata.image_name(x, y, focus) + ".jpg";
+        }
       };
 
       Preloader.prototype.fetch = function(x, y, focus) {
@@ -659,6 +678,7 @@ sarine.viewer.3dfullinspection - v0.20.0 -  Monday, April 6th, 2015, 6:49:24 PM
         this.dest = options.src;
         this.first_init_defer = options.first_init;
         this.full_init_defer = options.full_init;
+        this.resourcesPrefix = options.resourcesPrefix;
         this.reset();
         this.context = $('#main-canvas')[0].getContext("2d");
       }
@@ -691,10 +711,10 @@ sarine.viewer.3dfullinspection - v0.20.0 -  Monday, April 6th, 2015, 6:49:24 PM
           className = this.widget[0].className;
           this.widget.removeClass('sprite');
           imageChanged = $('#main-image').attr('src') !== src;
-          $('#main-image').attr({
-            src: src
-          });
           if (imageChanged || className !== this.widget[0].className) {
+            $('#main-image').attr({
+              src: src
+            });
             $('#main-image')[0].onload = function(img) {
               return $('#main-canvas')[0].getContext("2d").drawImage(img.target, 0, 0, 480, 480);
             };
@@ -713,6 +733,9 @@ sarine.viewer.3dfullinspection - v0.20.0 -  Monday, April 6th, 2015, 6:49:24 PM
         if (delta == null) {
           delta = 1;
         }
+        if (typeof this.MGlass !== 'undefined' && this.MGlass.isActive) {
+          return;
+        }
         this.direction = 'left';
         return this.move_horizontal(delta);
       };
@@ -720,6 +743,9 @@ sarine.viewer.3dfullinspection - v0.20.0 -  Monday, April 6th, 2015, 6:49:24 PM
       ViewerBI.prototype.right = function(delta) {
         if (delta == null) {
           delta = 1;
+        }
+        if (typeof this.MGlass !== 'undefined' && this.MGlass.isActive) {
+          return;
         }
         this.direction = 'right';
         return this.move_horizontal(delta);
@@ -745,6 +771,9 @@ sarine.viewer.3dfullinspection - v0.20.0 -  Monday, April 6th, 2015, 6:49:24 PM
         if (!this.active) {
           return;
         }
+        if (typeof this.MGlass !== 'undefined' && this.MGlass.isActive) {
+          return;
+        }
         prev_flip = this.flip();
         this.direction = 'up';
         this.y = this.metadata.inc_y(this.y, -delta);
@@ -762,6 +791,9 @@ sarine.viewer.3dfullinspection - v0.20.0 -  Monday, April 6th, 2015, 6:49:24 PM
           delta = 1;
         }
         if (!this.active) {
+          return;
+        }
+        if (typeof this.MGlass !== 'undefined' && this.MGlass.isActive) {
           return;
         }
         prev_flip = this.flip();
@@ -1069,11 +1101,13 @@ sarine.viewer.3dfullinspection - v0.20.0 -  Monday, April 6th, 2015, 6:49:24 PM
         small_css_url = this.dest + ("/InspectionSprites/" + this.size + "_" + this.sprite_size + "_" + this.metadata.sprite_quality + "_sprite.css");
         this.reset();
         this.show(true);
-        return this.load_stylesheet(small_css_url, this.sprite_size, (function(_this) {
-          return function() {
-            return _this.widget.trigger('low_quality');
-          };
-        })(this));
+        if (!isLocal) {
+          return this.load_stylesheet(small_css_url, this.sprite_size, (function(_this) {
+            return function() {
+              return _this.widget.trigger('low_quality');
+            };
+          })(this));
+        }
       };
 
       return ViewerBI;
@@ -1191,28 +1225,56 @@ sarine.viewer.3dfullinspection - v0.20.0 -  Monday, April 6th, 2015, 6:49:24 PM
                 break;
               case 37:
                 _this.stop();
-                _this.viewer.left();
+                if (typeof _this.viewer.MGlass === 'undefined') {
+                  _this.viewer.left();
+                } else if (!_this.viewer.MGlass.isActive) {
+                  _this.viewer.left();
+                }
                 break;
               case 38:
                 _this.stop();
-                _this.viewer.up();
+                if (typeof _this.viewer.MGlass === 'undefined') {
+                  _this.viewer.up();
+                } else if (!_this.viewer.MGlass.isActive) {
+                  _this.viewer.up();
+                }
                 break;
               case 39:
                 _this.stop();
-                _this.viewer.right();
+                if (typeof _this.viewer.MGlass === 'undefined') {
+                  _this.viewer.right();
+                } else if (!_this.viewer.MGlass.isActive) {
+                  _this.viewer.right();
+                }
                 break;
               case 40:
                 _this.stop();
-                _this.viewer.down();
+                if (typeof _this.viewer.MGlass === 'undefined') {
+                  _this.viewer.down();
+                } else if (!_this.viewer.MGlass.isActive) {
+                  _this.viewer.down();
+                }
                 break;
               case 49:
-                _this.viewer.top_view();
+                if (typeof _this.viewer.MGlass === 'undefined') {
+                  _this.viewer.top_view();
+                } else if (!_this.viewer.MGlass.isActive) {
+                  _this.viewer.top_view();
+                }
                 break;
               case 50:
-                _this.viewer.middle_view();
+                if (typeof _this.viewer.MGlass === 'undefined') {
+                  _this.viewer.middle_view();
+                } else if (!_this.viewer.MGlass.isActive) {
+                  _this.viewer.middle_view();
+                }
                 break;
               case 51:
-                _this.viewer.bottom_view();
+                if (typeof _this.viewer.MGlass === 'undefined') {
+                  _this.viewer.bottom_view();
+                } else if (!_this.viewer.MGlass.isActive) {
+                  _this.viewer.bottom_view();
+                }
                 break;
               case 107:
                 if (!_this.viewer.active) {
@@ -1327,6 +1389,7 @@ sarine.viewer.3dfullinspection - v0.20.0 -  Monday, April 6th, 2015, 6:49:24 PM
           return function(e, data) {
             var overAllTime, percent, progress;
             $('.high_quality').html("" + data.loaded + " / " + data.total);
+            _this.viewer.active = true;
             percent = Math.round((data.loaded * 100.0) / data.total);
             progress = $('.progress');
             $(progress).find('.progress_bar').css('width', Math.min(percent, 98) + '%');
@@ -1458,7 +1521,8 @@ sarine.viewer.3dfullinspection - v0.20.0 -  Monday, April 6th, 2015, 6:49:24 PM
                   quality: 70
                 });
                 _this.viewer.MGlass = new MGlass('main-canvas', image_source, {
-                  background: _this.viewer.metadata.background
+                  background: _this.viewer.metadata.background,
+                  innerHTML: "<div class='mglass_inner_html'><div class='dummy'></div><div class='img-container'><img src='" + _this.viewer.resourcesPrefix + "move_cursor.png' alt='move'/></div></div>"
                 }, arguments.callee);
               }
               _this.inactivate_button($(".focus_out"));
@@ -1487,5 +1551,77 @@ sarine.viewer.3dfullinspection - v0.20.0 -  Monday, April 6th, 2015, 6:49:24 PM
   })(Viewer);
 
   this.FullInspection = FullInspection;
+
+
+  /* Query string hepler */
+
+  window.queryString = (function() {
+    function queryString(url) {
+      var __qsImpl;
+      __qsImpl = new queryStringImpl(url);
+      this.getValue = function(key) {
+        var result;
+        result = __qsImpl.params[key];
+        if (result == null) {
+          result = __qsImpl.canonicalParams[key.toLowerCase()];
+        }
+        return result;
+      };
+      this.count = function() {
+        return __qsImpl.count;
+      };
+      this.hasKey = function(key) {
+        return key in __qsImpl.params || key.toLowerCase() in __qsImpl.canonicalParams;
+      };
+    }
+
+    return queryString;
+
+  })();
+
+  queryStringImpl = (function() {
+    function queryStringImpl(url) {
+      var qsPart, _ref;
+      qsPart = queryStringImpl.getQueryStringPart(url);
+      _ref = queryStringImpl.initParams(qsPart), this.params = _ref[0], this.canonicalParams = _ref[1], this.count = _ref[2];
+    }
+
+    queryStringImpl.getQueryStringPart = function(url) {
+      var index;
+      if (url != null) {
+        index = url.indexOf('?');
+        if (index > 0) {
+          return url.substring(index);
+        } else {
+          return '';
+        }
+      }
+      return window.location.search;
+    };
+
+    queryStringImpl.initParams = function(qsPart) {
+      var a, canonicalParams, count, d, e, key, params, q, r, value;
+      params = {};
+      canonicalParams = {};
+      count = 0;
+      a = /\+/g;
+      r = /([^&=]+)=?([^&]*)/g;
+      d = function(s) {
+        return decodeURIComponent(s.replace(a, " "));
+      };
+      q = qsPart.substring(1);
+      while ((e = r.exec(q))) {
+        key = d(e[1]);
+        value = d(e[2]);
+        params[key] = value;
+        canonicalParams[key.toLowerCase()] = value;
+        count += 1;
+      }
+      return [params, canonicalParams, count];
+    };
+
+    return queryStringImpl;
+
+  })();
 
 }).call(this);

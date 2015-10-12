@@ -1,5 +1,5 @@
 ###!
-sarine.viewer.3dfullinspection - v0.20.0 -  Monday, April 6th, 2015, 6:49:24 PM 
+sarine.viewer.3dfullinspection - v0.29.0 -  Monday, September 7th, 2015, 11:45:29 AM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 
@@ -35,8 +35,14 @@ class Viewer
 @Viewer = Viewer 
 
 class FullInspection extends Viewer
+
+  isLocal = false
+  qs = undefined
+
   constructor: (options) -> 
-    @resourcesPrefix = stones[0].viewersBaseUrl + "atomic/v1/assets/"
+    qs = new queryString()
+    isLocal = qs.getValue("isLocal") == "true" 
+    @resourcesPrefix = options.baseUrl + "atomic/v1/assets/"
     @resources = [
       {element:'script',src:'jquery-ui.js'},
       {element:'script',src:'jquery.ui.ipad.altfix.js'},
@@ -45,13 +51,10 @@ class FullInspection extends Viewer
       {element:'link',src:'inspection.css'}
     ]
     super(options)
-    {@jsonsrc} = options
+    {@jsonsrc, @src} = options
+   
 
-
-
-
-
-  preloadAssets: (callback)=>
+  preloadAssets: (callback)=> 
 
     loaded = 0
     totalScripts = @resources.map (elm)-> elm.element =='script'
@@ -68,22 +71,22 @@ class FullInspection extends Viewer
       if(resource.element == 'script')
         $(document.body).append(element)
         element.onload = element.onreadystatechange = ()-> triggerCallback(callback)
-        element.src = @resourcesPrefix + resource.src
+        element.src = @resourcesPrefix + resource.src + cacheVersion
         element.type= "text/javascript"
 
       else
-        element.href = @resourcesPrefix + resource.src
+        element.href = @resourcesPrefix + resource.src + cacheVersion
         element.rel= "stylesheet"
         element.type= "text/css"
-        $(document.head).prepend(element)
+        $(document.head).prepend(element) 
 
 
 
 
   convertElement :() =>
-    url = @resourcesPrefix+"3dfullinspection.html"
+    url = @resourcesPrefix+"3dfullinspection.html" +  cacheVersion
 
-
+ 
     $.get url, (innerHtml) =>
       compiled = $(innerHtml)
       $(".buttons",compiled).remove() if(@element.attr("menu")=="false")
@@ -101,14 +104,22 @@ class FullInspection extends Viewer
     @full_init_defer = $.Deferred()
     stone = ""
     start = (metadata) =>
-      @viewerBI =  new ViewerBI(first_init: @first_init_defer, full_init:@full_init_defer, src:@src, x: 0, y: metadata.vertical_angles.indexOf(90), stone: stone, friendlyName: "temp", cdn_subdomain: false, metadata: metadata, debug: false)
+      @viewerBI =  new ViewerBI(first_init: @first_init_defer, full_init:@full_init_defer, src:@src, x: 0, y: metadata.vertical_angles.indexOf(90), stone: stone, friendlyName: "temp", cdn_subdomain: false, metadata: metadata, debug: false, resourcesPrefix : @resourcesPrefix)
       @UIlogic = new UI(@viewerBI, auto_play: true)
       @UIlogic.go()
 
-    descriptionPath = @src + @jsonsrc
+    ##TODO -new json end-point     
+    if !isLocal     
+      descriptionPath = @src + @jsonsrc 
+    else
+      localInspectionBaseUrl = @src.substr 0, @src.indexOf('ImageRepo') 
+      localStoneMeasureUrl = @src.slice @src.indexOf('ImageRepo/') + 10, @src.lastIndexOf('/')
+      localStoneMeasureUrlArr = localStoneMeasureUrl.split '/'
+      descriptionPath = localInspectionBaseUrl + 'GetLocalJson?stoneId=' + localStoneMeasureUrlArr[0] + "&measureId=" + localStoneMeasureUrlArr[1] + "&viewer=inspection"
 
-    $.getJSON descriptionPath, (result) =>
+    $.getJSON descriptionPath, (result) =>  
       stone = result.StoneId + "_" + result.MeasurementId
+      result = if isLocal then JSON.parse(result) else result
       metadata = new Metadata(
         size_x: result.number_of_x_images
         flip_from_y: result.number_of_y_images
@@ -127,7 +138,7 @@ class FullInspection extends Viewer
           $(".inspect-stone",@element).addClass("no_stone")
           $(".buttons",@element).remove()
           $(".stone_number",@element).remove()
-          $(".inspect-stone",@element).css("background", "url('"+@callbackPic+"') no-repeat center center rgb(123, 123, 123)")
+          $(".inspect-stone",@element).css("background", "url('"+@callbackPic+"') no-repeat center center")
           $(".inspect-stone",@element).css("width", "480px") # @TODO: Change to dynamic
           $(".inspect-stone",@element).css("height", "480px")
         else
@@ -396,7 +407,10 @@ class FullInspection extends Viewer
         quality: trans.quality ? config.image_quality,
         height:  trans.height ? config.image_size
 
-      @dest + "/" +  attrs.height + "_" + attrs.quality + "/img_" + @metadata.image_name(x, y, focus)+ ".jpg"
+      if !isLocal
+        @dest + "/" +  attrs.height + "_" + attrs.quality + "/img_" + @metadata.image_name(x, y, focus)+ ".jpg"
+      else
+        @dest + "/" +  "merge" + "/img_" + @metadata.image_name(x, y, focus)+ ".jpg"
 
     fetch: (x, y, focus = null) ->
       # Remember current position to prioritize preload better
@@ -442,6 +456,7 @@ class FullInspection extends Viewer
       @dest = options.src
       @first_init_defer = options.first_init
       @full_init_defer = options.full_init
+      @resourcesPrefix = options.resourcesPrefix     
       @reset()
       @context = $('#main-canvas')[0].getContext("2d")
 
@@ -470,8 +485,8 @@ class FullInspection extends Viewer
         className = @widget[0].className
         @widget.removeClass('sprite')
         imageChanged = ($('#main-image').attr('src') != src)
-        $('#main-image').attr(src: src);
         if imageChanged || className != @widget[0].className 
+          $('#main-image').attr(src: src)
           $('#main-image')[0].onload = (img)->
             $('#main-canvas')[0].getContext("2d").drawImage(img.target,0,0,480,480)
           $('#main-canvas')[0].getContext("2d").drawImage($('#main-image')[0],0,0,480,480)
@@ -481,10 +496,12 @@ class FullInspection extends Viewer
       @viewport
 
     left: (delta = 1) ->
+      return if typeof @.MGlass != 'undefined' && @.MGlass.isActive
       @direction = 'left'
       @move_horizontal(delta)
 
     right: (delta = 1) ->
+      return if typeof @.MGlass != 'undefined' && @.MGlass.isActive
       @direction = 'right'
       @move_horizontal(delta)
 
@@ -497,6 +514,7 @@ class FullInspection extends Viewer
 
     up: (delta = 1) ->
       return if !@active
+      return if typeof @.MGlass != 'undefined' && @.MGlass.isActive
       prev_flip = @flip()
       @direction = 'up'
       @y = @metadata.inc_y(@y, -delta)
@@ -507,6 +525,7 @@ class FullInspection extends Viewer
       @show()
     down: (delta = 1) ->
       return if !@active
+      return if typeof @.MGlass != 'undefined' && @.MGlass.isActive
       prev_flip = @flip()
       @direction = 'down'
       @y = @metadata.inc_y(@y, delta)
@@ -708,10 +727,11 @@ class FullInspection extends Viewer
 
       @reset()
       @show(true)
-      @load_stylesheet(small_css_url, @sprite_size, =>
-        @widget.trigger('low_quality')
-
-      )
+      # TODO ?? 
+      if !isLocal
+        @load_stylesheet(small_css_url, @sprite_size, =>
+          @widget.trigger('low_quality')
+        )
 
   class UI
     constructor: (@viewer, options) ->
@@ -787,19 +807,41 @@ class FullInspection extends Viewer
       @viewer.inited = true
       @update_focus_buttons()
       @mouse_x = null
-      @mouse_y = null
+      @mouse_y = null      
       
       $(window).keydown((e) =>
+        
         switch e.keyCode
           when 32
             if $('.player .pause').data('active') then @stop() else @play()
-          when 37 then @stop(); @viewer.left();
-          when 38 then @stop(); @viewer.up()
-          when 39 then @stop(); @viewer.right()
-          when 40 then @stop(); @viewer.down()
-          when 49 then @viewer.top_view()
-          when 50 then @viewer.middle_view()
-          when 51 then @viewer.bottom_view()
+
+          # arrows  
+          when 37 
+            @stop()
+            if typeof @viewer.MGlass == 'undefined' then @viewer.left()  
+            else if !@viewer.MGlass.isActive then @viewer.left() 
+          when 38
+            @stop()
+            if typeof @viewer.MGlass == 'undefined' then @viewer.up()
+            else if !@viewer.MGlass.isActive then @viewer.up()
+          when 39
+            @stop()
+            if typeof @viewer.MGlass == 'undefined' then @viewer.right()
+            else if !@viewer.MGlass.isActive then @viewer.right()
+          when 40 
+            @stop()
+            if typeof @viewer.MGlass == 'undefined' then @viewer.down()
+            else if !@viewer.MGlass.isActive then @viewer.down() 
+ 
+          when 49 
+            if typeof @viewer.MGlass == 'undefined' then @viewer.top_view()
+            else if !@viewer.MGlass.isActive then @viewer.top_view()
+          when 50
+            if typeof @viewer.MGlass == 'undefined' then @viewer.middle_view()
+            else if !@viewer.MGlass.isActive then @viewer.middle_view()
+          when 51
+            if typeof @viewer.MGlass == 'undefined' then @viewer.bottom_view()
+            else if !@viewer.MGlass.isActive then @viewer.bottom_view()
           when 107
             return false if !@viewer.active
             return false if !@viewer.next_focus()?
@@ -840,7 +882,7 @@ class FullInspection extends Viewer
             @viewer.down(delta_y)
           else
             @viewer.up(delta_y)
-          @mouse_y = e.clientY
+          @mouse_y = e.clientY      
       ).click(->
         this.focus()
       ).bind('reset',=>
@@ -884,7 +926,7 @@ class FullInspection extends Viewer
 
       ).bind('high_quality',(e, data) =>
         $('.high_quality').html("#{data.loaded} / #{data.total}")
-
+        @viewer.active = true
         percent = Math.round(((data.loaded * 100.0) / data.total))
         progress = $('.progress')
         $(progress).find('.progress_bar').css('width', Math.min(percent, 98) + '%')
@@ -999,14 +1041,15 @@ class FullInspection extends Viewer
               height: 0,
               width: 0,
               quality: 70
-            )
-            #image_source = @viewer.preloader.src @viewer.x, @viewer.y, @viewer.focus
-            @viewer.MGlass = new MGlass 'main-canvas', image_source, {background: @viewer.metadata.background}, arguments.callee
+            ) 
+            #image_source = @viewer.preloader.src @viewer.x, @viewer.y, @viewer.focus     
+            @viewer.MGlass = new MGlass 'main-canvas', image_source, {
+              background: @viewer.metadata.background,innerHTML : "<div class='mglass_inner_html'><div class='dummy'></div><div class='img-container'><img src='#{@viewer.resourcesPrefix}move_cursor.png' alt='move'/></div></div>"}, arguments.callee
 
-          @inactivate_button $(".focus_out")
+          @inactivate_button $(".focus_out") 
           @inactivate_button $(".focus_in")
           @disable_button ".focus_out"
-          @disable_button ".focus_in"
+          @disable_button ".focus_in" 
 
           @activate_button $(".magnify")
 
@@ -1025,6 +1068,53 @@ class FullInspection extends Viewer
     
 
 @FullInspection = FullInspection
+
+### Query string hepler ###
+class window.queryString
+  constructor: (url) ->
+    __qsImpl = new queryStringImpl(url)
+
+    @getValue = (key) ->
+      result = __qsImpl.params[key]
+      if not result?
+        result = __qsImpl.canonicalParams[key.toLowerCase()]
+      return result
+  
+    @count = () ->
+      __qsImpl.count
+
+    @hasKey = (key) ->
+      return key of __qsImpl.params || key.toLowerCase() of __qsImpl.canonicalParams
+
+
+class queryStringImpl
+  constructor: (url)->
+    qsPart = queryStringImpl.getQueryStringPart(url)
+    [@params, @canonicalParams, @count] = queryStringImpl.initParams qsPart
+
+  @getQueryStringPart: (url) ->
+    if url?
+      index = url.indexOf '?'
+      return if index > 0 then url.substring index else ''
+    return window.location.search
+
+  @initParams: (qsPart) ->
+    params = {}
+    canonicalParams = {}
+    count = 0
+    a = /\+/g  #// Regex for replacing addition symbol with a space
+    r = /([^&=]+)=?([^&]*)/g
+    d = (s) -> 
+      decodeURIComponent(s.replace(a, " "))
+    q = qsPart.substring(1)
+
+    while (e = r.exec(q))
+      key = d(e[1])
+      value = d(e[2])
+      params[key] = value
+      canonicalParams[key.toLowerCase()] = value
+      count += 1
+    return [params, canonicalParams, count]
 
 
 
