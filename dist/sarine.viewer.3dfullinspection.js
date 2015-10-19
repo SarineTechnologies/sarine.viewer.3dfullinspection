@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.30.0 -  Tuesday, October 13th, 2015, 5:45:00 PM 
+sarine.viewer.3dfullinspection - v0.30.0 -  Monday, October 19th, 2015, 8:41:28 AM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -1117,6 +1117,7 @@ sarine.viewer.3dfullinspection - v0.30.0 -  Tuesday, October 13th, 2015, 5:45:00
     UI = (function() {
       function UI(viewer, options) {
         this.viewer = viewer;
+        this.keyDownFunc = __bind(this.keyDownFunc, this);
         this.auto_play = options.auto_play;
       }
 
@@ -1208,98 +1209,107 @@ sarine.viewer.3dfullinspection - v0.30.0 -  Tuesday, October 13th, 2015, 5:45:00
         return false;
       };
 
+      UI.prototype.keyDownFunc = function(e) {
+        switch (e.keyCode) {
+          case 32:
+            if ($('.player .pause').data('active')) {
+              this.stop();
+            } else {
+              this.play();
+            }
+            break;
+          case 37:
+            this.stop();
+            if (typeof this.viewer.MGlass === 'undefined') {
+              this.viewer.left();
+            } else if (!this.viewer.MGlass.isActive) {
+              this.viewer.left();
+            }
+            break;
+          case 38:
+            this.stop();
+            if (typeof this.viewer.MGlass === 'undefined') {
+              this.viewer.up();
+            } else if (!this.viewer.MGlass.isActive) {
+              this.viewer.up();
+            }
+            break;
+          case 39:
+            this.stop();
+            if (typeof this.viewer.MGlass === 'undefined') {
+              this.viewer.right();
+            } else if (!this.viewer.MGlass.isActive) {
+              this.viewer.right();
+            }
+            break;
+          case 40:
+            this.stop();
+            if (typeof this.viewer.MGlass === 'undefined') {
+              this.viewer.down();
+            } else if (!this.viewer.MGlass.isActive) {
+              this.viewer.down();
+            }
+            break;
+          case 49:
+            if (typeof this.viewer.MGlass === 'undefined') {
+              this.viewer.top_view();
+            } else if (!this.viewer.MGlass.isActive) {
+              this.viewer.top_view();
+            }
+            break;
+          case 50:
+            if (typeof this.viewer.MGlass === 'undefined') {
+              this.viewer.middle_view();
+            } else if (!this.viewer.MGlass.isActive) {
+              this.viewer.middle_view();
+            }
+            break;
+          case 51:
+            if (typeof this.viewer.MGlass === 'undefined') {
+              this.viewer.bottom_view();
+            } else if (!this.viewer.MGlass.isActive) {
+              this.viewer.bottom_view();
+            }
+            break;
+          case 107:
+            if (!this.viewer.active) {
+              return false;
+            }
+            if (this.viewer.next_focus() == null) {
+              return false;
+            }
+            this.viewer.change_focus(this.viewer.next_focus());
+            this.update_focus_buttons();
+            break;
+          case 109:
+            if (!this.viewer.active) {
+              return false;
+            }
+            if (this.viewer.prev_focus() == null) {
+              return false;
+            }
+            this.viewer.change_focus(this.viewer.prev_focus());
+            this.update_focus_buttons();
+            break;
+          default:
+            return true;
+        }
+        return false;
+      };
+
       UI.prototype.go = function() {
         this.viewer.inited = true;
         this.update_focus_buttons();
         this.mouse_x = null;
         this.mouse_y = null;
-        $(window, top.document).keydown((function(_this) {
+        $(window).keydown((function(_this) {
           return function(e) {
-            switch (e.keyCode) {
-              case 32:
-                if ($('.player .pause').data('active')) {
-                  _this.stop();
-                } else {
-                  _this.play();
-                }
-                break;
-              case 37:
-                _this.stop();
-                if (typeof _this.viewer.MGlass === 'undefined') {
-                  _this.viewer.left();
-                } else if (!_this.viewer.MGlass.isActive) {
-                  _this.viewer.left();
-                }
-                break;
-              case 38:
-                _this.stop();
-                if (typeof _this.viewer.MGlass === 'undefined') {
-                  _this.viewer.up();
-                } else if (!_this.viewer.MGlass.isActive) {
-                  _this.viewer.up();
-                }
-                break;
-              case 39:
-                _this.stop();
-                if (typeof _this.viewer.MGlass === 'undefined') {
-                  _this.viewer.right();
-                } else if (!_this.viewer.MGlass.isActive) {
-                  _this.viewer.right();
-                }
-                break;
-              case 40:
-                _this.stop();
-                if (typeof _this.viewer.MGlass === 'undefined') {
-                  _this.viewer.down();
-                } else if (!_this.viewer.MGlass.isActive) {
-                  _this.viewer.down();
-                }
-                break;
-              case 49:
-                if (typeof _this.viewer.MGlass === 'undefined') {
-                  _this.viewer.top_view();
-                } else if (!_this.viewer.MGlass.isActive) {
-                  _this.viewer.top_view();
-                }
-                break;
-              case 50:
-                if (typeof _this.viewer.MGlass === 'undefined') {
-                  _this.viewer.middle_view();
-                } else if (!_this.viewer.MGlass.isActive) {
-                  _this.viewer.middle_view();
-                }
-                break;
-              case 51:
-                if (typeof _this.viewer.MGlass === 'undefined') {
-                  _this.viewer.bottom_view();
-                } else if (!_this.viewer.MGlass.isActive) {
-                  _this.viewer.bottom_view();
-                }
-                break;
-              case 107:
-                if (!_this.viewer.active) {
-                  return false;
-                }
-                if (_this.viewer.next_focus() == null) {
-                  return false;
-                }
-                _this.viewer.change_focus(_this.viewer.next_focus());
-                _this.update_focus_buttons();
-                break;
-              case 109:
-                if (!_this.viewer.active) {
-                  return false;
-                }
-                if (_this.viewer.prev_focus() == null) {
-                  return false;
-                }
-                _this.viewer.change_focus(_this.viewer.prev_focus());
-                _this.update_focus_buttons();
-                break;
-              default:
-                return true;
-            }
-            return false;
+            return _this.keyDownFunc(e);
+          };
+        })(this));
+        $(top).keydown((function(_this) {
+          return function(e) {
+            return _this.keyDownFunc(e);
           };
         })(this));
         this.viewer.widget.focus().addTouch().mousedown((function(_this) {

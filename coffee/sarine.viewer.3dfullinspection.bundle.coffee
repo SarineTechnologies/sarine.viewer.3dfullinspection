@@ -1,5 +1,5 @@
 ###!
-sarine.viewer.3dfullinspection - v0.30.0 -  Tuesday, October 13th, 2015, 5:45:00 PM 
+sarine.viewer.3dfullinspection - v0.30.0 -  Monday, October 19th, 2015, 8:41:27 AM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 
@@ -802,16 +802,9 @@ class FullInspection extends Viewer
       @viewer.play()
       return false
 
-    go: ->
+    keyDownFunc : (e)=>  
 
-      @viewer.inited = true
-      @update_focus_buttons()
-      @mouse_x = null
-      @mouse_y = null      
-      
-      $(window, top.document).keydown((e) =>
-        
-        switch e.keyCode
+        switch e.keyCode  
           when 32
             if $('.player .pause').data('active') then @stop() else @play()
 
@@ -856,6 +849,21 @@ class FullInspection extends Viewer
             @update_focus_buttons()
           else return true
         return false
+  
+    
+    go: ->
+
+      @viewer.inited = true
+      @update_focus_buttons()
+      @mouse_x = null
+      @mouse_y = null      
+      
+      $(window).keydown((e) =>        
+        @keyDownFunc(e)
+      )
+      
+      $(top).keydown((e) =>        
+        @keyDownFunc(e)
       )
 
       @viewer.widget.focus().addTouch().mousedown((e) =>
