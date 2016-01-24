@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.33.0 -  Tuesday, October 20th, 2015, 4:36:35 PM 
+sarine.viewer.3dfullinspection - v0.33.0 -  Sunday, January 24th, 2016, 8:23:14 AM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -334,7 +334,7 @@ sarine.viewer.3dfullinspection - v0.33.0 -  Tuesday, October 20th, 2015, 4:36:35
           return _results;
         }).call(this);
         this.sprite_factors.sort();
-        this.size_y = (this.flip_from_y - 1) * 2 - 1;
+        this.size_y = (this.flip_from_y - 1) * 2;
         this.num_images = this.size_x * this.flip_from_y;
         this.num_sprite_images = this.num_images / STRIDE_X;
         this.sprite_num_y = Math.floor(Math.sqrt(this.num_sprite_images));
@@ -400,8 +400,8 @@ sarine.viewer.3dfullinspection - v0.33.0 -  Tuesday, October 20th, 2015, 4:36:35
       Metadata.prototype.normal_y = function(y) {
         var normal_y;
         normal_y = y;
-        if (y > Math.floor(this.size_y / 2 + 1)) {
-          normal_y = this.size_y - y + 1;
+        if (y > Math.floor(this.size_y / 2)) {
+          normal_y = this.size_y - y;
         }
         return normal_y;
       };
