@@ -1,5 +1,5 @@
 ###!
-sarine.viewer.3dfullinspection - v0.33.0 -  Tuesday, October 20th, 2015, 4:36:36 PM 
+sarine.viewer.3dfullinspection - v0.33.0 -  Sunday, January 24th, 2016, 8:23:14 AM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 class FullInspection extends Viewer
@@ -177,7 +177,7 @@ class FullInspection extends Viewer
         parseInt(factor)
       @sprite_factors.sort()
       # computed
-      @size_y = (@flip_from_y - 1) * 2 - 1
+      @size_y = (@flip_from_y - 1) * 2
       @num_images = @size_x * @flip_from_y
       @num_sprite_images = @num_images / STRIDE_X
       @sprite_num_y = Math.floor(Math.sqrt(@num_sprite_images))
@@ -212,8 +212,8 @@ class FullInspection extends Viewer
     normal_y: (y) ->
       #normalize y index
       normal_y = y
-      if y > Math.floor @size_y / 2 + 1
-        normal_y = (@size_y - y + 1)
+      if y > Math.floor @size_y / 2
+        normal_y = (@size_y - y)
       return normal_y
 
 
