@@ -1,5 +1,5 @@
 ###!
-sarine.viewer.3dfullinspection - v0.34.0 -  Sunday, January 24th, 2016, 8:40:28 AM 
+sarine.viewer.3dfullinspection - v0.34.0 -  Tuesday, March 29th, 2016, 11:11:39 AM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 
@@ -126,7 +126,8 @@ class FullInspection extends Viewer
         background: result.background
         vertical_angles: result.vertical_angles
         num_focus_points: result.num_focus_points
-        shooting_parameters: result.shooting_parameters
+        shooting_parameters: result.shooting_parameters,
+        rawdata_size : result.rawdata_size || 480
       )
       @preloadAssets ()-> start metadata
 
@@ -191,7 +192,7 @@ class FullInspection extends Viewer
         this[option] = options[option] || config[option]
       # integer options, overrideable in url
       for option in ["size_x", "flip_from_y", "num_focus_points", "image_quality", "sprite_quality", "speed",
-                     "initial_focus", "speed"]
+                     "initial_focus", "speed","rawdata_size"]
         this[option] =options[option] || config[option]
       # defaults
       unless options["vertical_angles"]
@@ -638,9 +639,14 @@ class FullInspection extends Viewer
       src = @get_sprite_image(info)
       if src
         @widget.addClass('sprite')
-        $('#sprite-image').attr(src: src).css(top: top, left: left)[0].onload = ()-> 
-          $('#main-canvas')[0].getContext("2d").drawImage(this,0,0,480,480,parseInt($(this).css("left").match(/\d+/g)[0])*-1,parseInt($(this).css("top").match(/\d+/g)[0])*-1,480*4,480*4)
-        $('#main-canvas')[0].getContext("2d").drawImage($('#sprite-image')[0],sprite_left*-1,sprite_top*-1,120,120,0,0,480,480)
+        viewSize = Math.floor(@size / @metadata.sprite_factors[1])
+        $('#sprite-image').attr(src: src,rawdata_size : @metadata.rawdata_size).css(top: top, left: left)[0].onload = ()-> 
+          rawdata_size = parseInt($(this).attr('rawdata_size'))
+          sx = parseInt($(this).css("left").match(/\d+/g)[0])*-1
+          sy = parseInt($(this).css("top").match(/\d+/g)[0])*-1
+          $('#main-canvas')[0].getContext("2d").drawImage(this,sx,sy,viewSize,viewSize,0,0,480,480)
+        
+        $('#main-canvas')[0].getContext("2d").drawImage($('#sprite-image')[0],sprite_left*-1,sprite_top*-1,viewSize,viewSize,0,0,480,480)
         @viewport.attr(class: @flip_class())
 
     get_sprite_image: (info) ->
@@ -686,7 +692,7 @@ class FullInspection extends Viewer
     zoom_large: ->
       @widget.removeClass('small').addClass('large')
       @mode = 'large'
-      @zoom(480, @metadata.hq_trans(), 0)
+      @zoom(@metadata.rawdata_size , @metadata.hq_trans(), 0)
 
     zoom_small: ->
       @widget.removeClass('large').addClass('small')
