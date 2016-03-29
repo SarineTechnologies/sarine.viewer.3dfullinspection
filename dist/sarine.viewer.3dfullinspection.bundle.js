@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.34.0 -  Sunday, January 24th, 2016, 8:40:28 AM 
+sarine.viewer.3dfullinspection - v0.34.0 -  Tuesday, March 29th, 2016, 11:11:39 AM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -218,7 +218,8 @@ sarine.viewer.3dfullinspection - v0.34.0 -  Sunday, January 24th, 2016, 8:40:28 
             background: result.background,
             vertical_angles: result.vertical_angles,
             num_focus_points: result.num_focus_points,
-            shooting_parameters: result.shooting_parameters
+            shooting_parameters: result.shooting_parameters,
+            rawdata_size: result.rawdata_size || 480
           });
           return _this.preloadAssets(function() {
             return start(metadata);
@@ -306,7 +307,7 @@ sarine.viewer.3dfullinspection - v0.34.0 -  Sunday, January 24th, 2016, 8:40:28 
           option = _ref[_i];
           this[option] = options[option] || config[option];
         }
-        _ref1 = ["size_x", "flip_from_y", "num_focus_points", "image_quality", "sprite_quality", "speed", "initial_focus", "speed"];
+        _ref1 = ["size_x", "flip_from_y", "num_focus_points", "image_quality", "sprite_quality", "speed", "initial_focus", "speed", "rawdata_size"];
         for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
           option = _ref1[_j];
           this[option] = options[option] || config[option];
@@ -1024,7 +1025,7 @@ sarine.viewer.3dfullinspection - v0.34.0 -  Sunday, January 24th, 2016, 8:40:28 
       };
 
       ViewerBI.prototype.load_from_sprite = function() {
-        var bpx, bpy, info, left, sprite_left, sprite_top, src, top, top_i, _ref;
+        var bpx, bpy, info, left, sprite_left, sprite_top, src, top, top_i, viewSize, _ref;
         info = this.sprite_info();
         bpy = info.css("background-position-y");
         bpx = info.css("background-position-x");
@@ -1037,15 +1038,21 @@ sarine.viewer.3dfullinspection - v0.34.0 -  Sunday, January 24th, 2016, 8:40:28 
         src = this.get_sprite_image(info);
         if (src) {
           this.widget.addClass('sprite');
+          viewSize = Math.floor(this.size / this.metadata.sprite_factors[1]);
           $('#sprite-image').attr({
-            src: src
+            src: src,
+            rawdata_size: this.metadata.rawdata_size
           }).css({
             top: top,
             left: left
           })[0].onload = function() {
-            return $('#main-canvas')[0].getContext("2d").drawImage(this, 0, 0, 480, 480, parseInt($(this).css("left").match(/\d+/g)[0]) * -1, parseInt($(this).css("top").match(/\d+/g)[0]) * -1, 480 * 4, 480 * 4);
+            var rawdata_size, sx, sy;
+            rawdata_size = parseInt($(this).attr('rawdata_size'));
+            sx = parseInt($(this).css("left").match(/\d+/g)[0]) * -1;
+            sy = parseInt($(this).css("top").match(/\d+/g)[0]) * -1;
+            return $('#main-canvas')[0].getContext("2d").drawImage(this, sx, sy, viewSize, viewSize, 0, 0, 480, 480);
           };
-          $('#main-canvas')[0].getContext("2d").drawImage($('#sprite-image')[0], sprite_left * -1, sprite_top * -1, 120, 120, 0, 0, 480, 480);
+          $('#main-canvas')[0].getContext("2d").drawImage($('#sprite-image')[0], sprite_left * -1, sprite_top * -1, viewSize, viewSize, 0, 0, 480, 480);
           return this.viewport.attr({
             "class": this.flip_class()
           });
@@ -1114,7 +1121,7 @@ sarine.viewer.3dfullinspection - v0.34.0 -  Sunday, January 24th, 2016, 8:40:28 
       ViewerBI.prototype.zoom_large = function() {
         this.widget.removeClass('small').addClass('large');
         this.mode = 'large';
-        return this.zoom(480, this.metadata.hq_trans(), 0);
+        return this.zoom(this.metadata.rawdata_size, this.metadata.hq_trans(), 0);
       };
 
       ViewerBI.prototype.zoom_small = function() {
