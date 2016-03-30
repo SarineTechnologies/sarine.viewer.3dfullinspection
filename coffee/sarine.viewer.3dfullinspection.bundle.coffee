@@ -1,5 +1,5 @@
 ###!
-sarine.viewer.3dfullinspection - v0.35.0 -  Tuesday, March 29th, 2016, 1:07:35 PM 
+sarine.viewer.3dfullinspection - v0.35.0 -  Wednesday, March 30th, 2016, 2:24:32 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 
@@ -127,7 +127,7 @@ class FullInspection extends Viewer
         vertical_angles: result.vertical_angles
         num_focus_points: result.num_focus_points
         shooting_parameters: result.shooting_parameters,
-        rawdata_size : result.rawdata_size || 480
+        image_size : result.ImageSize || 480
       )
       @preloadAssets ()-> start metadata
 
@@ -192,7 +192,7 @@ class FullInspection extends Viewer
         this[option] = options[option] || config[option]
       # integer options, overrideable in url
       for option in ["size_x", "flip_from_y", "num_focus_points", "image_quality", "sprite_quality", "speed",
-                     "initial_focus", "speed","rawdata_size"]
+                     "initial_focus", "speed","image_size"]
         this[option] =options[option] || config[option]
       # defaults
       unless options["vertical_angles"]
@@ -640,7 +640,7 @@ class FullInspection extends Viewer
       if src
         @widget.addClass('sprite')
         viewSize = Math.floor(@size / @metadata.sprite_factors[1])
-        $('#sprite-image').attr(src: src,rawdata_size : @metadata.rawdata_size).css(top: top, left: left)[0].onload = ()-> 
+        $('#sprite-image').attr(src: src,rawdata_size : @metadata.image_size).css(top: top, left: left)[0].onload = ()-> 
           rawdata_size = parseInt($(this).attr('rawdata_size'))
           sx = parseInt($(this).css("left").match(/\d+/g)[0])*-1
           sy = parseInt($(this).css("top").match(/\d+/g)[0])*-1
@@ -692,7 +692,7 @@ class FullInspection extends Viewer
     zoom_large: ->
       @widget.removeClass('small').addClass('large')
       @mode = 'large'
-      @zoom(@metadata.rawdata_size , @metadata.hq_trans(), 0)
+      @zoom(@metadata.image_size , @metadata.hq_trans(), 0)
 
     zoom_small: ->
       @widget.removeClass('large').addClass('small')

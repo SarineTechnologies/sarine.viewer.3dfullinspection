@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.35.0 -  Tuesday, March 29th, 2016, 1:07:35 PM 
+sarine.viewer.3dfullinspection - v0.35.0 -  Wednesday, March 30th, 2016, 2:24:32 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -219,7 +219,7 @@ sarine.viewer.3dfullinspection - v0.35.0 -  Tuesday, March 29th, 2016, 1:07:35 P
             vertical_angles: result.vertical_angles,
             num_focus_points: result.num_focus_points,
             shooting_parameters: result.shooting_parameters,
-            rawdata_size: result.rawdata_size || 480
+            image_size: result.ImageSize || 480
           });
           return _this.preloadAssets(function() {
             return start(metadata);
@@ -307,7 +307,7 @@ sarine.viewer.3dfullinspection - v0.35.0 -  Tuesday, March 29th, 2016, 1:07:35 P
           option = _ref[_i];
           this[option] = options[option] || config[option];
         }
-        _ref1 = ["size_x", "flip_from_y", "num_focus_points", "image_quality", "sprite_quality", "speed", "initial_focus", "speed", "rawdata_size"];
+        _ref1 = ["size_x", "flip_from_y", "num_focus_points", "image_quality", "sprite_quality", "speed", "initial_focus", "speed", "image_size"];
         for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
           option = _ref1[_j];
           this[option] = options[option] || config[option];
@@ -1041,7 +1041,7 @@ sarine.viewer.3dfullinspection - v0.35.0 -  Tuesday, March 29th, 2016, 1:07:35 P
           viewSize = Math.floor(this.size / this.metadata.sprite_factors[1]);
           $('#sprite-image').attr({
             src: src,
-            rawdata_size: this.metadata.rawdata_size
+            rawdata_size: this.metadata.image_size
           }).css({
             top: top,
             left: left
@@ -1121,7 +1121,7 @@ sarine.viewer.3dfullinspection - v0.35.0 -  Tuesday, March 29th, 2016, 1:07:35 P
       ViewerBI.prototype.zoom_large = function() {
         this.widget.removeClass('small').addClass('large');
         this.mode = 'large';
-        return this.zoom(this.metadata.rawdata_size, this.metadata.hq_trans(), 0);
+        return this.zoom(this.metadata.image_size, this.metadata.hq_trans(), 0);
       };
 
       ViewerBI.prototype.zoom_small = function() {
