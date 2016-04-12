@@ -1,5 +1,5 @@
 ###!
-sarine.viewer.3dfullinspection - v0.37.0 -  Thursday, March 31st, 2016, 10:27:51 AM 
+sarine.viewer.3dfullinspection - v0.37.0 -  Tuesday, April 12th, 2016, 10:53:01 AM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 
@@ -128,6 +128,7 @@ class FullInspection extends Viewer
         num_focus_points: result.num_focus_points
         shooting_parameters: result.shooting_parameters,
         image_size : result.ImageSize || 480
+        sprite_factor : result.SpriteFactor || 4
       )
       @preloadAssets ()-> start metadata
 
@@ -174,7 +175,7 @@ class FullInspection extends Viewer
 
   STRIDE_X = 4
   config =
-    sprite_factors: "2,4"
+    sprite_factors: "2,4" 
     image_quality: 70
     sprite_quality: 30
     image_size: 480
@@ -192,7 +193,7 @@ class FullInspection extends Viewer
         this[option] = options[option] || config[option]
       # integer options, overrideable in url
       for option in ["size_x", "flip_from_y", "num_focus_points", "image_quality", "sprite_quality", "speed",
-                     "initial_focus", "speed","image_size"]
+                     "initial_focus", "speed","image_size", "sprite_factor"]
         this[option] =options[option] || config[option]
       # defaults
       unless options["vertical_angles"]
@@ -639,7 +640,8 @@ class FullInspection extends Viewer
       src = @get_sprite_image(info)
       if src
         @widget.addClass('sprite')
-        viewSize = Math.floor(@size / @metadata.sprite_factors[1])
+        #viewSize = Math.floor(@size / @metadata.sprite_factors[1])
+        viewSize = Math.floor(@size / @metadata.sprite_factor)
         $('#sprite-image').attr(src: src,rawdata_size : @metadata.image_size).css(top: top, left: left)[0].onload = ()-> 
           rawdata_size = parseInt($(this).attr('rawdata_size'))
           sx = parseInt($(this).css("left").match(/\d+/g)[0])*-1
@@ -717,7 +719,8 @@ class FullInspection extends Viewer
       @currentDownloadImagesTimeStart = new Date()
       @size = size
       [large_sprite_factor, sprite_factor] = @metadata.sprite_factors
-      @sprite_size = Math.floor(@size / sprite_factor)
+      #@sprite_size = Math.floor(@size / sprite_factor)
+      @sprite_size = Math.floor(@size / @metadata.sprite_factor) 
       @configure trans
       attrs =
         crop: "scale"
