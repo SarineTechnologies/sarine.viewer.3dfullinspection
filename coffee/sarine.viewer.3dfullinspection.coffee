@@ -1,5 +1,5 @@
 ###!
-sarine.viewer.3dfullinspection - v0.29.0 -  Monday, September 7th, 2015, 11:45:29 AM 
+sarine.viewer.3dfullinspection - v0.38.0 -  Tuesday, April 12th, 2016, 1:42:54 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 class FullInspection extends Viewer
@@ -94,7 +94,9 @@ class FullInspection extends Viewer
         background: result.background
         vertical_angles: result.vertical_angles
         num_focus_points: result.num_focus_points
-        shooting_parameters: result.shooting_parameters
+        shooting_parameters: result.shooting_parameters,
+        image_size : result.ImageSize || 480
+        sprite_factor : result.SpriteFactor || 4
       )
       @preloadAssets ()-> start metadata
 
@@ -141,7 +143,7 @@ class FullInspection extends Viewer
 
   STRIDE_X = 4
   config =
-    sprite_factors: "2,4"
+    sprite_factors: "2,4" 
     image_quality: 70
     sprite_quality: 30
     image_size: 480
@@ -159,7 +161,7 @@ class FullInspection extends Viewer
         this[option] = options[option] || config[option]
       # integer options, overrideable in url
       for option in ["size_x", "flip_from_y", "num_focus_points", "image_quality", "sprite_quality", "speed",
-                     "initial_focus", "speed"]
+                     "initial_focus", "speed","image_size", "sprite_factor"]
         this[option] =options[option] || config[option]
       # defaults
       unless options["vertical_angles"]
@@ -177,7 +179,7 @@ class FullInspection extends Viewer
         parseInt(factor)
       @sprite_factors.sort()
       # computed
-      @size_y = (@flip_from_y - 1) * 2 - 1
+      @size_y = (@flip_from_y - 1) * 2
       @num_images = @size_x * @flip_from_y
       @num_sprite_images = @num_images / STRIDE_X
       @sprite_num_y = Math.floor(Math.sqrt(@num_sprite_images))
@@ -212,8 +214,8 @@ class FullInspection extends Viewer
     normal_y: (y) ->
       #normalize y index
       normal_y = y
-      if y > Math.floor @size_y / 2 + 1
-        normal_y = (@size_y - y + 1)
+      if y > Math.floor @size_y / 2
+        normal_y = (@size_y - y)
       return normal_y
 
 
@@ -606,9 +608,15 @@ class FullInspection extends Viewer
       src = @get_sprite_image(info)
       if src
         @widget.addClass('sprite')
-        $('#sprite-image').attr(src: src).css(top: top, left: left)[0].onload = ()-> 
-          $('#main-canvas')[0].getContext("2d").drawImage(this,0,0,480,480,parseInt($(this).css("left").match(/\d+/g)[0])*-1,parseInt($(this).css("top").match(/\d+/g)[0])*-1,480*4,480*4)
-        $('#main-canvas')[0].getContext("2d").drawImage($('#sprite-image')[0],sprite_left*-1,sprite_top*-1,120,120,0,0,480,480)
+        #viewSize = Math.floor(@size / @metadata.sprite_factors[1])
+        viewSize = Math.floor(@size / @metadata.sprite_factor)
+        $('#sprite-image').attr(src: src,rawdata_size : @metadata.image_size).css(top: top, left: left)[0].onload = ()-> 
+          rawdata_size = parseInt($(this).attr('rawdata_size'))
+          sx = parseInt($(this).css("left").match(/\d+/g)[0])*-1
+          sy = parseInt($(this).css("top").match(/\d+/g)[0])*-1
+          $('#main-canvas')[0].getContext("2d").drawImage(this,sx,sy,viewSize,viewSize,0,0,480,480)
+        
+        $('#main-canvas')[0].getContext("2d").drawImage($('#sprite-image')[0],sprite_left*-1,sprite_top*-1,viewSize,viewSize,0,0,480,480)
         @viewport.attr(class: @flip_class())
 
     get_sprite_image: (info) ->
@@ -654,7 +662,7 @@ class FullInspection extends Viewer
     zoom_large: ->
       @widget.removeClass('small').addClass('large')
       @mode = 'large'
-      @zoom(480, @metadata.hq_trans(), 0)
+      @zoom(@metadata.image_size , @metadata.hq_trans(), 0)
 
     zoom_small: ->
       @widget.removeClass('large').addClass('small')
@@ -679,7 +687,8 @@ class FullInspection extends Viewer
       @currentDownloadImagesTimeStart = new Date()
       @size = size
       [large_sprite_factor, sprite_factor] = @metadata.sprite_factors
-      @sprite_size = Math.floor(@size / sprite_factor)
+      #@sprite_size = Math.floor(@size / sprite_factor)
+      @sprite_size = Math.floor(@size / @metadata.sprite_factor) 
       @configure trans
       attrs =
         crop: "scale"
@@ -770,16 +779,9 @@ class FullInspection extends Viewer
       @viewer.play()
       return false
 
-    go: ->
+    keyDownFunc : (e)=>  
 
-      @viewer.inited = true
-      @update_focus_buttons()
-      @mouse_x = null
-      @mouse_y = null      
-      
-      $(window).keydown((e) =>
-        
-        switch e.keyCode
+        switch e.keyCode  
           when 32
             if $('.player .pause').data('active') then @stop() else @play()
 
@@ -824,6 +826,17 @@ class FullInspection extends Viewer
             @update_focus_buttons()
           else return true
         return false
+  
+    
+    go: ->
+
+      @viewer.inited = true
+      @update_focus_buttons()
+      @mouse_x = null
+      @mouse_y = null      
+      
+      $(window).keydown((e) =>        
+        @keyDownFunc(e)
       )
 
       @viewer.widget.focus().addTouch().mousedown((e) =>

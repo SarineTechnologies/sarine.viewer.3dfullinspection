@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.29.0 -  Monday, September 7th, 2015, 11:45:29 AM 
+sarine.viewer.3dfullinspection - v0.38.0 -  Tuesday, April 12th, 2016, 1:42:54 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -218,7 +218,9 @@ sarine.viewer.3dfullinspection - v0.29.0 -  Monday, September 7th, 2015, 11:45:2
             background: result.background,
             vertical_angles: result.vertical_angles,
             num_focus_points: result.num_focus_points,
-            shooting_parameters: result.shooting_parameters
+            shooting_parameters: result.shooting_parameters,
+            image_size: result.ImageSize || 480,
+            sprite_factor: result.SpriteFactor || 4
           });
           return _this.preloadAssets(function() {
             return start(metadata);
@@ -306,7 +308,7 @@ sarine.viewer.3dfullinspection - v0.29.0 -  Monday, September 7th, 2015, 11:45:2
           option = _ref[_i];
           this[option] = options[option] || config[option];
         }
-        _ref1 = ["size_x", "flip_from_y", "num_focus_points", "image_quality", "sprite_quality", "speed", "initial_focus", "speed"];
+        _ref1 = ["size_x", "flip_from_y", "num_focus_points", "image_quality", "sprite_quality", "speed", "initial_focus", "speed", "image_size", "sprite_factor"];
         for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
           option = _ref1[_j];
           this[option] = options[option] || config[option];
@@ -334,7 +336,7 @@ sarine.viewer.3dfullinspection - v0.29.0 -  Monday, September 7th, 2015, 11:45:2
           return _results;
         }).call(this);
         this.sprite_factors.sort();
-        this.size_y = (this.flip_from_y - 1) * 2 - 1;
+        this.size_y = (this.flip_from_y - 1) * 2;
         this.num_images = this.size_x * this.flip_from_y;
         this.num_sprite_images = this.num_images / STRIDE_X;
         this.sprite_num_y = Math.floor(Math.sqrt(this.num_sprite_images));
@@ -400,8 +402,8 @@ sarine.viewer.3dfullinspection - v0.29.0 -  Monday, September 7th, 2015, 11:45:2
       Metadata.prototype.normal_y = function(y) {
         var normal_y;
         normal_y = y;
-        if (y > Math.floor(this.size_y / 2 + 1)) {
-          normal_y = this.size_y - y + 1;
+        if (y > Math.floor(this.size_y / 2)) {
+          normal_y = this.size_y - y;
         }
         return normal_y;
       };
@@ -1024,7 +1026,7 @@ sarine.viewer.3dfullinspection - v0.29.0 -  Monday, September 7th, 2015, 11:45:2
       };
 
       ViewerBI.prototype.load_from_sprite = function() {
-        var bpx, bpy, info, left, sprite_left, sprite_top, src, top, top_i, _ref;
+        var bpx, bpy, info, left, sprite_left, sprite_top, src, top, top_i, viewSize, _ref;
         info = this.sprite_info();
         bpy = info.css("background-position-y");
         bpx = info.css("background-position-x");
@@ -1037,15 +1039,21 @@ sarine.viewer.3dfullinspection - v0.29.0 -  Monday, September 7th, 2015, 11:45:2
         src = this.get_sprite_image(info);
         if (src) {
           this.widget.addClass('sprite');
+          viewSize = Math.floor(this.size / this.metadata.sprite_factor);
           $('#sprite-image').attr({
-            src: src
+            src: src,
+            rawdata_size: this.metadata.image_size
           }).css({
             top: top,
             left: left
           })[0].onload = function() {
-            return $('#main-canvas')[0].getContext("2d").drawImage(this, 0, 0, 480, 480, parseInt($(this).css("left").match(/\d+/g)[0]) * -1, parseInt($(this).css("top").match(/\d+/g)[0]) * -1, 480 * 4, 480 * 4);
+            var rawdata_size, sx, sy;
+            rawdata_size = parseInt($(this).attr('rawdata_size'));
+            sx = parseInt($(this).css("left").match(/\d+/g)[0]) * -1;
+            sy = parseInt($(this).css("top").match(/\d+/g)[0]) * -1;
+            return $('#main-canvas')[0].getContext("2d").drawImage(this, sx, sy, viewSize, viewSize, 0, 0, 480, 480);
           };
-          $('#main-canvas')[0].getContext("2d").drawImage($('#sprite-image')[0], sprite_left * -1, sprite_top * -1, 120, 120, 0, 0, 480, 480);
+          $('#main-canvas')[0].getContext("2d").drawImage($('#sprite-image')[0], sprite_left * -1, sprite_top * -1, viewSize, viewSize, 0, 0, 480, 480);
           return this.viewport.attr({
             "class": this.flip_class()
           });
@@ -1114,7 +1122,7 @@ sarine.viewer.3dfullinspection - v0.29.0 -  Monday, September 7th, 2015, 11:45:2
       ViewerBI.prototype.zoom_large = function() {
         this.widget.removeClass('small').addClass('large');
         this.mode = 'large';
-        return this.zoom(480, this.metadata.hq_trans(), 0);
+        return this.zoom(this.metadata.image_size, this.metadata.hq_trans(), 0);
       };
 
       ViewerBI.prototype.zoom_small = function() {
@@ -1146,7 +1154,7 @@ sarine.viewer.3dfullinspection - v0.29.0 -  Monday, September 7th, 2015, 11:45:2
         this.currentDownloadImagesTimeStart = new Date();
         this.size = size;
         _ref = this.metadata.sprite_factors, large_sprite_factor = _ref[0], sprite_factor = _ref[1];
-        this.sprite_size = Math.floor(this.size / sprite_factor);
+        this.sprite_size = Math.floor(this.size / this.metadata.sprite_factor);
         this.configure(trans);
         attrs = {
           crop: "scale",
@@ -1178,6 +1186,7 @@ sarine.viewer.3dfullinspection - v0.29.0 -  Monday, September 7th, 2015, 11:45:2
     UI = (function() {
       function UI(viewer, options) {
         this.viewer = viewer;
+        this.keyDownFunc = __bind(this.keyDownFunc, this);
         this.auto_play = options.auto_play;
       }
 
@@ -1269,6 +1278,94 @@ sarine.viewer.3dfullinspection - v0.29.0 -  Monday, September 7th, 2015, 11:45:2
         return false;
       };
 
+      UI.prototype.keyDownFunc = function(e) {
+        switch (e.keyCode) {
+          case 32:
+            if ($('.player .pause').data('active')) {
+              this.stop();
+            } else {
+              this.play();
+            }
+            break;
+          case 37:
+            this.stop();
+            if (typeof this.viewer.MGlass === 'undefined') {
+              this.viewer.left();
+            } else if (!this.viewer.MGlass.isActive) {
+              this.viewer.left();
+            }
+            break;
+          case 38:
+            this.stop();
+            if (typeof this.viewer.MGlass === 'undefined') {
+              this.viewer.up();
+            } else if (!this.viewer.MGlass.isActive) {
+              this.viewer.up();
+            }
+            break;
+          case 39:
+            this.stop();
+            if (typeof this.viewer.MGlass === 'undefined') {
+              this.viewer.right();
+            } else if (!this.viewer.MGlass.isActive) {
+              this.viewer.right();
+            }
+            break;
+          case 40:
+            this.stop();
+            if (typeof this.viewer.MGlass === 'undefined') {
+              this.viewer.down();
+            } else if (!this.viewer.MGlass.isActive) {
+              this.viewer.down();
+            }
+            break;
+          case 49:
+            if (typeof this.viewer.MGlass === 'undefined') {
+              this.viewer.top_view();
+            } else if (!this.viewer.MGlass.isActive) {
+              this.viewer.top_view();
+            }
+            break;
+          case 50:
+            if (typeof this.viewer.MGlass === 'undefined') {
+              this.viewer.middle_view();
+            } else if (!this.viewer.MGlass.isActive) {
+              this.viewer.middle_view();
+            }
+            break;
+          case 51:
+            if (typeof this.viewer.MGlass === 'undefined') {
+              this.viewer.bottom_view();
+            } else if (!this.viewer.MGlass.isActive) {
+              this.viewer.bottom_view();
+            }
+            break;
+          case 107:
+            if (!this.viewer.active) {
+              return false;
+            }
+            if (this.viewer.next_focus() == null) {
+              return false;
+            }
+            this.viewer.change_focus(this.viewer.next_focus());
+            this.update_focus_buttons();
+            break;
+          case 109:
+            if (!this.viewer.active) {
+              return false;
+            }
+            if (this.viewer.prev_focus() == null) {
+              return false;
+            }
+            this.viewer.change_focus(this.viewer.prev_focus());
+            this.update_focus_buttons();
+            break;
+          default:
+            return true;
+        }
+        return false;
+      };
+
       UI.prototype.go = function() {
         this.viewer.inited = true;
         this.update_focus_buttons();
@@ -1276,91 +1373,7 @@ sarine.viewer.3dfullinspection - v0.29.0 -  Monday, September 7th, 2015, 11:45:2
         this.mouse_y = null;
         $(window).keydown((function(_this) {
           return function(e) {
-            switch (e.keyCode) {
-              case 32:
-                if ($('.player .pause').data('active')) {
-                  _this.stop();
-                } else {
-                  _this.play();
-                }
-                break;
-              case 37:
-                _this.stop();
-                if (typeof _this.viewer.MGlass === 'undefined') {
-                  _this.viewer.left();
-                } else if (!_this.viewer.MGlass.isActive) {
-                  _this.viewer.left();
-                }
-                break;
-              case 38:
-                _this.stop();
-                if (typeof _this.viewer.MGlass === 'undefined') {
-                  _this.viewer.up();
-                } else if (!_this.viewer.MGlass.isActive) {
-                  _this.viewer.up();
-                }
-                break;
-              case 39:
-                _this.stop();
-                if (typeof _this.viewer.MGlass === 'undefined') {
-                  _this.viewer.right();
-                } else if (!_this.viewer.MGlass.isActive) {
-                  _this.viewer.right();
-                }
-                break;
-              case 40:
-                _this.stop();
-                if (typeof _this.viewer.MGlass === 'undefined') {
-                  _this.viewer.down();
-                } else if (!_this.viewer.MGlass.isActive) {
-                  _this.viewer.down();
-                }
-                break;
-              case 49:
-                if (typeof _this.viewer.MGlass === 'undefined') {
-                  _this.viewer.top_view();
-                } else if (!_this.viewer.MGlass.isActive) {
-                  _this.viewer.top_view();
-                }
-                break;
-              case 50:
-                if (typeof _this.viewer.MGlass === 'undefined') {
-                  _this.viewer.middle_view();
-                } else if (!_this.viewer.MGlass.isActive) {
-                  _this.viewer.middle_view();
-                }
-                break;
-              case 51:
-                if (typeof _this.viewer.MGlass === 'undefined') {
-                  _this.viewer.bottom_view();
-                } else if (!_this.viewer.MGlass.isActive) {
-                  _this.viewer.bottom_view();
-                }
-                break;
-              case 107:
-                if (!_this.viewer.active) {
-                  return false;
-                }
-                if (_this.viewer.next_focus() == null) {
-                  return false;
-                }
-                _this.viewer.change_focus(_this.viewer.next_focus());
-                _this.update_focus_buttons();
-                break;
-              case 109:
-                if (!_this.viewer.active) {
-                  return false;
-                }
-                if (_this.viewer.prev_focus() == null) {
-                  return false;
-                }
-                _this.viewer.change_focus(_this.viewer.prev_focus());
-                _this.update_focus_buttons();
-                break;
-              default:
-                return true;
-            }
-            return false;
+            return _this.keyDownFunc(e);
           };
         })(this));
         this.viewer.widget.focus().addTouch().mousedown((function(_this) {
