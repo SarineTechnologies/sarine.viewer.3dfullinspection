@@ -1,5 +1,5 @@
 ###!
-sarine.viewer.3dfullinspection - v0.38.0 -  Tuesday, April 12th, 2016, 1:42:54 PM 
+sarine.viewer.3dfullinspection - v0.38.0 -  Sunday, July 24th, 2016, 6:19:18 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 
@@ -35,26 +35,41 @@ class Viewer
 @Viewer = Viewer 
 
 class FullInspection extends Viewer
-
   isLocal = false
   qs = undefined
+  magnifierLibName = null
 
   constructor: (options) -> 
     qs = new queryString()
     isLocal = qs.getValue("isLocal") == "true" 
     @resourcesPrefix = options.baseUrl + "atomic/v1/assets/"
+    @setMagnifierLibName()
     @resources = [
       {element:'script',src:'jquery-ui.js'},
       {element:'script',src:'jquery.ui.ipad.altfix.js'},
       {element:'script',src:'momentum.js'},
       {element:'script',src:'mglass.js'},
       {element:'link',src:'inspection.css'}
+      {element:'script',src:'cloudzoom.js'},
     ]
     super(options)
     {@jsonsrc, @src} = options
-   
 
-  preloadAssets: (callback)=> 
+  isSupportedMagnifier: (libName) ->
+    return [ 'mglass', 'cloudzoom' ].filter((libItem)->
+        return libItem == libName
+      ).length == 1
+
+  setMagnifierLibName: () ->
+    magnifierLibName = 'mglass'
+    currentExperience = configuration.experiences.filter (exper)->
+      return exper.atom == 'loupe3DFullInspection'
+
+    if(currentExperience.length == 1 && currentExperience[0].magnifierLibName && @isSupportedMagnifier(currentExperience[0].magnifierLibName))
+      magnifierLibName = currentExperience[0].magnifierLibName
+      return
+
+  preloadAssets: (callback)=>
 
     loaded = 0
     totalScripts = @resources.map (elm)-> elm.element =='script'
@@ -811,6 +826,55 @@ class FullInspection extends Viewer
       @viewer.play()
       return false
 
+    initMagnify: (image_source)->
+      if(magnifierLibName == 'mglass')
+        @viewer.MGlass = new MGlass 'main-canvas', image_source, {
+          background: @viewer.metadata.background,innerHTML : "<div class='mglass_inner_html'><div class='dummy'></div><div class='img-container'><img src='#{@viewer.resourcesPrefix}move_cursor.png' alt='move'/></div></div>"}, arguments.callee
+      else if magnifierLibName == 'cloudzoom'
+        magnifyOptions = {
+          zoomImage: image_source,
+          zoomPosition: 'inside',
+          autoInside: true,
+          permaZoom: true,
+          zoomOffsetX: 0
+        }
+
+        sliderWrap = $(".slider-wrap")
+        magnifyImageContainer = $('#magnify-image-container')
+        magnifyInstance = $('#magnify-image')
+        closeButton = $('#closeMagnify')
+        if(magnifyImageContainer.length == 0)
+          sliderHeight = $('.slider-wrap').last().height()
+          magnifyImageContainer = $('<div id="magnify-image-container" class="slider-wrap">')
+          magnifyImageContainer.height(sliderHeight)
+          magnifyInstance = $('<img id="magnify-image">')
+          magnifyInstance.css 'width', '100%'
+          closeButton = $('<a id="closeMagnify">&times;</a>')
+          magnifyImageContainer.append closeButton
+          magnifyImageContainer.append magnifyInstance
+          sliderWrap.before magnifyImageContainer
+
+        magnifyInstance.attr 'src', image_source
+        @viewer.CloudZoom = new CloudZoom $('#magnify-image'), magnifyOptions
+        sliderWrap.css 'display', 'none'
+        magnifyImageContainer.css 'display', 'block'
+
+
+        closeButton.on 'click', (=>
+          @viewer.CloudZoom.closeZoom()
+          sliderWrap.css 'display', 'block'
+          magnifyImageContainer.css 'display', 'none'
+          return
+        )
+        return
+
+
+    deleteMagnify: ()->
+      if(@viewer.MGlass)
+        @viewer.MGlass.Delete()
+      if(@viewer.CloudZoom)
+        @viewer.CloudZoom.destroy()
+
     keyDownFunc : (e)=>  
 
         switch e.keyCode  
@@ -1032,16 +1096,17 @@ class FullInspection extends Viewer
           $('.inspect-stone').css("overflow", "hidden"); #Legacy
           $(document).unbind("mouseup");
 
-          @viewer.MGlass.Delete()
+          @deleteMagnify()
           @inactivate_button $(".magnify")
           $(".buttons li:not(.magnify)").removeClass("disabled");
           @update_focus_buttons()
         else
           @viewer.active = false
-          $(document).mouseup (e)=>
-            container = $ ".mglass_viewer,.magnify"
-            if !container.is(e.target) and container.has(e.target).length == 0
-              setTimeout (()=> $(".magnify").click() ), 0
+          if(magnifierLibName == 'mglass')
+            $(document).mouseup (e)=>
+              container = $ ".mglass_viewer,.magnify"
+              if !container.is(e.target) and container.has(e.target).length == 0
+                setTimeout (()=> $(".magnify").click() ), 0
 
           $(".buttons li:not(.magnify)").addClass("disabled");
           $(".magnify").show();
@@ -1055,9 +1120,8 @@ class FullInspection extends Viewer
               width: 0,
               quality: 70
             ) 
-            #image_source = @viewer.preloader.src @viewer.x, @viewer.y, @viewer.focus     
-            @viewer.MGlass = new MGlass 'main-canvas', image_source, {
-              background: @viewer.metadata.background,innerHTML : "<div class='mglass_inner_html'><div class='dummy'></div><div class='img-container'><img src='#{@viewer.resourcesPrefix}move_cursor.png' alt='move'/></div></div>"}, arguments.callee
+            #image_source = @viewer.preloader.src @viewer.x, @viewer.y, @viewer.focus
+            @initMagnify image_source
 
           @inactivate_button $(".focus_out") 
           @inactivate_button $(".focus_in")
@@ -1077,8 +1141,6 @@ class FullInspection extends Viewer
 
 
 
-
-    
 
 @FullInspection = FullInspection
 
