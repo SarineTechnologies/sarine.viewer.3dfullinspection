@@ -1,5 +1,5 @@
 ###!
-sarine.viewer.3dfullinspection - v0.38.0 -  Sunday, July 24th, 2016, 6:19:19 PM 
+sarine.viewer.3dfullinspection - v0.38.0 -  Monday, July 25th, 2016, 1:05:50 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 class FullInspection extends Viewer
@@ -18,8 +18,11 @@ class FullInspection extends Viewer
       {element:'script',src:'momentum.js'},
       {element:'script',src:'mglass.js'},
       {element:'link',src:'inspection.css'}
-      {element:'script',src:'cloudzoom.js'},
     ]
+
+    if(magnifierLibName == 'cloudzoom')
+      @resources.push {element:'script',src:'cloudzoom.js'}
+      
     super(options)
     {@jsonsrc, @src} = options
 
