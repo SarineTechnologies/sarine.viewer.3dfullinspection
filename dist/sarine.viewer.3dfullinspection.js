@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.38.0 -  Tuesday, April 12th, 2016, 1:42:54 PM 
+sarine.viewer.3dfullinspection - v0.38.0 -  Monday, July 25th, 2016, 1:12:13 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -11,13 +11,15 @@ sarine.viewer.3dfullinspection - v0.38.0 -  Tuesday, April 12th, 2016, 1:42:54 P
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   FullInspection = (function(_super) {
-    var Metadata, Preloader, STRIDE_X, UI, ViewerBI, config, isLocal, qs;
+    var Metadata, Preloader, STRIDE_X, UI, ViewerBI, config, isLocal, magnifierLibName, qs;
 
     __extends(FullInspection, _super);
 
     isLocal = false;
 
     qs = void 0;
+
+    magnifierLibName = null;
 
     function FullInspection(options) {
       this.full_init = __bind(this.full_init, this);
@@ -27,6 +29,7 @@ sarine.viewer.3dfullinspection - v0.38.0 -  Tuesday, April 12th, 2016, 1:42:54 P
       qs = new queryString();
       isLocal = qs.getValue("isLocal") === "true";
       this.resourcesPrefix = options.baseUrl + "atomic/v1/assets/";
+      this.setMagnifierLibName();
       this.resources = [
         {
           element: 'script',
@@ -38,16 +41,41 @@ sarine.viewer.3dfullinspection - v0.38.0 -  Tuesday, April 12th, 2016, 1:42:54 P
           element: 'script',
           src: 'momentum.js'
         }, {
-          element: 'script',
-          src: 'mglass.js'
-        }, {
           element: 'link',
           src: 'inspection.css'
         }
       ];
+      if (magnifierLibName === 'cloudzoom') {
+        this.resources.push({
+          element: 'script',
+          src: 'cloudzoom.js'
+        });
+      } else if (magnifierLibName === 'mglass') {
+        ({
+          element: 'script',
+          src: 'mglass.js'
+        });
+      }
       FullInspection.__super__.constructor.call(this, options);
       this.jsonsrc = options.jsonsrc, this.src = options.src;
     }
+
+    FullInspection.prototype.isSupportedMagnifier = function(libName) {
+      return ['mglass', 'cloudzoom'].filter(function(libItem) {
+        return libItem === libName;
+      }).length === 1;
+    };
+
+    FullInspection.prototype.setMagnifierLibName = function() {
+      var currentExperience;
+      magnifierLibName = 'mglass';
+      currentExperience = configuration.experiences.filter(function(exper) {
+        return exper.atom === 'loupe3DFullInspection';
+      });
+      if (currentExperience.length === 1 && currentExperience[0].magnifierLibName && this.isSupportedMagnifier(currentExperience[0].magnifierLibName)) {
+        magnifierLibName = currentExperience[0].magnifierLibName;
+      }
+    };
 
     FullInspection.prototype.preloadAssets = function(callback) {
       var element, loaded, resource, totalScripts, triggerCallback, _i, _len, _ref, _results;
@@ -1217,6 +1245,59 @@ sarine.viewer.3dfullinspection - v0.38.0 -  Tuesday, April 12th, 2016, 1:42:54 P
         return false;
       };
 
+      UI.prototype.initMagnify = function(image_source) {
+        var closeButton, magnifyImageContainer, magnifyInstance, magnifyOptions, sliderHeight, sliderWrap;
+        if (magnifierLibName === 'mglass') {
+          return this.viewer.MGlass = new MGlass('main-canvas', image_source, {
+            background: this.viewer.metadata.background,
+            innerHTML: "<div class='mglass_inner_html'><div class='dummy'></div><div class='img-container'><img src='" + this.viewer.resourcesPrefix + "move_cursor.png' alt='move'/></div></div>"
+          }, arguments.callee);
+        } else if (magnifierLibName === 'cloudzoom') {
+          magnifyOptions = {
+            zoomImage: image_source,
+            zoomPosition: 'inside',
+            autoInside: true,
+            permaZoom: true,
+            zoomOffsetX: 0
+          };
+          sliderWrap = $(".slider-wrap");
+          magnifyImageContainer = $('#magnify-image-container');
+          magnifyInstance = $('#magnify-image');
+          closeButton = $('#closeMagnify');
+          if (magnifyImageContainer.length === 0) {
+            sliderHeight = $('.slider-wrap').last().height();
+            magnifyImageContainer = $('<div id="magnify-image-container" class="slider-wrap">');
+            magnifyImageContainer.height(sliderHeight);
+            magnifyInstance = $('<img id="magnify-image">');
+            magnifyInstance.css('width', '100%');
+            closeButton = $('<a id="closeMagnify">&times;</a>');
+            magnifyImageContainer.append(closeButton);
+            magnifyImageContainer.append(magnifyInstance);
+            sliderWrap.before(magnifyImageContainer);
+          }
+          magnifyInstance.attr('src', image_source);
+          this.viewer.CloudZoom = new CloudZoom($('#magnify-image'), magnifyOptions);
+          sliderWrap.css('display', 'none');
+          magnifyImageContainer.css('display', 'block');
+          closeButton.on('click', ((function(_this) {
+            return function() {
+              _this.viewer.CloudZoom.closeZoom();
+              sliderWrap.css('display', 'block');
+              magnifyImageContainer.css('display', 'none');
+            };
+          })(this)));
+        }
+      };
+
+      UI.prototype.deleteMagnify = function() {
+        if (this.viewer.MGlass) {
+          this.viewer.MGlass.Delete();
+        }
+        if (this.viewer.CloudZoom) {
+          return this.viewer.CloudZoom.destroy();
+        }
+      };
+
       UI.prototype.keyDownFunc = function(e) {
         switch (e.keyCode) {
           case 32:
@@ -1509,21 +1590,23 @@ sarine.viewer.3dfullinspection - v0.38.0 -  Tuesday, April 12th, 2016, 1:42:54 P
               _this.viewer.active = true;
               $('.inspect-stone').css("overflow", "hidden");
               $(document).unbind("mouseup");
-              _this.viewer.MGlass.Delete();
+              _this.deleteMagnify();
               _this.inactivate_button($(".magnify"));
               $(".buttons li:not(.magnify)").removeClass("disabled");
               _this.update_focus_buttons();
             } else {
               _this.viewer.active = false;
-              $(document).mouseup(function(e) {
-                var container;
-                container = $(".mglass_viewer,.magnify");
-                if (!container.is(e.target) && container.has(e.target).length === 0) {
-                  return setTimeout((function() {
-                    return $(".magnify").click();
-                  }), 0);
-                }
-              });
+              if (magnifierLibName === 'mglass') {
+                $(document).mouseup(function(e) {
+                  var container;
+                  container = $(".mglass_viewer,.magnify");
+                  if (!container.is(e.target) && container.has(e.target).length === 0) {
+                    return setTimeout((function() {
+                      return $(".magnify").click();
+                    }), 0);
+                  }
+                });
+              }
               $(".buttons li:not(.magnify)").addClass("disabled");
               $(".magnify").show();
               $('.inspect-stone').css("overflow", "visible");
@@ -1533,10 +1616,7 @@ sarine.viewer.3dfullinspection - v0.38.0 -  Tuesday, April 12th, 2016, 1:42:54 P
                   width: 0,
                   quality: 70
                 });
-                _this.viewer.MGlass = new MGlass('main-canvas', image_source, {
-                  background: _this.viewer.metadata.background,
-                  innerHTML: "<div class='mglass_inner_html'><div class='dummy'></div><div class='img-container'><img src='" + _this.viewer.resourcesPrefix + "move_cursor.png' alt='move'/></div></div>"
-                }, arguments.callee);
+                _this.initMagnify(image_source);
               }
               _this.inactivate_button($(".focus_out"));
               _this.inactivate_button($(".focus_in"));
