@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.38.0 -  Monday, July 25th, 2016, 1:12:13 PM 
+sarine.viewer.3dfullinspection - v0.38.0 -  Monday, July 25th, 2016, 4:46:37 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -1307,7 +1307,7 @@ sarine.viewer.3dfullinspection - v0.38.0 -  Monday, July 25th, 2016, 1:12:13 PM
       };
 
       UI.prototype.initMagnify = function(image_source) {
-        var closeButton, magnifyImageContainer, magnifyInstance, magnifyOptions, sliderHeight, sliderWrap;
+        var closeButton, closeButtonContainer, dashboardContainer, dashboardContent, magnifyImageContainer, magnifyInstance, magnifyOptions, magnifySize, sliderHeight, widgetContainer;
         if (magnifierLibName === 'mglass') {
           return this.viewer.MGlass = new MGlass('main-canvas', image_source, {
             background: this.viewer.metadata.background,
@@ -1318,33 +1318,55 @@ sarine.viewer.3dfullinspection - v0.38.0 -  Monday, July 25th, 2016, 1:12:13 PM
             zoomImage: image_source,
             zoomPosition: 'inside',
             autoInside: true,
-            permaZoom: true,
-            zoomOffsetX: 0
+            permaZoom: true
           };
-          sliderWrap = $(".slider-wrap");
+          widgetContainer = $(".slider-wrap");
+          dashboardContainer = $('.slide--loupe3d');
           magnifyImageContainer = $('#magnify-image-container');
           magnifyInstance = $('#magnify-image');
           closeButton = $('#closeMagnify');
+          dashboardContent = dashboardContainer.find('.content');
           if (magnifyImageContainer.length === 0) {
             sliderHeight = $('.slider-wrap').last().height();
-            magnifyImageContainer = $('<div id="magnify-image-container" class="slider-wrap">');
+            magnifyImageContainer = $('<div id="magnify-image-container">');
             magnifyImageContainer.height(sliderHeight);
             magnifyInstance = $('<img id="magnify-image">');
-            magnifyInstance.css('width', '100%');
+            closeButtonContainer = $('<div id="closeMagnify-container">');
             closeButton = $('<a id="closeMagnify">&times;</a>');
-            magnifyImageContainer.append(closeButton);
+            closeButtonContainer.append(closeButton);
+            magnifyImageContainer.append(closeButtonContainer);
             magnifyImageContainer.append(magnifyInstance);
-            sliderWrap.before(magnifyImageContainer);
+            magnifyInstance.css('width', '100%');
+            if (widgetContainer.length === 1) {
+              magnifyImageContainer.attr('class', 'slider-wrap');
+              widgetContainer.before(magnifyImageContainer);
+            } else if (dashboardContainer.length === 1) {
+              magnifyInstance.css('margin', '0px 0px 0px 7px');
+              magnifyImageContainer.attr('class', 'content');
+              magnifyImageContainer.css('padding', '0');
+              dashboardContainer.append(magnifyImageContainer);
+              magnifySize = $('#magnify-image-container').height() - 50;
+              magnifyInstance.css('width', magnifySize + 'px');
+              magnifyInstance.css('height', magnifySize + 'px');
+            }
           }
           magnifyInstance.attr('src', image_source);
           this.viewer.CloudZoom = new CloudZoom($('#magnify-image'), magnifyOptions);
-          sliderWrap.css('display', 'none');
-          magnifyImageContainer.css('display', 'block');
+          if (widgetContainer.length > 0) {
+            widgetContainer.hide();
+          } else if (dashboardContainer.length > 0) {
+            dashboardContent.hide();
+          }
+          magnifyImageContainer.show();
           closeButton.on('click', ((function(_this) {
             return function() {
               _this.viewer.CloudZoom.closeZoom();
-              sliderWrap.css('display', 'block');
-              magnifyImageContainer.css('display', 'none');
+              if (widgetContainer.length > 0) {
+                widgetContainer.show();
+              } else if (dashboardContainer.length > 0) {
+                dashboardContent.show();
+              }
+              magnifyImageContainer.hide();
             };
           })(this)));
         }
