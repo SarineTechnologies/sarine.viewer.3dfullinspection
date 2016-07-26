@@ -836,6 +836,8 @@ class FullInspection extends Viewer
             magnifyImageContainer.css('padding', '0')
             dashboardContainer.append magnifyImageContainer
             magnifySize = $('#magnify-image-container').height() - 50
+            if(magnifySize < 280)
+              magnifySize = 280
             magnifyInstance.css 'width', magnifySize + 'px'
             magnifyInstance.css 'height', magnifySize + 'px'
 
