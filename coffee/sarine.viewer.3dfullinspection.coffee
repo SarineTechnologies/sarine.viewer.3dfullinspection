@@ -816,11 +816,13 @@ class FullInspection extends Viewer
         magnifyInstance = $('#magnify-image')
         closeButton = $('#closeMagnify')
         dashboardContent = dashboardContainer.find('.content')
+        isFlipped = $('.viewport').hasClass('flip')
         if(magnifyImageContainer.length == 0)
           sliderHeight = $('.slider-wrap').last().height()
           magnifyImageContainer = $('<div id="magnify-image-container">')
           magnifyImageContainer.height(sliderHeight)
           magnifyInstance = $('<img id="magnify-image">')
+
           closeButtonContainer = $('<div id="closeMagnify-container">')
           closeButton = $('<a id="closeMagnify">&times;</a>')
           closeButtonContainer.append closeButton
@@ -835,14 +837,35 @@ class FullInspection extends Viewer
             magnifyImageContainer.attr('class', 'content')
             magnifyImageContainer.css('padding', '0')
             dashboardContainer.append magnifyImageContainer
-            magnifySize = $('#magnify-image-container').height() - 50
+            magnifySize = $('#magnify-image-container').height() - 47
             if(magnifySize < 280)
               magnifySize = 280
             magnifyInstance.css 'width', magnifySize + 'px'
             magnifyInstance.css 'height', magnifySize + 'px'
 
+
+        magnifyInstance.unbind 'cloudzoom_start_zoom'
+
+        if(isFlipped)
+          magnifyInstance.addClass('flip180')
+          hasRemovedTrasform = false
+          magnifyInstance.bind 'cloudzoom_start_zoom', (=>
+            setTimeout (=>
+              if(!hasRemovedTrasform)
+                magnifyImage = $('.cloudzoom-zoom-inside img')
+                if(magnifyImage.length > 0)
+                  currentStyle = magnifyImage.attr('style')
+                  currentStyle = currentStyle.replace 'transform: translateZ(0px); ', ''
+                  magnifyImage.attr 'style', currentStyle
+                  magnifyImage.attr 'class', 'flip180'
+                  hasRemovedTrasform = true
+            ), 300
+            return
+          )
+
         magnifyInstance.attr 'src', image_source
         @viewer.CloudZoom = new CloudZoom $('#magnify-image'), magnifyOptions
+
         if(widgetContainer.length > 0)
           widgetContainer.hide()
         else if(dashboardContainer.length > 0)
