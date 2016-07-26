@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.38.0 -  Monday, July 25th, 2016, 4:46:37 PM 
+sarine.viewer.3dfullinspection - v0.38.0 -  Tuesday, July 26th, 2016, 2:06:11 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -1285,6 +1285,9 @@ sarine.viewer.3dfullinspection - v0.38.0 -  Monday, July 25th, 2016, 4:46:37 PM
               magnifyImageContainer.css('padding', '0');
               dashboardContainer.append(magnifyImageContainer);
               magnifySize = $('#magnify-image-container').height() - 50;
+              if (magnifySize < 280) {
+                magnifySize = 280;
+              }
               magnifyInstance.css('width', magnifySize + 'px');
               magnifyInstance.css('height', magnifySize + 'px');
             }
