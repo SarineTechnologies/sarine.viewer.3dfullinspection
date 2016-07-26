@@ -1,5 +1,5 @@
 ###!
-sarine.viewer.3dfullinspection - v0.38.0 -  Tuesday, July 26th, 2016, 2:06:11 PM 
+sarine.viewer.3dfullinspection - v0.38.0 -  Tuesday, July 26th, 2016, 6:46:53 PM
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 class FullInspection extends Viewer
@@ -7,9 +7,9 @@ class FullInspection extends Viewer
   qs = undefined
   magnifierLibName = null
 
-  constructor: (options) -> 
+  constructor: (options) ->
     qs = new queryString()
-    isLocal = qs.getValue("isLocal") == "true" 
+    isLocal = qs.getValue("isLocal") == "true"
     @resourcesPrefix = options.baseUrl + "atomic/v1/assets/"
     @setMagnifierLibName()
     @resources = [
@@ -23,7 +23,7 @@ class FullInspection extends Viewer
       @resources.push {element:'script',src:'cloudzoom.js'}
     else if(magnifierLibName == 'mglass')
       {element:'script',src:'mglass.js'}
-      
+
     super(options)
     {@jsonsrc, @src} = options
 
@@ -48,9 +48,9 @@ class FullInspection extends Viewer
     triggerCallback = (callback) ->
       loaded++
       if(loaded == totalScripts.length-1 && callback!=undefined )
-        setTimeout( ()=> 
-          callback() 
-        ,500) 
+        setTimeout( ()=>
+          callback()
+        ,500)
 
     element
     for resource in @resources
@@ -65,7 +65,7 @@ class FullInspection extends Viewer
         element.href = @resourcesPrefix + resource.src + cacheVersion
         element.rel= "stylesheet"
         element.type= "text/css"
-        $(document.head).prepend(element) 
+        $(document.head).prepend(element)
 
 
 
@@ -73,7 +73,7 @@ class FullInspection extends Viewer
   convertElement :() =>
     url = @resourcesPrefix+"3dfullinspection.html" +  cacheVersion
 
- 
+
     $.get url, (innerHtml) =>
       compiled = $(innerHtml)
       $(".buttons",compiled).remove() if(@element.attr("menu")=="false")
@@ -85,7 +85,7 @@ class FullInspection extends Viewer
       @element.append(compiled)
     @element
 
-  
+
   first_init : () =>
     @first_init_defer = $.Deferred()
     @full_init_defer = $.Deferred()
@@ -95,16 +95,16 @@ class FullInspection extends Viewer
       @UIlogic = new UI(@viewerBI, auto_play: true)
       @UIlogic.go()
 
-    ##TODO -new json end-point     
-    if !isLocal     
-      descriptionPath = @src + @jsonsrc 
+    ##TODO -new json end-point
+    if !isLocal
+      descriptionPath = @src + @jsonsrc
     else
-      localInspectionBaseUrl = @src.substr 0, @src.indexOf('ImageRepo') 
+      localInspectionBaseUrl = @src.substr 0, @src.indexOf('ImageRepo')
       localStoneMeasureUrl = @src.slice @src.indexOf('ImageRepo/') + 10, @src.lastIndexOf('/')
       localStoneMeasureUrlArr = localStoneMeasureUrl.split '/'
       descriptionPath = localInspectionBaseUrl + 'GetLocalJson?stoneId=' + localStoneMeasureUrlArr[0] + "&measureId=" + localStoneMeasureUrlArr[1] + "&viewer=inspection"
 
-    $.getJSON descriptionPath, (result) =>  
+    $.getJSON descriptionPath, (result) =>
       stone = result.StoneId + "_" + result.MeasurementId
       result = if isLocal then JSON.parse(result) else result
       metadata = new Metadata(
@@ -162,7 +162,7 @@ class FullInspection extends Viewer
 
   STRIDE_X = 4
   config =
-    sprite_factors: "2,4" 
+    sprite_factors: "2,4"
     image_quality: 70
     sprite_quality: 30
     image_size: 480
@@ -175,12 +175,12 @@ class FullInspection extends Viewer
 
   class Metadata
     constructor: (options) ->
-      # string options, overrideable in url
+# string options, overrideable in url
       for option in ["background", "initial_zoom", "sprite_factors", "shooting_parameters", "local"]
         this[option] = options[option] || config[option]
       # integer options, overrideable in url
       for option in ["size_x", "flip_from_y", "num_focus_points", "image_quality", "sprite_quality", "speed",
-                     "initial_focus", "speed","image_size", "sprite_factor"]
+        "initial_focus", "speed","image_size", "sprite_factor"]
         this[option] =options[option] || config[option]
       # defaults
       unless options["vertical_angles"]
@@ -231,7 +231,7 @@ class FullInspection extends Viewer
         return 0
 
     normal_y: (y) ->
-      #normalize y index
+#normalize y index
       normal_y = y
       if y > Math.floor @size_y / 2
         normal_y = (@size_y - y)
@@ -327,7 +327,7 @@ class FullInspection extends Viewer
 
 
     go: ->
-      # Fill queue
+# Fill queue
       for x in [0..@metadata.size_x - 1]
         for y in [0..@metadata.flip_from_y - 1]
           for focus in @metadata.supported_focus_indexes(x, y)
@@ -348,7 +348,7 @@ class FullInspection extends Viewer
     circle_distance: (x1, x2, size) ->
       Math.min((x1 - x2 + size) % size, (x2 - x1 + size) % size)
     prioritize: ->
-      # later in the array is proccessed earlier
+# later in the array is proccessed earlier
       for shard, queue of @queue
         for entry in queue
           priority = @circle_distance(entry.x, @x, @metadata.size_x) + Math.pow(@circle_distance(entry.y, @y,
@@ -360,7 +360,7 @@ class FullInspection extends Viewer
           b.priority - a.priority
 
     load_image: (x, y, focus, src, queue) ->
-      # In case it will change by the time the image is loaded
+# In case it will change by the time the image is loaded
       cache_key = @cache_key()
       trans = @trans
       version = @version
@@ -377,7 +377,7 @@ class FullInspection extends Viewer
       img.onerror = img.onload
 
     total: ->
-      @totals[@cache_key()] 
+      @totals[@cache_key()]
 
     preload: (queue) ->
       return if queue.length == 0
@@ -386,7 +386,7 @@ class FullInspection extends Viewer
 
     has: (x, y, focus) ->
       focus ?= @metadata.default_focus(x, y)
-      @images[@cache_key()][@metadata.image_name(x, y, focus)] == true 
+      @images[@cache_key()][@metadata.image_name(x, y, focus)] == true
 
     src: (x, y, focus, trans = "") ->
       x = Math.floor(x / @density) * @density
@@ -402,7 +402,7 @@ class FullInspection extends Viewer
         @dest + "/" +  "merge" + "/img_" + @metadata.image_name(x, y, focus)+ ".jpg"
 
     fetch: (x, y, focus = null) ->
-      # Remember current position to prioritize preload better
+# Remember current position to prioritize preload better
       timeoutMl = 300
       if @has(x, y, focus)
         timeoutMl=0
@@ -445,7 +445,7 @@ class FullInspection extends Viewer
       @dest = options.src
       @first_init_defer = options.first_init
       @full_init_defer = options.full_init
-      @resourcesPrefix = options.resourcesPrefix     
+      @resourcesPrefix = options.resourcesPrefix
       @reset()
       @context = $('#main-canvas')[0].getContext("2d")
 
@@ -465,7 +465,7 @@ class FullInspection extends Viewer
       if(@first_hit)
         @first_hit = false
         @first_init_defer.resolve(@)
-        
+
 
 
       @widget.trigger('high_quality',
@@ -474,7 +474,7 @@ class FullInspection extends Viewer
         className = @widget[0].className
         @widget.removeClass('sprite')
         imageChanged = ($('#main-image').attr('src') != src)
-        if imageChanged || className != @widget[0].className 
+        if imageChanged || className != @widget[0].className
           $('#main-image').attr(src: src)
           $('#main-image')[0].onload = (img)->
             $('#main-canvas')[0].getContext("2d").drawImage(img.target,0,0,480,480)
@@ -586,13 +586,13 @@ class FullInspection extends Viewer
       x = @x
       y = if @flip() then @metadata.size_y + 1 - @y else @y
       if !force
-        # Try to find the closest image according to the direction of movement
+# Try to find the closest image according to the direction of movement
         sign = if @direction == 'left' then 1 else -1
         approximate = !@preloader.has(x, y)
         until @preloader.has(x, y) || x % STRIDE_X == 0
           x = @metadata.inc_x(x, sign)
         if approximate
-          # Actually move to this x so that moving up/down will not cause the diamond to appear spinning
+# Actually move to this x so that moving up/down will not cause the diamond to appear spinning
           @x = x if @direction == 'up' || @direction == 'down'
 
           # If we stay here, force loading image
@@ -604,7 +604,7 @@ class FullInspection extends Viewer
           return @load_from_sprite() if x % STRIDE_X == 0
         @load_from_sprite()
       @preloader.fetch(@x, @y, @focus)
-        
+
 
     sprite_info: (sprite_size = @sprite_size, x = @x, y = @y) ->
       sprite_prefix = "zoom_#{@size}_#{sprite_size}_#{config.sprite_quality}_"
@@ -629,12 +629,12 @@ class FullInspection extends Viewer
         @widget.addClass('sprite')
         #viewSize = Math.floor(@size / @metadata.sprite_factors[1])
         viewSize = Math.floor(@size / @metadata.sprite_factor)
-        $('#sprite-image').attr(src: src,rawdata_size : @metadata.image_size).css(top: top, left: left)[0].onload = ()-> 
+        $('#sprite-image').attr(src: src,rawdata_size : @metadata.image_size).css(top: top, left: left)[0].onload = ()->
           rawdata_size = parseInt($(this).attr('rawdata_size'))
           sx = parseInt($(this).css("left").match(/\d+/g)[0])*-1
           sy = parseInt($(this).css("top").match(/\d+/g)[0])*-1
           $('#main-canvas')[0].getContext("2d").drawImage(this,sx,sy,viewSize,viewSize,0,0,480,480)
-        
+
         $('#main-canvas')[0].getContext("2d").drawImage($('#sprite-image')[0],sprite_left*-1,sprite_top*-1,viewSize,viewSize,0,0,480,480)
         @viewport.attr(class: @flip_class())
 
@@ -654,7 +654,7 @@ class FullInspection extends Viewer
         )
         css_link.appendTo($('head'))
       size = @size
-      check = => 
+      check = =>
         info = @sprite_info(sprite_size, 0, 0)
         src = @get_sprite_image(info)
         if src?
@@ -665,14 +665,14 @@ class FullInspection extends Viewer
             img.cached = true
           else
             img.cached = false
-          img.onload = => 
+          img.onload = =>
             img.endLoadStamp = new Date()
             totalTime = (img.endLoadStamp.getTime() - img.startLoadStamp.getTime())
             if size == @size
               @widget.find('#sprite-image').css
                 width: (@metadata.sprite_num_x * sprite_size) * @size / sprite_size
                 height: (@metadata.sprite_num_y * sprite_size) * @size / sprite_size
-                #$('#main-canvas')[0].getContext("2d").drawImage(@widget.find('#sprite-image')[0],0,0,480,480,parseInt($(this).css("left").match(/\d+/g)[0])*-1,parseInt($(this).css("top").match(/\d+/g)[0])*-1,480*4,480*4)
+            #$('#main-canvas')[0].getContext("2d").drawImage(@widget.find('#sprite-image')[0],0,0,480,480,parseInt($(this).css("left").match(/\d+/g)[0])*-1,parseInt($(this).css("top").match(/\d+/g)[0])*-1,480*4,480*4)
             callback()
         else
           setTimeout(check, 50)
@@ -707,7 +707,7 @@ class FullInspection extends Viewer
       @size = size
       [large_sprite_factor, sprite_factor] = @metadata.sprite_factors
       #@sprite_size = Math.floor(@size / sprite_factor)
-      @sprite_size = Math.floor(@size / @metadata.sprite_factor) 
+      @sprite_size = Math.floor(@size / @metadata.sprite_factor)
       @configure trans
       attrs =
         crop: "scale"
@@ -723,7 +723,7 @@ class FullInspection extends Viewer
 
       @reset()
       @show(true)
-      # TODO ?? 
+      # TODO ??
       if !isLocal
         @load_stylesheet(small_css_url, @sprite_size, =>
           @widget.trigger('low_quality')
@@ -816,11 +816,13 @@ class FullInspection extends Viewer
         magnifyInstance = $('#magnify-image')
         closeButton = $('#closeMagnify')
         dashboardContent = dashboardContainer.find('.content')
+        isFlipped = $('.viewport').hasClass('flip')
         if(magnifyImageContainer.length == 0)
           sliderHeight = $('.slider-wrap').last().height()
           magnifyImageContainer = $('<div id="magnify-image-container">')
           magnifyImageContainer.height(sliderHeight)
           magnifyInstance = $('<img id="magnify-image">')
+
           closeButtonContainer = $('<div id="closeMagnify-container">')
           closeButton = $('<a id="closeMagnify">&times;</a>')
           closeButtonContainer.append closeButton
@@ -835,14 +837,35 @@ class FullInspection extends Viewer
             magnifyImageContainer.attr('class', 'content')
             magnifyImageContainer.css('padding', '0')
             dashboardContainer.append magnifyImageContainer
-            magnifySize = $('#magnify-image-container').height() - 50
+            magnifySize = $('#magnify-image-container').height() - 47
             if(magnifySize < 280)
               magnifySize = 280
             magnifyInstance.css 'width', magnifySize + 'px'
             magnifyInstance.css 'height', magnifySize + 'px'
 
+
+        magnifyInstance.unbind 'cloudzoom_start_zoom'
+
+        if(isFlipped)
+          magnifyInstance.addClass('flip180')
+          hasRemovedTrasform = false
+          magnifyInstance.bind 'cloudzoom_start_zoom', (=>
+            setTimeout (=>
+              if(!hasRemovedTrasform)
+                magnifyImage = $('.cloudzoom-zoom-inside img')
+                if(magnifyImage.length > 0)
+                  currentStyle = magnifyImage.attr('style')
+                  currentStyle = currentStyle.replace 'transform: translateZ(0px); ', ''
+                  magnifyImage.attr 'style', currentStyle
+                  magnifyImage.attr 'class', 'flip180'
+                  hasRemovedTrasform = true
+            ), 300
+            return
+          )
+
         magnifyInstance.attr 'src', image_source
         @viewer.CloudZoom = new CloudZoom $('#magnify-image'), magnifyOptions
+
         if(widgetContainer.length > 0)
           widgetContainer.hide()
         else if(dashboardContainer.length > 0)
@@ -868,63 +891,63 @@ class FullInspection extends Viewer
       if(@viewer.CloudZoom)
         @viewer.CloudZoom.destroy()
 
-    keyDownFunc : (e)=>  
+    keyDownFunc : (e)=>
 
-        switch e.keyCode  
-          when 32
-            if $('.player .pause').data('active') then @stop() else @play()
+      switch e.keyCode
+        when 32
+          if $('.player .pause').data('active') then @stop() else @play()
 
-          # arrows  
-          when 37 
-            @stop()
-            if typeof @viewer.MGlass == 'undefined' then @viewer.left()  
-            else if !@viewer.MGlass.isActive then @viewer.left() 
-          when 38
-            @stop()
-            if typeof @viewer.MGlass == 'undefined' then @viewer.up()
-            else if !@viewer.MGlass.isActive then @viewer.up()
-          when 39
-            @stop()
-            if typeof @viewer.MGlass == 'undefined' then @viewer.right()
-            else if !@viewer.MGlass.isActive then @viewer.right()
-          when 40 
-            @stop()
-            if typeof @viewer.MGlass == 'undefined' then @viewer.down()
-            else if !@viewer.MGlass.isActive then @viewer.down() 
- 
-          when 49 
-            if typeof @viewer.MGlass == 'undefined' then @viewer.top_view()
-            else if !@viewer.MGlass.isActive then @viewer.top_view()
-          when 50
-            if typeof @viewer.MGlass == 'undefined' then @viewer.middle_view()
-            else if !@viewer.MGlass.isActive then @viewer.middle_view()
-          when 51
-            if typeof @viewer.MGlass == 'undefined' then @viewer.bottom_view()
-            else if !@viewer.MGlass.isActive then @viewer.bottom_view()
-          when 107
-            return false if !@viewer.active
-            return false if !@viewer.next_focus()?
+# arrows
+        when 37
+          @stop()
+          if typeof @viewer.MGlass == 'undefined' then @viewer.left()
+          else if !@viewer.MGlass.isActive then @viewer.left()
+        when 38
+          @stop()
+          if typeof @viewer.MGlass == 'undefined' then @viewer.up()
+          else if !@viewer.MGlass.isActive then @viewer.up()
+        when 39
+          @stop()
+          if typeof @viewer.MGlass == 'undefined' then @viewer.right()
+          else if !@viewer.MGlass.isActive then @viewer.right()
+        when 40
+          @stop()
+          if typeof @viewer.MGlass == 'undefined' then @viewer.down()
+          else if !@viewer.MGlass.isActive then @viewer.down()
 
-            @viewer.change_focus(@viewer.next_focus())
-            @update_focus_buttons()
-          when 109
-            return false if !@viewer.active
-            return false if !@viewer.prev_focus()?
+        when 49
+          if typeof @viewer.MGlass == 'undefined' then @viewer.top_view()
+          else if !@viewer.MGlass.isActive then @viewer.top_view()
+        when 50
+          if typeof @viewer.MGlass == 'undefined' then @viewer.middle_view()
+          else if !@viewer.MGlass.isActive then @viewer.middle_view()
+        when 51
+          if typeof @viewer.MGlass == 'undefined' then @viewer.bottom_view()
+          else if !@viewer.MGlass.isActive then @viewer.bottom_view()
+        when 107
+          return false if !@viewer.active
+          return false if !@viewer.next_focus()?
 
-            @viewer.change_focus(@viewer.prev_focus())
-            @update_focus_buttons()
-          else return true
-        return false
-  
-    
+          @viewer.change_focus(@viewer.next_focus())
+          @update_focus_buttons()
+        when 109
+          return false if !@viewer.active
+          return false if !@viewer.prev_focus()?
+
+          @viewer.change_focus(@viewer.prev_focus())
+          @update_focus_buttons()
+        else return true
+      return false
+
+
     go: ->
 
       @viewer.inited = true
       @update_focus_buttons()
       @mouse_x = null
-      @mouse_y = null      
-      
-      $(window).keydown((e) =>        
+      @mouse_y = null
+
+      $(window).keydown((e) =>
         @keyDownFunc(e)
       )
 
@@ -952,7 +975,7 @@ class FullInspection extends Viewer
             @viewer.down(delta_y)
           else
             @viewer.up(delta_y)
-          @mouse_y = e.clientY      
+          @mouse_y = e.clientY
       ).click(->
         this.focus()
       ).bind('reset',=>
@@ -1080,11 +1103,11 @@ class FullInspection extends Viewer
         return false
 
       $(".magnify").click =>
-          
-        #if @viewer.mode == "small"
-        #    return 1
+
+#if @viewer.mode == "small"
+#    return 1
         if @viewer.inspection
-          #bindScroll()
+#bindScroll()
           @viewer.active = true
           $('.inspect-stone').css("overflow", "hidden"); #Legacy
           $(document).unbind("mouseup");
@@ -1112,14 +1135,14 @@ class FullInspection extends Viewer
               height: 0,
               width: 0,
               quality: 70
-            ) 
+            )
             #image_source = @viewer.preloader.src @viewer.x, @viewer.y, @viewer.focus
             @initMagnify image_source
 
-          @inactivate_button $(".focus_out") 
+          @inactivate_button $(".focus_out")
           @inactivate_button $(".focus_in")
           @disable_button ".focus_out"
-          @disable_button ".focus_in" 
+          @disable_button ".focus_in"
 
           @activate_button $(".magnify")
 
@@ -1147,7 +1170,7 @@ class window.queryString
       if not result?
         result = __qsImpl.canonicalParams[key.toLowerCase()]
       return result
-  
+
     @count = () ->
       __qsImpl.count
 
@@ -1172,7 +1195,7 @@ class queryStringImpl
     count = 0
     a = /\+/g  #// Regex for replacing addition symbol with a space
     r = /([^&=]+)=?([^&]*)/g
-    d = (s) -> 
+    d = (s) ->
       decodeURIComponent(s.replace(a, " "))
     q = qsPart.substring(1)
 
