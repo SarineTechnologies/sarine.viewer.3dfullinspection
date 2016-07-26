@@ -1,5 +1,5 @@
 ###!
-sarine.viewer.3dfullinspection - v0.38.0 -  Tuesday, July 26th, 2016, 2:06:11 PM 
+sarine.viewer.3dfullinspection - v0.38.0 -  Tuesday, July 26th, 2016, 6:46:53 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 class FullInspection extends Viewer
@@ -816,11 +816,13 @@ class FullInspection extends Viewer
         magnifyInstance = $('#magnify-image')
         closeButton = $('#closeMagnify')
         dashboardContent = dashboardContainer.find('.content')
+        isFlipped = $('.viewport').hasClass('flip')
         if(magnifyImageContainer.length == 0)
           sliderHeight = $('.slider-wrap').last().height()
           magnifyImageContainer = $('<div id="magnify-image-container">')
           magnifyImageContainer.height(sliderHeight)
           magnifyInstance = $('<img id="magnify-image">')
+  
           closeButtonContainer = $('<div id="closeMagnify-container">')
           closeButton = $('<a id="closeMagnify">&times;</a>')
           closeButtonContainer.append closeButton
@@ -835,14 +837,35 @@ class FullInspection extends Viewer
             magnifyImageContainer.attr('class', 'content')
             magnifyImageContainer.css('padding', '0')
             dashboardContainer.append magnifyImageContainer
-            magnifySize = $('#magnify-image-container').height() - 50
+            magnifySize = $('#magnify-image-container').height() - 47
             if(magnifySize < 280)
               magnifySize = 280
             magnifyInstance.css 'width', magnifySize + 'px'
             magnifyInstance.css 'height', magnifySize + 'px'
 
+
+        magnifyInstance.unbind 'cloudzoom_start_zoom'
+        
+        if(isFlipped)
+          magnifyInstance.addClass('flip180')
+          hasRemovedTrasform = false
+          magnifyInstance.bind 'cloudzoom_start_zoom', (=>
+            setTimeout (=>
+              if(!hasRemovedTrasform)
+                magnifyImage = $('.cloudzoom-zoom-inside img')
+                if(magnifyImage.length > 0)
+                  currentStyle = magnifyImage.attr('style')
+                  currentStyle = currentStyle.replace 'transform: translateZ(0px); ', ''
+                  magnifyImage.attr 'style', currentStyle
+                  magnifyImage.attr 'class', 'flip180'
+                  hasRemovedTrasform = true
+            ), 300
+            return
+          )
+
         magnifyInstance.attr 'src', image_source
         @viewer.CloudZoom = new CloudZoom $('#magnify-image'), magnifyOptions
+
         if(widgetContainer.length > 0)
           widgetContainer.hide()
         else if(dashboardContainer.length > 0)
