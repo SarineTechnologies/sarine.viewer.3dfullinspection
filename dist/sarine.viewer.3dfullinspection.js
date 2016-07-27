@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.38.0 -  Tuesday, July 26th, 2016, 2:06:11 PM 
+sarine.viewer.3dfullinspection - v0.38.0 -  Wednesday, July 27th, 2016, 5:00:38 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -51,7 +51,7 @@ sarine.viewer.3dfullinspection - v0.38.0 -  Tuesday, July 26th, 2016, 2:06:11 PM
           src: 'cloudzoom.js'
         });
       } else if (magnifierLibName === 'mglass') {
-        ({
+        this.resources.push({
           element: 'script',
           src: 'mglass.js'
         });
@@ -1246,7 +1246,7 @@ sarine.viewer.3dfullinspection - v0.38.0 -  Tuesday, July 26th, 2016, 2:06:11 PM
       };
 
       UI.prototype.initMagnify = function(image_source) {
-        var closeButton, closeButtonContainer, dashboardContainer, dashboardContent, magnifyImageContainer, magnifyInstance, magnifyOptions, magnifySize, sliderHeight, widgetContainer;
+        var closeButton, closeButtonContainer, dashboardContainer, dashboardContent, isFlipped, magnifyImageContainer, magnifyInstance, magnifyOptions, magnifySize, sliderHeight, widgetContainer;
         if (magnifierLibName === 'mglass') {
           return this.viewer.MGlass = new MGlass('main-canvas', image_source, {
             background: this.viewer.metadata.background,
@@ -1265,6 +1265,7 @@ sarine.viewer.3dfullinspection - v0.38.0 -  Tuesday, July 26th, 2016, 2:06:11 PM
           magnifyInstance = $('#magnify-image');
           closeButton = $('#closeMagnify');
           dashboardContent = dashboardContainer.find('.content');
+          isFlipped = $('.viewport').hasClass('flip');
           if (magnifyImageContainer.length === 0) {
             sliderHeight = $('.slider-wrap').last().height();
             magnifyImageContainer = $('<div id="magnify-image-container">');
@@ -1284,7 +1285,7 @@ sarine.viewer.3dfullinspection - v0.38.0 -  Tuesday, July 26th, 2016, 2:06:11 PM
               magnifyImageContainer.attr('class', 'content');
               magnifyImageContainer.css('padding', '0');
               dashboardContainer.append(magnifyImageContainer);
-              magnifySize = $('#magnify-image-container').height() - 50;
+              magnifySize = $('#magnify-image-container').height() - 47;
               if (magnifySize < 280) {
                 magnifySize = 280;
               }
@@ -1292,6 +1293,33 @@ sarine.viewer.3dfullinspection - v0.38.0 -  Tuesday, July 26th, 2016, 2:06:11 PM
               magnifyInstance.css('height', magnifySize + 'px');
             }
           }
+          magnifyInstance.unbind('cloudzoom_start_zoom');
+          magnifyInstance.removeClass('flip180');
+          if (isFlipped) {
+            magnifyInstance.addClass('flip180');
+          }
+          magnifyInstance.bind('cloudzoom_start_zoom', ((function(_this) {
+            return function() {
+              var hasRemovedTrasform;
+              hasRemovedTrasform = false;
+              setTimeout((function() {
+                var currentStyle, magnifyImage;
+                if (!hasRemovedTrasform) {
+                  magnifyImage = $('.cloudzoom-zoom-inside img');
+                  if (magnifyImage.length > 0) {
+                    magnifyImage.removeClass('flip180');
+                    if (isFlipped) {
+                      currentStyle = magnifyImage.attr('style');
+                      currentStyle = currentStyle.replace('transform: translateZ(0px); ', '');
+                      magnifyImage.attr('style', currentStyle);
+                      magnifyImage.attr('class', 'flip180');
+                      return hasRemovedTrasform = true;
+                    }
+                  }
+                }
+              }), 300);
+            };
+          })(this)));
           magnifyInstance.attr('src', image_source);
           this.viewer.CloudZoom = new CloudZoom($('#magnify-image'), magnifyOptions);
           if (widgetContainer.length > 0) {
@@ -1303,12 +1331,16 @@ sarine.viewer.3dfullinspection - v0.38.0 -  Tuesday, July 26th, 2016, 2:06:11 PM
           closeButton.on('click', ((function(_this) {
             return function() {
               _this.viewer.CloudZoom.closeZoom();
+              _this.viewer.CloudZoom.destroy();
               if (widgetContainer.length > 0) {
                 widgetContainer.show();
               } else if (dashboardContainer.length > 0) {
                 dashboardContent.show();
               }
               magnifyImageContainer.hide();
+              _this.viewer.inspection = false;
+              $('.cloudzoom-zoom-inside').remove();
+              $('.cloudzoom-blank').remove();
             };
           })(this)));
         }
@@ -1649,7 +1681,7 @@ sarine.viewer.3dfullinspection - v0.38.0 -  Tuesday, July 26th, 2016, 2:06:11 PM
               _this.disable_button(".focus_in");
               _this.activate_button($(".magnify"));
             }
-            return _this.viewer.inspection = !_this.viewer.inspection;
+            _this.viewer.inspection = !_this.viewer.inspection;
           };
         })(this));
         if (this.viewer.metadata.initial_zoom === 'small') {

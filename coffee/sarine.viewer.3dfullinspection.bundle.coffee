@@ -1,5 +1,5 @@
 ###!
-sarine.viewer.3dfullinspection - v0.38.0 -  Tuesday, July 26th, 2016, 2:06:11 PM 
+sarine.viewer.3dfullinspection - v0.38.0 -  Wednesday, July 27th, 2016, 5:00:37 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 
@@ -54,7 +54,7 @@ class FullInspection extends Viewer
     if(magnifierLibName == 'cloudzoom')
       @resources.push {element:'script',src:'cloudzoom.js'}
     else if(magnifierLibName == 'mglass')
-      {element:'script',src:'mglass.js'}
+      @resources.push {element:'script',src:'mglass.js'}
       
     super(options)
     {@jsonsrc, @src} = options
@@ -848,11 +848,13 @@ class FullInspection extends Viewer
         magnifyInstance = $('#magnify-image')
         closeButton = $('#closeMagnify')
         dashboardContent = dashboardContainer.find('.content')
+        isFlipped = $('.viewport').hasClass('flip')
         if(magnifyImageContainer.length == 0)
           sliderHeight = $('.slider-wrap').last().height()
           magnifyImageContainer = $('<div id="magnify-image-container">')
           magnifyImageContainer.height(sliderHeight)
           magnifyInstance = $('<img id="magnify-image">')
+  
           closeButtonContainer = $('<div id="closeMagnify-container">')
           closeButton = $('<a id="closeMagnify">&times;</a>')
           closeButtonContainer.append closeButton
@@ -867,14 +869,40 @@ class FullInspection extends Viewer
             magnifyImageContainer.attr('class', 'content')
             magnifyImageContainer.css('padding', '0')
             dashboardContainer.append magnifyImageContainer
-            magnifySize = $('#magnify-image-container').height() - 50
+            magnifySize = $('#magnify-image-container').height() - 47
             if(magnifySize < 280)
               magnifySize = 280
             magnifyInstance.css 'width', magnifySize + 'px'
             magnifyInstance.css 'height', magnifySize + 'px'
 
+
+        magnifyInstance.unbind 'cloudzoom_start_zoom'
+
+        magnifyInstance.removeClass('flip180')
+        if(isFlipped)
+          magnifyInstance.addClass('flip180')
+
+        magnifyInstance.bind 'cloudzoom_start_zoom', (=>
+          hasRemovedTrasform = false
+          setTimeout (=>
+            if(!hasRemovedTrasform)
+              magnifyImage = $('.cloudzoom-zoom-inside img')
+              if(magnifyImage.length > 0)
+                magnifyImage.removeClass 'flip180'
+                if(isFlipped)
+                  currentStyle = magnifyImage.attr('style')
+                  currentStyle = currentStyle.replace 'transform: translateZ(0px); ', ''
+                  magnifyImage.attr 'style', currentStyle
+                  magnifyImage.attr 'class', 'flip180'
+                  hasRemovedTrasform = true
+          ), 300
+          return
+        )
+
+
         magnifyInstance.attr 'src', image_source
         @viewer.CloudZoom = new CloudZoom $('#magnify-image'), magnifyOptions
+
         if(widgetContainer.length > 0)
           widgetContainer.hide()
         else if(dashboardContainer.length > 0)
@@ -884,11 +912,16 @@ class FullInspection extends Viewer
 
         closeButton.on 'click', (=>
           @viewer.CloudZoom.closeZoom()
+          @viewer.CloudZoom.destroy()
           if(widgetContainer.length > 0)
             widgetContainer.show()
           else if(dashboardContainer.length > 0)
             dashboardContent.show()
           magnifyImageContainer.hide()
+          @viewer.inspection = false
+          $('.cloudzoom-zoom-inside').remove()
+          $('.cloudzoom-blank').remove()
+
           return
         )
         return
@@ -1112,9 +1145,7 @@ class FullInspection extends Viewer
         return false
 
       $(".magnify").click =>
-          
-        #if @viewer.mode == "small"
-        #    return 1
+
         if @viewer.inspection
           #bindScroll()
           @viewer.active = true
@@ -1155,8 +1186,8 @@ class FullInspection extends Viewer
 
           @activate_button $(".magnify")
 
-
         @viewer.inspection = !@viewer.inspection
+        return
 
       if @viewer.metadata.initial_zoom == 'small'
         @viewer.zoom_small()
