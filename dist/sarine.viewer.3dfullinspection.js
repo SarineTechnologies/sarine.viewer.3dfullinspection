@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.40.0 -  Tuesday, July 26th, 2016, 2:27:14 PM 
+sarine.viewer.3dfullinspection - v0.41.0 -  Wednesday, July 27th, 2016, 11:33:59 AM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -1246,7 +1246,7 @@ sarine.viewer.3dfullinspection - v0.40.0 -  Tuesday, July 26th, 2016, 2:27:14 PM
       };
 
       UI.prototype.initMagnify = function(image_source) {
-        var closeButton, closeButtonContainer, dashboardContainer, dashboardContent, magnifyImageContainer, magnifyInstance, magnifyOptions, magnifySize, sliderHeight, widgetContainer;
+        var closeButton, closeButtonContainer, dashboardContainer, dashboardContent, hasRemovedTrasform, isFlipped, magnifyImageContainer, magnifyInstance, magnifyOptions, magnifySize, sliderHeight, widgetContainer;
         if (magnifierLibName === 'mglass') {
           return this.viewer.MGlass = new MGlass('main-canvas', image_source, {
             background: this.viewer.metadata.background,
@@ -1265,6 +1265,7 @@ sarine.viewer.3dfullinspection - v0.40.0 -  Tuesday, July 26th, 2016, 2:27:14 PM
           magnifyInstance = $('#magnify-image');
           closeButton = $('#closeMagnify');
           dashboardContent = dashboardContainer.find('.content');
+          isFlipped = $('.viewport').hasClass('flip');
           if (magnifyImageContainer.length === 0) {
             sliderHeight = $('.slider-wrap').last().height();
             magnifyImageContainer = $('<div id="magnify-image-container">');
@@ -1284,13 +1285,35 @@ sarine.viewer.3dfullinspection - v0.40.0 -  Tuesday, July 26th, 2016, 2:27:14 PM
               magnifyImageContainer.attr('class', 'content');
               magnifyImageContainer.css('padding', '0');
               dashboardContainer.append(magnifyImageContainer);
-              magnifySize = $('#magnify-image-container').height() - 50;
+              magnifySize = $('#magnify-image-container').height() - 47;
               if (magnifySize < 280) {
                 magnifySize = 280;
               }
               magnifyInstance.css('width', magnifySize + 'px');
               magnifyInstance.css('height', magnifySize + 'px');
             }
+          }
+          magnifyInstance.unbind('cloudzoom_start_zoom');
+          if (isFlipped) {
+            magnifyInstance.addClass('flip180');
+            hasRemovedTrasform = false;
+            magnifyInstance.bind('cloudzoom_start_zoom', ((function(_this) {
+              return function() {
+                setTimeout((function() {
+                  var currentStyle, magnifyImage;
+                  if (!hasRemovedTrasform) {
+                    magnifyImage = $('.cloudzoom-zoom-inside img');
+                    if (magnifyImage.length > 0) {
+                      currentStyle = magnifyImage.attr('style');
+                      currentStyle = currentStyle.replace('transform: translateZ(0px); ', '');
+                      magnifyImage.attr('style', currentStyle);
+                      magnifyImage.attr('class', 'flip180');
+                      return hasRemovedTrasform = true;
+                    }
+                  }
+                }), 300);
+              };
+            })(this)));
           }
           magnifyInstance.attr('src', image_source);
           this.viewer.CloudZoom = new CloudZoom($('#magnify-image'), magnifyOptions);
