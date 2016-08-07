@@ -1,17 +1,18 @@
 ###!
-sarine.viewer.3dfullinspection - v0.43.0 -  Wednesday, July 27th, 2016, 5:21:48 PM 
+sarine.viewer.3dfullinspection - v0.43.0 -  Sunday, August 7th, 2016, 4:22:23 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 class FullInspection extends Viewer
   isLocal = false
   qs = undefined
   magnifierLibName = null
-
+  
   constructor: (options) -> 
     qs = new queryString()
     isLocal = qs.getValue("isLocal") == "true" 
     @resourcesPrefix = options.baseUrl + "atomic/v1/assets/"
     @setMagnifierLibName()
+    @cdn_subdomains = options.cdn_subdomains || [];
     @resources = [
       {element:'script',src:'jquery-ui.js'},
       {element:'script',src:'jquery.ui.ipad.altfix.js'},
@@ -25,7 +26,10 @@ class FullInspection extends Viewer
       @resources.push {element:'script',src:'mglass.js'}
       
     super(options)
-    {@jsonsrc, @src} = options
+    {@jsonsrc} = options
+    
+    if(@cdn_subdomains.length && window.location.pathname.indexOf('/bucket') is -1)
+      @src = options.src.replace("://", "://" + @cdn_subdomains[0] + ".")
 
   isSupportedMagnifier: (libName) ->
     return [ 'mglass', 'cloudzoom' ].filter((libItem)->
@@ -91,7 +95,7 @@ class FullInspection extends Viewer
     @full_init_defer = $.Deferred()
     stone = ""
     start = (metadata) =>
-      @viewerBI =  new ViewerBI(first_init: @first_init_defer, full_init:@full_init_defer, src:@src, x: 0, y: metadata.vertical_angles.indexOf(90), stone: stone, friendlyName: "temp", cdn_subdomain: false, metadata: metadata, debug: false, resourcesPrefix : @resourcesPrefix)
+      @viewerBI =  new ViewerBI(first_init: @first_init_defer, full_init:@full_init_defer, src:@src, x: 0, y: metadata.vertical_angles.indexOf(90), stone: stone, friendlyName: "temp", cdn_subdomains: @cdn_subdomains, metadata: metadata, debug: false, resourcesPrefix : @resourcesPrefix)
       @UIlogic = new UI(@viewerBI, auto_play: true)
       @UIlogic.go()
 
@@ -142,16 +146,10 @@ class FullInspection extends Viewer
     @full_init_defer.resolve(@) unless @viewerBI
     return @full_init_defer unless @viewerBI
 
-    @viewerBI.preloader.go() if(@element.attr("active")=="true")
-
-    setInterval(=>
-      if(@element.attr("active") == "true")
-        @viewerBI.preloader.go()
-        @viewerBI.show(true)
-      else
-        @viewerBI.preloader.clear_queue()
-
-    ,500) unless @element.attr("active")==undefined
+    if(@element.attr("active") isnt undefined)
+      @viewerBI.preloader.go()
+      @viewerBI.show(true)
+    
     @full_init_defer
   nextImage : ()->
     console.log "FullInspection: nextImage"
@@ -301,10 +299,10 @@ class FullInspection extends Viewer
       @images = {}
       @totals = {}
       @stone = options.stone
-      @cdn_subdomain = options.cdn_subdomain && window.location.protocol == 'http:' && !config.local
+      @cdn_subdomains = options.cdn_subdomains
       @density = options.density || 1
       @fetchTimer
-
+      
     cache_key: ->
       @trans
 
@@ -333,6 +331,10 @@ class FullInspection extends Viewer
           for focus in @metadata.supported_focus_indexes(x, y)
             continue if @has(x, y, focus)
             src = @src(x, y, focus)
+            
+            if (@cdn_subdomains.length && window.location.pathname.indexOf('/bucket') is -1)
+              src = src.replace(/\/[^.]*/, '//' + @cdn_subdomains[((x + y) % @cdn_subdomains.length)])
+              
             shard = "all"
             @queue[shard].push
               src: src
@@ -342,9 +344,8 @@ class FullInspection extends Viewer
               trans: @trans
               version: @version
       @prioritize()
-      for i in [0..2]
-        for shard, queue of @queue
-          @preload(queue)
+      for shard, queue of @queue
+        @preload(queue)
     circle_distance: (x1, x2, size) ->
       Math.min((x1 - x2 + size) % size, (x2 - x1 + size) % size)
     prioritize: ->
@@ -373,8 +374,10 @@ class FullInspection extends Viewer
         if @version == version
           @loaded++ if was_new
           @callback(trans, x, y, focus, src)
-          @preload(queue) if queue?
-      img.onerror = img.onload
+      if queue
+        @preload(queue)
+      else 
+        img.onerror = img.onload
 
     total: ->
       @totals[@cache_key()] 
@@ -395,7 +398,7 @@ class FullInspection extends Viewer
         format: "jpg"
         quality: trans.quality ? config.image_quality,
         height:  trans.height ? config.image_size
-
+       
       if !isLocal
         @dest + "/" +  attrs.height + "_" + attrs.quality + "/img_" + @metadata.image_name(x, y, focus)+ ".jpg"
       else
