@@ -1,11 +1,13 @@
 ###!
-sarine.viewer.3dfullinspection - v0.43.0 -  Sunday, August 7th, 2016, 4:22:23 PM 
+sarine.viewer.3dfullinspection - v0.43.0 -  Wednesday, August 10th, 2016, 2:24:48 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 class FullInspection extends Viewer
   isLocal = false
   qs = undefined
   magnifierLibName = null
+  isBucket = window.location.pathname.indexOf('/bucket') isnt -1
+  reqsPerHostAllowed = 6; # Requests per Hostname
   
   constructor: (options) -> 
     qs = new queryString()
@@ -26,9 +28,9 @@ class FullInspection extends Viewer
       @resources.push {element:'script',src:'mglass.js'}
       
     super(options)
-    {@jsonsrc} = options
+    {@jsonsrc, @src} = options
     
-    if(@cdn_subdomains.length && window.location.pathname.indexOf('/bucket') is -1)
+    if(@cdn_subdomains.length && !isBucket && !isLocal) 
       @src = options.src.replace("://", "://" + @cdn_subdomains[0] + ".")
 
   isSupportedMagnifier: (libName) ->
@@ -295,13 +297,17 @@ class FullInspection extends Viewer
     constructor: (@callback, @widget, @metadata, options) ->
       @version = 0
       @dest = options.src
-      @clear_queue()
+      @clear_queue() 
       @images = {}
       @totals = {}
       @stone = options.stone
       @cdn_subdomains = options.cdn_subdomains
       @density = options.density || 1
       @fetchTimer
+      @shard_imgs_loaded = @cdn_subdomains.reduce(((o, v, i) ->
+        o[v] = 0
+        o
+      ), {})
       
     cache_key: ->
       @trans
@@ -321,8 +327,6 @@ class FullInspection extends Viewer
       @version++
       @loaded = 0
       @queue = {}
-      @queue["all"] = []
-
 
     go: ->
       # Fill queue
@@ -330,12 +334,17 @@ class FullInspection extends Viewer
         for y in [0..@metadata.flip_from_y - 1]
           for focus in @metadata.supported_focus_indexes(x, y)
             continue if @has(x, y, focus)
+            
+            shard = "all"            
             src = @src(x, y, focus)
             
-            if (@cdn_subdomains.length && window.location.pathname.indexOf('/bucket') is -1)
-              src = src.replace(/\/[^.]*/, '//' + @cdn_subdomains[((x + y) % @cdn_subdomains.length)])
-              
-            shard = "all"
+            if (@cdn_subdomains.length && !isBucket && !isLocal)
+              shard = @cdn_subdomains[(x + y) % @cdn_subdomains.length]; 
+              src = @replace_subdomain(src, shard)
+            
+            if (!@queue[shard])
+              @queue[shard] = []
+            
             @queue[shard].push
               src: src
               x: x
@@ -344,8 +353,11 @@ class FullInspection extends Viewer
               trans: @trans
               version: @version
       @prioritize()
-      for shard, queue of @queue
-        @preload(queue)
+      @preload(@queue)
+    
+    replace_subdomain: (src, subdomain) ->
+      src.replace(/\/[^.]*/, '//' + subdomain)
+    
     circle_distance: (x1, x2, size) ->
       Math.min((x1 - x2 + size) % size, (x2 - x1 + size) % size)
     prioritize: ->
@@ -360,7 +372,7 @@ class FullInspection extends Viewer
         queue.sort (a, b) ->
           b.priority - a.priority
 
-    load_image: (x, y, focus, src, queue) ->
+    load_image: (x, y, focus, src, queue, shard) ->
       # In case it will change by the time the image is loaded
       cache_key = @cache_key()
       trans = @trans
@@ -374,19 +386,34 @@ class FullInspection extends Viewer
         if @version == version
           @loaded++ if was_new
           @callback(trans, x, y, focus, src)
-      if queue
-        @preload(queue)
-      else 
-        img.onerror = img.onload
+          ++@shard_imgs_loaded[shard]
+          if !shard || @shard_imgs_loaded[shard] >= reqsPerHostAllowed
+            @preload(queue, shard)            
+      img.onerror = img.onload
 
     total: ->
       @totals[@cache_key()] 
 
-    preload: (queue) ->
-      return if queue.length == 0
-      entry = queue.pop()
-      @load_image(entry.x, entry.y, entry.focus, entry.src, queue)
+    load_img_shard: (queue, shard) ->
+      r = 0
+      while r < reqsPerHostAllowed
+        entry = queue[shard].pop()
+        if entry
+          @load_image(entry.x, entry.y, entry.focus, entry.src, queue, shard)
+        ++r  
 
+    preload: (queue, shard) ->
+      return if !queue || queue.length == 0
+      if shard && @shard_imgs_loaded[shard] >= reqsPerHostAllowed
+        @shard_imgs_loaded[shard] = 0;
+        
+      if !shard
+        for shard of queue
+          @load_img_shard(queue, shard)  
+      else if @shard_imgs_loaded[shard] is 0
+        @load_img_shard(queue, shard) 
+      return
+      
     has: (x, y, focus) ->
       focus ?= @metadata.default_focus(x, y)
       @images[@cache_key()][@metadata.image_name(x, y, focus)] == true 
@@ -477,6 +504,10 @@ class FullInspection extends Viewer
         className = @widget[0].className
         @widget.removeClass('sprite')
         imageChanged = ($('#main-image').attr('src') != src)
+        
+        if @preloader.cdn_subdomains.length && !isBucket && !isLocal
+          src = @preloader.replace_subdomain(src, @preloader.cdn_subdomains[(x + y) % @preloader.cdn_subdomains.length])
+        
         if imageChanged || className != @widget[0].className 
           $('#main-image').attr(src: src)
           $('#main-image')[0].onload = (img)->
