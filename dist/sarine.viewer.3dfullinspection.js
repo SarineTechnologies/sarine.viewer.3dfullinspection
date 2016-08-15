@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.43.0 -  Wednesday, August 10th, 2016, 2:24:48 PM 
+sarine.viewer.3dfullinspection - v0.43.0 -  Sunday, August 14th, 2016, 6:39:39 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -64,7 +64,7 @@ sarine.viewer.3dfullinspection - v0.43.0 -  Wednesday, August 10th, 2016, 2:24:4
       FullInspection.__super__.constructor.call(this, options);
       this.jsonsrc = options.jsonsrc, this.src = options.src;
       if (this.cdn_subdomains.length && !isBucket && !isLocal) {
-        this.src = options.src.replace("://", "://" + this.cdn_subdomains[0] + ".");
+        this.src = options.src.replace(/\/[^.]*/, '//' + this.cdn_subdomains[0]);
       }
     }
 
