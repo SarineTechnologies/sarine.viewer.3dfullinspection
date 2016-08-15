@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.43.0 -  Sunday, August 14th, 2016, 6:39:38 PM 
+sarine.viewer.3dfullinspection - v0.38.0 -  Monday, July 25th, 2016, 1:12:13 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -72,7 +72,7 @@ sarine.viewer.3dfullinspection - v0.43.0 -  Sunday, August 14th, 2016, 6:39:38 P
   this.Viewer = Viewer;
 
   FullInspection = (function(_super) {
-    var Metadata, Preloader, STRIDE_X, UI, ViewerBI, config, isBucket, isLocal, magnifierLibName, qs, reqsPerHostAllowed;
+    var Metadata, Preloader, STRIDE_X, UI, ViewerBI, config, isLocal, magnifierLibName, qs;
 
     __extends(FullInspection, _super);
 
@@ -81,10 +81,6 @@ sarine.viewer.3dfullinspection - v0.43.0 -  Sunday, August 14th, 2016, 6:39:38 P
     qs = void 0;
 
     magnifierLibName = null;
-
-    isBucket = window.location.pathname.indexOf('/bucket') !== -1;
-
-    reqsPerHostAllowed = 6;
 
     function FullInspection(options) {
       this.full_init = __bind(this.full_init, this);
@@ -95,7 +91,6 @@ sarine.viewer.3dfullinspection - v0.43.0 -  Sunday, August 14th, 2016, 6:39:38 P
       isLocal = qs.getValue("isLocal") === "true";
       this.resourcesPrefix = options.baseUrl + "atomic/v1/assets/";
       this.setMagnifierLibName();
-      this.cdn_subdomains = options.cdn_subdomains || [];
       this.resources = [
         {
           element: 'script',
@@ -117,16 +112,13 @@ sarine.viewer.3dfullinspection - v0.43.0 -  Sunday, August 14th, 2016, 6:39:38 P
           src: 'cloudzoom.js'
         });
       } else if (magnifierLibName === 'mglass') {
-        this.resources.push({
+        ({
           element: 'script',
           src: 'mglass.js'
         });
       }
       FullInspection.__super__.constructor.call(this, options);
       this.jsonsrc = options.jsonsrc, this.src = options.src;
-      if (this.cdn_subdomains.length && !isBucket && !isLocal) {
-        this.src = options.src.replace(/\/[^.]*/, '//' + this.cdn_subdomains[0]);
-      }
     }
 
     FullInspection.prototype.isSupportedMagnifier = function(libName) {
@@ -224,7 +216,7 @@ sarine.viewer.3dfullinspection - v0.43.0 -  Sunday, August 14th, 2016, 6:39:38 P
             y: metadata.vertical_angles.indexOf(90),
             stone: stone,
             friendlyName: "temp",
-            cdn_subdomains: _this.cdn_subdomains,
+            cdn_subdomain: false,
             metadata: metadata,
             debug: false,
             resourcesPrefix: _this.resourcesPrefix
@@ -291,9 +283,20 @@ sarine.viewer.3dfullinspection - v0.43.0 -  Sunday, August 14th, 2016, 6:39:38 P
       if (!this.viewerBI) {
         return this.full_init_defer;
       }
-      if (this.element.attr("active") !== void 0) {
+      if (this.element.attr("active") === "true") {
         this.viewerBI.preloader.go();
-        this.viewerBI.show(true);
+      }
+      if (this.element.attr("active") !== void 0) {
+        setInterval((function(_this) {
+          return function() {
+            if (_this.element.attr("active") === "true") {
+              _this.viewerBI.preloader.go();
+              return _this.viewerBI.show(true);
+            } else {
+              return _this.viewerBI.preloader.clear_queue();
+            }
+          };
+        })(this), 500);
       }
       return this.full_init_defer;
     };
@@ -535,13 +538,9 @@ sarine.viewer.3dfullinspection - v0.43.0 -  Sunday, August 14th, 2016, 6:39:38 P
         this.images = {};
         this.totals = {};
         this.stone = options.stone;
-        this.cdn_subdomains = options.cdn_subdomains;
+        this.cdn_subdomain = options.cdn_subdomain && window.location.protocol === 'http:' && !config.local;
         this.density = options.density || 1;
         this.fetchTimer;
-        this.shard_imgs_loaded = this.cdn_subdomains.reduce((function(o, v, i) {
-          o[v] = 0;
-          return o;
-        }), {});
       }
 
       Preloader.prototype.cache_key = function() {
@@ -574,11 +573,12 @@ sarine.viewer.3dfullinspection - v0.43.0 -  Sunday, August 14th, 2016, 6:39:38 P
       Preloader.prototype.clear_queue = function() {
         this.version++;
         this.loaded = 0;
-        return this.queue = {};
+        this.queue = {};
+        return this.queue["all"] = [];
       };
 
       Preloader.prototype.go = function() {
-        var focus, shard, src, x, y, _i, _j, _k, _len, _ref, _ref1, _ref2;
+        var focus, i, queue, shard, src, x, y, _i, _j, _k, _l, _len, _ref, _ref1, _ref2, _results;
         for (x = _i = 0, _ref = this.metadata.size_x - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; x = 0 <= _ref ? ++_i : --_i) {
           for (y = _j = 0, _ref1 = this.metadata.flip_from_y - 1; 0 <= _ref1 ? _j <= _ref1 : _j >= _ref1; y = 0 <= _ref1 ? ++_j : --_j) {
             _ref2 = this.metadata.supported_focus_indexes(x, y);
@@ -587,15 +587,8 @@ sarine.viewer.3dfullinspection - v0.43.0 -  Sunday, August 14th, 2016, 6:39:38 P
               if (this.has(x, y, focus)) {
                 continue;
               }
-              shard = "all";
               src = this.src(x, y, focus);
-              if (this.cdn_subdomains.length && !isBucket && !isLocal) {
-                shard = this.cdn_subdomains[(x + y) % this.cdn_subdomains.length];
-                src = this.replace_subdomain(src, shard);
-              }
-              if (!this.queue[shard]) {
-                this.queue[shard] = [];
-              }
+              shard = "all";
               this.queue[shard].push({
                 src: src,
                 x: x,
@@ -608,11 +601,20 @@ sarine.viewer.3dfullinspection - v0.43.0 -  Sunday, August 14th, 2016, 6:39:38 P
           }
         }
         this.prioritize();
-        return this.preload(this.queue);
-      };
-
-      Preloader.prototype.replace_subdomain = function(src, subdomain) {
-        return src.replace(/\/[^.]*/, '//' + subdomain);
+        _results = [];
+        for (i = _l = 0; _l <= 2; i = ++_l) {
+          _results.push((function() {
+            var _ref3, _results1;
+            _ref3 = this.queue;
+            _results1 = [];
+            for (shard in _ref3) {
+              queue = _ref3[shard];
+              _results1.push(this.preload(queue));
+            }
+            return _results1;
+          }).call(this));
+        }
+        return _results;
       };
 
       Preloader.prototype.circle_distance = function(x1, x2, size) {
@@ -640,7 +642,7 @@ sarine.viewer.3dfullinspection - v0.43.0 -  Sunday, August 14th, 2016, 6:39:38 P
         return _results;
       };
 
-      Preloader.prototype.load_image = function(x, y, focus, src, queue, shard) {
+      Preloader.prototype.load_image = function(x, y, focus, src, queue) {
         var cache_key, img, trans, version;
         cache_key = this.cache_key();
         trans = this.trans;
@@ -658,9 +660,8 @@ sarine.viewer.3dfullinspection - v0.43.0 -  Sunday, August 14th, 2016, 6:39:38 P
                 _this.loaded++;
               }
               _this.callback(trans, x, y, focus, src);
-              ++_this.shard_imgs_loaded[shard];
-              if (!shard || _this.shard_imgs_loaded[shard] >= reqsPerHostAllowed) {
-                return _this.preload(queue, shard);
+              if (queue != null) {
+                return _this.preload(queue);
               }
             }
           };
@@ -672,34 +673,13 @@ sarine.viewer.3dfullinspection - v0.43.0 -  Sunday, August 14th, 2016, 6:39:38 P
         return this.totals[this.cache_key()];
       };
 
-      Preloader.prototype.load_img_shard = function(queue, shard) {
-        var entry, r, _results;
-        r = 0;
-        _results = [];
-        while (r < reqsPerHostAllowed) {
-          entry = queue[shard].pop();
-          if (entry) {
-            this.load_image(entry.x, entry.y, entry.focus, entry.src, queue, shard);
-          }
-          _results.push(++r);
-        }
-        return _results;
-      };
-
-      Preloader.prototype.preload = function(queue, shard) {
-        if (!queue || queue.length === 0) {
+      Preloader.prototype.preload = function(queue) {
+        var entry;
+        if (queue.length === 0) {
           return;
         }
-        if (shard && this.shard_imgs_loaded[shard] >= reqsPerHostAllowed) {
-          this.shard_imgs_loaded[shard] = 0;
-        }
-        if (!shard) {
-          for (shard in queue) {
-            this.load_img_shard(queue, shard);
-          }
-        } else if (this.shard_imgs_loaded[shard] === 0) {
-          this.load_img_shard(queue, shard);
-        }
+        entry = queue.pop();
+        return this.load_image(entry.x, entry.y, entry.focus, entry.src, queue);
       };
 
       Preloader.prototype.has = function(x, y, focus) {
@@ -822,9 +802,6 @@ sarine.viewer.3dfullinspection - v0.43.0 -  Sunday, August 14th, 2016, 6:39:38 P
           className = this.widget[0].className;
           this.widget.removeClass('sprite');
           imageChanged = $('#main-image').attr('src') !== src;
-          if (this.preloader.cdn_subdomains.length && !isBucket && !isLocal) {
-            src = this.preloader.replace_subdomain(src, this.preloader.cdn_subdomains[(x + y) % this.preloader.cdn_subdomains.length]);
-          }
           if (imageChanged || className !== this.widget[0].className) {
             $('#main-image').attr({
               src: src
@@ -1330,7 +1307,7 @@ sarine.viewer.3dfullinspection - v0.43.0 -  Sunday, August 14th, 2016, 6:39:38 P
       };
 
       UI.prototype.initMagnify = function(image_source) {
-        var closeButton, closeButtonContainer, dashboardContainer, dashboardContent, isFlipped, magnifyImageContainer, magnifyInstance, magnifyOptions, magnifySize, sliderHeight, widgetContainer;
+        var closeButton, magnifyImageContainer, magnifyInstance, magnifyOptions, sliderHeight, sliderWrap;
         if (magnifierLibName === 'mglass') {
           return this.viewer.MGlass = new MGlass('main-canvas', image_source, {
             background: this.viewer.metadata.background,
@@ -1341,90 +1318,33 @@ sarine.viewer.3dfullinspection - v0.43.0 -  Sunday, August 14th, 2016, 6:39:38 P
             zoomImage: image_source,
             zoomPosition: 'inside',
             autoInside: true,
-            permaZoom: true
+            permaZoom: true,
+            zoomOffsetX: 0
           };
-          widgetContainer = $(".slider-wrap");
-          dashboardContainer = $('.slide--loupe3d');
+          sliderWrap = $(".slider-wrap");
           magnifyImageContainer = $('#magnify-image-container');
           magnifyInstance = $('#magnify-image');
           closeButton = $('#closeMagnify');
-          dashboardContent = dashboardContainer.find('.content');
-          isFlipped = $('.viewport').hasClass('flip');
           if (magnifyImageContainer.length === 0) {
             sliderHeight = $('.slider-wrap').last().height();
-            magnifyImageContainer = $('<div id="magnify-image-container">');
+            magnifyImageContainer = $('<div id="magnify-image-container" class="slider-wrap">');
             magnifyImageContainer.height(sliderHeight);
             magnifyInstance = $('<img id="magnify-image">');
-            closeButtonContainer = $('<div id="closeMagnify-container">');
-            closeButton = $('<a id="closeMagnify">&times;</a>');
-            closeButtonContainer.append(closeButton);
-            magnifyImageContainer.append(closeButtonContainer);
-            magnifyImageContainer.append(magnifyInstance);
             magnifyInstance.css('width', '100%');
-            if (widgetContainer.length === 1) {
-              magnifyImageContainer.attr('class', 'slider-wrap');
-              widgetContainer.before(magnifyImageContainer);
-            } else if (dashboardContainer.length === 1) {
-              magnifyInstance.css('margin', '0px 0px 0px 7px');
-              magnifyImageContainer.attr('class', 'content');
-              magnifyImageContainer.css('padding', '0');
-              dashboardContainer.append(magnifyImageContainer);
-              magnifySize = $('#magnify-image-container').height() - 47;
-              if (magnifySize < 280) {
-                magnifySize = 280;
-              }
-              magnifyInstance.css('width', magnifySize + 'px');
-              magnifyInstance.css('height', magnifySize + 'px');
-            }
+            closeButton = $('<a id="closeMagnify">&times;</a>');
+            magnifyImageContainer.append(closeButton);
+            magnifyImageContainer.append(magnifyInstance);
+            sliderWrap.before(magnifyImageContainer);
           }
-          magnifyInstance.unbind('cloudzoom_start_zoom');
-          magnifyInstance.removeClass('flip180');
-          if (isFlipped) {
-            magnifyInstance.addClass('flip180');
-          }
-          magnifyInstance.bind('cloudzoom_start_zoom', ((function(_this) {
-            return function() {
-              var hasRemovedTrasform;
-              hasRemovedTrasform = false;
-              setTimeout((function() {
-                var currentStyle, magnifyImage;
-                if (!hasRemovedTrasform) {
-                  magnifyImage = $('.cloudzoom-zoom-inside img');
-                  if (magnifyImage.length > 0) {
-                    magnifyImage.removeClass('flip180');
-                    if (isFlipped) {
-                      currentStyle = magnifyImage.attr('style');
-                      currentStyle = currentStyle.replace('transform: translateZ(0px); ', '');
-                      magnifyImage.attr('style', currentStyle);
-                      magnifyImage.attr('class', 'flip180');
-                      return hasRemovedTrasform = true;
-                    }
-                  }
-                }
-              }), 300);
-            };
-          })(this)));
           magnifyInstance.attr('src', image_source);
           this.viewer.CloudZoom = new CloudZoom($('#magnify-image'), magnifyOptions);
-          if (widgetContainer.length > 0) {
-            widgetContainer.hide();
-          } else if (dashboardContainer.length > 0) {
-            dashboardContent.hide();
-          }
-          magnifyImageContainer.show();
+          sliderWrap.css('display', 'none');
+          magnifyImageContainer.css('display', 'block');
           closeButton.on('click', ((function(_this) {
             return function() {
               _this.viewer.CloudZoom.closeZoom();
-              _this.viewer.CloudZoom.destroy();
-              if (widgetContainer.length > 0) {
-                widgetContainer.show();
-              } else if (dashboardContainer.length > 0) {
-                dashboardContent.show();
-              }
-              magnifyImageContainer.hide();
-              _this.viewer.inspection = false;
-              $('.cloudzoom-zoom-inside').remove();
-              $('.cloudzoom-blank').remove();
+              sliderWrap.css('display', 'block');
+              magnifyImageContainer.css('display', 'none');
             };
           })(this)));
         }
@@ -1765,7 +1685,7 @@ sarine.viewer.3dfullinspection - v0.43.0 -  Sunday, August 14th, 2016, 6:39:38 P
               _this.disable_button(".focus_in");
               _this.activate_button($(".magnify"));
             }
-            _this.viewer.inspection = !_this.viewer.inspection;
+            return _this.viewer.inspection = !_this.viewer.inspection;
           };
         })(this));
         if (this.viewer.metadata.initial_zoom === 'small') {

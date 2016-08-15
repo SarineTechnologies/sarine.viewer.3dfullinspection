@@ -1,20 +1,17 @@
 ###!
-sarine.viewer.3dfullinspection - v0.43.0 -  Sunday, August 14th, 2016, 6:39:39 PM 
+sarine.viewer.3dfullinspection - v0.38.0 -  Monday, July 25th, 2016, 1:12:13 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 class FullInspection extends Viewer
   isLocal = false
   qs = undefined
   magnifierLibName = null
-  isBucket = window.location.pathname.indexOf('/bucket') isnt -1
-  reqsPerHostAllowed = 6; # Requests per Hostname
-  
+
   constructor: (options) -> 
     qs = new queryString()
     isLocal = qs.getValue("isLocal") == "true" 
     @resourcesPrefix = options.baseUrl + "atomic/v1/assets/"
     @setMagnifierLibName()
-    @cdn_subdomains = options.cdn_subdomains || [];
     @resources = [
       {element:'script',src:'jquery-ui.js'},
       {element:'script',src:'jquery.ui.ipad.altfix.js'},
@@ -25,13 +22,10 @@ class FullInspection extends Viewer
     if(magnifierLibName == 'cloudzoom')
       @resources.push {element:'script',src:'cloudzoom.js'}
     else if(magnifierLibName == 'mglass')
-      @resources.push {element:'script',src:'mglass.js'}
+      {element:'script',src:'mglass.js'}
       
     super(options)
     {@jsonsrc, @src} = options
-    
-    if(@cdn_subdomains.length && !isBucket && !isLocal) 
-      @src = options.src.replace(/\/[^.]*/, '//' + @cdn_subdomains[0])
 
   isSupportedMagnifier: (libName) ->
     return [ 'mglass', 'cloudzoom' ].filter((libItem)->
@@ -97,7 +91,7 @@ class FullInspection extends Viewer
     @full_init_defer = $.Deferred()
     stone = ""
     start = (metadata) =>
-      @viewerBI =  new ViewerBI(first_init: @first_init_defer, full_init:@full_init_defer, src:@src, x: 0, y: metadata.vertical_angles.indexOf(90), stone: stone, friendlyName: "temp", cdn_subdomains: @cdn_subdomains, metadata: metadata, debug: false, resourcesPrefix : @resourcesPrefix)
+      @viewerBI =  new ViewerBI(first_init: @first_init_defer, full_init:@full_init_defer, src:@src, x: 0, y: metadata.vertical_angles.indexOf(90), stone: stone, friendlyName: "temp", cdn_subdomain: false, metadata: metadata, debug: false, resourcesPrefix : @resourcesPrefix)
       @UIlogic = new UI(@viewerBI, auto_play: true)
       @UIlogic.go()
 
@@ -148,10 +142,16 @@ class FullInspection extends Viewer
     @full_init_defer.resolve(@) unless @viewerBI
     return @full_init_defer unless @viewerBI
 
-    if(@element.attr("active") isnt undefined)
-      @viewerBI.preloader.go()
-      @viewerBI.show(true)
-    
+    @viewerBI.preloader.go() if(@element.attr("active")=="true")
+
+    setInterval(=>
+      if(@element.attr("active") == "true")
+        @viewerBI.preloader.go()
+        @viewerBI.show(true)
+      else
+        @viewerBI.preloader.clear_queue()
+
+    ,500) unless @element.attr("active")==undefined
     @full_init_defer
   nextImage : ()->
     console.log "FullInspection: nextImage"
@@ -297,18 +297,14 @@ class FullInspection extends Viewer
     constructor: (@callback, @widget, @metadata, options) ->
       @version = 0
       @dest = options.src
-      @clear_queue() 
+      @clear_queue()
       @images = {}
       @totals = {}
       @stone = options.stone
-      @cdn_subdomains = options.cdn_subdomains
+      @cdn_subdomain = options.cdn_subdomain && window.location.protocol == 'http:' && !config.local
       @density = options.density || 1
       @fetchTimer
-      @shard_imgs_loaded = @cdn_subdomains.reduce(((o, v, i) ->
-        o[v] = 0
-        o
-      ), {})
-      
+
     cache_key: ->
       @trans
 
@@ -327,6 +323,8 @@ class FullInspection extends Viewer
       @version++
       @loaded = 0
       @queue = {}
+      @queue["all"] = []
+
 
     go: ->
       # Fill queue
@@ -334,17 +332,8 @@ class FullInspection extends Viewer
         for y in [0..@metadata.flip_from_y - 1]
           for focus in @metadata.supported_focus_indexes(x, y)
             continue if @has(x, y, focus)
-            
-            shard = "all"            
             src = @src(x, y, focus)
-            
-            if (@cdn_subdomains.length && !isBucket && !isLocal)
-              shard = @cdn_subdomains[(x + y) % @cdn_subdomains.length]; 
-              src = @replace_subdomain(src, shard)
-            
-            if (!@queue[shard])
-              @queue[shard] = []
-            
+            shard = "all"
             @queue[shard].push
               src: src
               x: x
@@ -353,11 +342,9 @@ class FullInspection extends Viewer
               trans: @trans
               version: @version
       @prioritize()
-      @preload(@queue)
-    
-    replace_subdomain: (src, subdomain) ->
-      src.replace(/\/[^.]*/, '//' + subdomain)
-    
+      for i in [0..2]
+        for shard, queue of @queue
+          @preload(queue)
     circle_distance: (x1, x2, size) ->
       Math.min((x1 - x2 + size) % size, (x2 - x1 + size) % size)
     prioritize: ->
@@ -372,7 +359,7 @@ class FullInspection extends Viewer
         queue.sort (a, b) ->
           b.priority - a.priority
 
-    load_image: (x, y, focus, src, queue, shard) ->
+    load_image: (x, y, focus, src, queue) ->
       # In case it will change by the time the image is loaded
       cache_key = @cache_key()
       trans = @trans
@@ -386,34 +373,17 @@ class FullInspection extends Viewer
         if @version == version
           @loaded++ if was_new
           @callback(trans, x, y, focus, src)
-          ++@shard_imgs_loaded[shard]
-          if !shard || @shard_imgs_loaded[shard] >= reqsPerHostAllowed
-            @preload(queue, shard)            
+          @preload(queue) if queue?
       img.onerror = img.onload
 
     total: ->
       @totals[@cache_key()] 
 
-    load_img_shard: (queue, shard) ->
-      r = 0
-      while r < reqsPerHostAllowed
-        entry = queue[shard].pop()
-        if entry
-          @load_image(entry.x, entry.y, entry.focus, entry.src, queue, shard)
-        ++r  
+    preload: (queue) ->
+      return if queue.length == 0
+      entry = queue.pop()
+      @load_image(entry.x, entry.y, entry.focus, entry.src, queue)
 
-    preload: (queue, shard) ->
-      return if !queue || queue.length == 0
-      if shard && @shard_imgs_loaded[shard] >= reqsPerHostAllowed
-        @shard_imgs_loaded[shard] = 0;
-        
-      if !shard
-        for shard of queue
-          @load_img_shard(queue, shard)  
-      else if @shard_imgs_loaded[shard] is 0
-        @load_img_shard(queue, shard) 
-      return
-      
     has: (x, y, focus) ->
       focus ?= @metadata.default_focus(x, y)
       @images[@cache_key()][@metadata.image_name(x, y, focus)] == true 
@@ -425,7 +395,7 @@ class FullInspection extends Viewer
         format: "jpg"
         quality: trans.quality ? config.image_quality,
         height:  trans.height ? config.image_size
-       
+
       if !isLocal
         @dest + "/" +  attrs.height + "_" + attrs.quality + "/img_" + @metadata.image_name(x, y, focus)+ ".jpg"
       else
@@ -504,10 +474,6 @@ class FullInspection extends Viewer
         className = @widget[0].className
         @widget.removeClass('sprite')
         imageChanged = ($('#main-image').attr('src') != src)
-        
-        if @preloader.cdn_subdomains.length && !isBucket && !isLocal
-          src = @preloader.replace_subdomain(src, @preloader.cdn_subdomains[(x + y) % @preloader.cdn_subdomains.length])
-        
         if imageChanged || className != @widget[0].className 
           $('#main-image').attr(src: src)
           $('#main-image')[0].onload = (img)->
@@ -841,89 +807,35 @@ class FullInspection extends Viewer
           zoomImage: image_source,
           zoomPosition: 'inside',
           autoInside: true,
-          permaZoom: true
+          permaZoom: true,
+          zoomOffsetX: 0
         }
 
-        widgetContainer = $(".slider-wrap")
-        dashboardContainer = $('.slide--loupe3d')
+        sliderWrap = $(".slider-wrap")
         magnifyImageContainer = $('#magnify-image-container')
         magnifyInstance = $('#magnify-image')
         closeButton = $('#closeMagnify')
-        dashboardContent = dashboardContainer.find('.content')
-        isFlipped = $('.viewport').hasClass('flip')
         if(magnifyImageContainer.length == 0)
           sliderHeight = $('.slider-wrap').last().height()
-          magnifyImageContainer = $('<div id="magnify-image-container">')
+          magnifyImageContainer = $('<div id="magnify-image-container" class="slider-wrap">')
           magnifyImageContainer.height(sliderHeight)
           magnifyInstance = $('<img id="magnify-image">')
-  
-          closeButtonContainer = $('<div id="closeMagnify-container">')
-          closeButton = $('<a id="closeMagnify">&times;</a>')
-          closeButtonContainer.append closeButton
-          magnifyImageContainer.append closeButtonContainer
-          magnifyImageContainer.append magnifyInstance
           magnifyInstance.css 'width', '100%'
-          if(widgetContainer.length == 1)
-            magnifyImageContainer.attr('class', 'slider-wrap')
-            widgetContainer.before magnifyImageContainer
-          else if(dashboardContainer.length == 1)
-            magnifyInstance.css('margin', '0px 0px 0px 7px')
-            magnifyImageContainer.attr('class', 'content')
-            magnifyImageContainer.css('padding', '0')
-            dashboardContainer.append magnifyImageContainer
-            magnifySize = $('#magnify-image-container').height() - 47
-            if(magnifySize < 280)
-              magnifySize = 280
-            magnifyInstance.css 'width', magnifySize + 'px'
-            magnifyInstance.css 'height', magnifySize + 'px'
-
-
-        magnifyInstance.unbind 'cloudzoom_start_zoom'
-
-        magnifyInstance.removeClass('flip180')
-        if(isFlipped)
-          magnifyInstance.addClass('flip180')
-
-        magnifyInstance.bind 'cloudzoom_start_zoom', (=>
-          hasRemovedTrasform = false
-          setTimeout (=>
-            if(!hasRemovedTrasform)
-              magnifyImage = $('.cloudzoom-zoom-inside img')
-              if(magnifyImage.length > 0)
-                magnifyImage.removeClass 'flip180'
-                if(isFlipped)
-                  currentStyle = magnifyImage.attr('style')
-                  currentStyle = currentStyle.replace 'transform: translateZ(0px); ', ''
-                  magnifyImage.attr 'style', currentStyle
-                  magnifyImage.attr 'class', 'flip180'
-                  hasRemovedTrasform = true
-          ), 300
-          return
-        )
-
+          closeButton = $('<a id="closeMagnify">&times;</a>')
+          magnifyImageContainer.append closeButton
+          magnifyImageContainer.append magnifyInstance
+          sliderWrap.before magnifyImageContainer
 
         magnifyInstance.attr 'src', image_source
         @viewer.CloudZoom = new CloudZoom $('#magnify-image'), magnifyOptions
-
-        if(widgetContainer.length > 0)
-          widgetContainer.hide()
-        else if(dashboardContainer.length > 0)
-          dashboardContent.hide()
-        magnifyImageContainer.show()
+        sliderWrap.css 'display', 'none'
+        magnifyImageContainer.css 'display', 'block'
 
 
         closeButton.on 'click', (=>
           @viewer.CloudZoom.closeZoom()
-          @viewer.CloudZoom.destroy()
-          if(widgetContainer.length > 0)
-            widgetContainer.show()
-          else if(dashboardContainer.length > 0)
-            dashboardContent.show()
-          magnifyImageContainer.hide()
-          @viewer.inspection = false
-          $('.cloudzoom-zoom-inside').remove()
-          $('.cloudzoom-blank').remove()
-
+          sliderWrap.css 'display', 'block'
+          magnifyImageContainer.css 'display', 'none'
           return
         )
         return
@@ -1147,7 +1059,9 @@ class FullInspection extends Viewer
         return false
 
       $(".magnify").click =>
-
+          
+        #if @viewer.mode == "small"
+        #    return 1
         if @viewer.inspection
           #bindScroll()
           @viewer.active = true
@@ -1188,8 +1102,8 @@ class FullInspection extends Viewer
 
           @activate_button $(".magnify")
 
+
         @viewer.inspection = !@viewer.inspection
-        return
 
       if @viewer.metadata.initial_zoom == 'small'
         @viewer.zoom_small()
