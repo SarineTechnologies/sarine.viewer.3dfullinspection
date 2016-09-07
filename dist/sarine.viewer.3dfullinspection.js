@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.45.0 -  Monday, August 15th, 2016, 10:15:03 AM 
+sarine.viewer.3dfullinspection - v0.45.0 -  Wednesday, September 7th, 2016, 11:19:04 AM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -77,9 +77,12 @@ sarine.viewer.3dfullinspection - v0.45.0 -  Monday, August 15th, 2016, 10:15:03 
     FullInspection.prototype.setMagnifierLibName = function() {
       var currentExperience;
       magnifierLibName = 'mglass';
-      currentExperience = configuration.experiences.filter(function(exper) {
-        return exper.atom === 'loupe3DFullInspection';
-      });
+      currentExperience = [];
+      if (configuration.experiences) {
+        currentExperience = configuration.experiences.filter(function(exper) {
+          return exper.atom === 'loupe3DFullInspection';
+        });
+      }
       if (currentExperience.length === 1 && currentExperience[0].magnifierLibName && this.isSupportedMagnifier(currentExperience[0].magnifierLibName)) {
         magnifierLibName = currentExperience[0].magnifierLibName;
       }
