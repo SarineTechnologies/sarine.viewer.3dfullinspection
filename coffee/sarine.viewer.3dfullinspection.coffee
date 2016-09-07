@@ -40,8 +40,11 @@ class FullInspection extends Viewer
 
   setMagnifierLibName: () ->
     magnifierLibName = 'mglass'
-    currentExperience = configuration.experiences.filter (exper)->
-      return exper.atom == 'loupe3DFullInspection'
+    currentExperience = []
+
+    if configuration.experiences
+      currentExperience = configuration.experiences.filter (exper)->
+        return exper.atom == 'loupe3DFullInspection'
 
     if(currentExperience.length == 1 && currentExperience[0].magnifierLibName && @isSupportedMagnifier(currentExperience[0].magnifierLibName))
       magnifierLibName = currentExperience[0].magnifierLibName
