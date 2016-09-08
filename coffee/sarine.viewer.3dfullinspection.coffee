@@ -1,13 +1,13 @@
 ###!
-sarine.viewer.3dfullinspection - v0.43.0 -  Sunday, August 14th, 2016, 6:39:39 PM 
+sarine.viewer.3dfullinspection - v0.43.0 -  Thursday, September 8th, 2016, 12:24:32 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
-class FullInspection extends Viewer
+class FullInspection extends Viewer 
   isLocal = false
   qs = undefined
   magnifierLibName = null
   isBucket = window.location.pathname.indexOf('/bucket') isnt -1
-  reqsPerHostAllowed = 6; # Requests per Hostname
+  reqsPerHostAllowed = 6; # Requests per Hostname 
   
   constructor: (options) -> 
     qs = new queryString()
@@ -21,7 +21,7 @@ class FullInspection extends Viewer
       {element:'script',src:'momentum.js'},
       {element:'link',src:'inspection.css'}
     ]
-
+    
     if(magnifierLibName == 'cloudzoom')
       @resources.push {element:'script',src:'cloudzoom.js'}
     else if(magnifierLibName == 'mglass')
@@ -304,10 +304,13 @@ class FullInspection extends Viewer
       @cdn_subdomains = options.cdn_subdomains
       @density = options.density || 1
       @fetchTimer
-      @shard_imgs_loaded = @cdn_subdomains.reduce(((o, v, i) ->
-        o[v] = 0
-        o
-      ), {})
+      
+      @shard_imgs_loaded = {'all': 0}
+      if (@cdn_subdomains.length && !isBucket && !isLocal)
+        @shard_imgs_loaded = @cdn_subdomains.reduce(((o, v, i) ->
+          o[v] = 0
+          o
+        ), {})
       
     cache_key: ->
       @trans
