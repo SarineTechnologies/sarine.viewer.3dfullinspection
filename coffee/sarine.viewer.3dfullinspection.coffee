@@ -1,5 +1,5 @@
 ###!
-sarine.viewer.3dfullinspection - v0.43.0 -  Thursday, September 8th, 2016, 12:24:32 PM 
+sarine.viewer.3dfullinspection - v0.45.0 -  Thursday, September 22nd, 2016, 4:22:07 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 class FullInspection extends Viewer 
@@ -796,7 +796,7 @@ class FullInspection extends Viewer
         $(button).data('active', false)
         $(button).removeClass('selected')
       )
-    update_focus_buttons: ->
+    update_focus_buttons: ->    
       @disable_button('.focus_out')
       @disable_button('.focus_in')
       @inactivate_button('.focus_out')
@@ -920,7 +920,7 @@ class FullInspection extends Viewer
 
         closeButton.on 'click', (=>
           @viewer.CloudZoom.closeZoom()
-          @viewer.CloudZoom.destroy()
+          @viewer.CloudZoom.destroy()          
           if(widgetContainer.length > 0)
             widgetContainer.show()
           else if(dashboardContainer.length > 0)
@@ -942,7 +942,7 @@ class FullInspection extends Viewer
         @viewer.CloudZoom.destroy()
 
     keyDownFunc : (e)=>  
-
+    
         switch e.keyCode  
           when 32
             if $('.player .pause').data('active') then @stop() else @play()
@@ -1153,7 +1153,7 @@ class FullInspection extends Viewer
         return false
 
       $(".magnify").click =>
-
+      
         if @viewer.inspection
           #bindScroll()
           @viewer.active = true
@@ -1165,7 +1165,7 @@ class FullInspection extends Viewer
           $(".buttons li:not(.magnify)").removeClass("disabled");
           @update_focus_buttons()
         else
-          @viewer.active = false
+          @viewer.active = true
           if(magnifierLibName == 'mglass')
             $(document).mouseup (e)=>
               container = $ ".mglass_viewer,.magnify"
@@ -1184,7 +1184,7 @@ class FullInspection extends Viewer
               width: 0,
               quality: 70
             ) 
-            #image_source = @viewer.preloader.src @viewer.x, @viewer.y, @viewer.focus
+            #image_source = @viewer.preloader.src @viewer.x, @viewer.y, @viewer.focus            
             @initMagnify image_source
 
           @inactivate_button $(".focus_out") 
