@@ -873,13 +873,19 @@ class FullInspection extends Viewer
             magnifyImageContainer.attr('class', 'slider-wrap')
             widgetContainer.before magnifyImageContainer
           else if(dashboardContainer.length == 1)
-            magnifyInstance.css('margin', '0px 0px 0px 7px')
+            magnifyInstance.css('margin', 0)
             magnifyImageContainer.attr('class', 'content')
-            magnifyImageContainer.css('padding', '0')
+            magnifyImageContainer.css({
+              'padding': 0,
+              'height': dashboardContent.innerHeight()
+            })
             dashboardContainer.append magnifyImageContainer
-            magnifySize = $('#magnify-image-container').height() - 47
-            if(magnifySize < 280)
-              magnifySize = 280
+            
+            if (dashboardContent.innerWidth() < dashboardContent.innerHeight()) # portrait
+              magnifySize = dashboardContent.innerWidth() - 15 # margins
+            else # landscape  
+              magnifySize = dashboardContent.innerHeight() - 30 - 15 # 30 is height of close
+            
             magnifyInstance.css 'width', magnifySize + 'px'
             magnifyInstance.css 'height', magnifySize + 'px'
 
