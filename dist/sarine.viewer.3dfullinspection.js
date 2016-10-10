@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.48.0 -  Sunday, October 9th, 2016, 3:39:51 PM 
+sarine.viewer.3dfullinspection - v0.49.0 -  Monday, October 10th, 2016, 4:19:54 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -1312,13 +1312,17 @@ sarine.viewer.3dfullinspection - v0.48.0 -  Sunday, October 9th, 2016, 3:39:51 P
               magnifyImageContainer.attr('class', 'slider-wrap');
               widgetContainer.before(magnifyImageContainer);
             } else if (dashboardContainer.length === 1) {
-              magnifyInstance.css('margin', '0px 0px 0px 7px');
+              magnifyInstance.css('margin', 0);
               magnifyImageContainer.attr('class', 'content');
-              magnifyImageContainer.css('padding', '0');
+              magnifyImageContainer.css({
+                'padding': 0,
+                'height': dashboardContent.innerHeight()
+              });
               dashboardContainer.append(magnifyImageContainer);
-              magnifySize = $('#magnify-image-container').height() - 47;
-              if (magnifySize < 280) {
-                magnifySize = 280;
+              if (dashboardContent.innerWidth() < dashboardContent.innerHeight()) {
+                magnifySize = dashboardContent.innerWidth() - 15;
+              } else {
+                magnifySize = dashboardContent.innerHeight() - 30 - 15;
               }
               magnifyInstance.css('width', magnifySize + 'px');
               magnifyInstance.css('height', magnifySize + 'px');
