@@ -1,5 +1,5 @@
 ###!
-sarine.viewer.3dfullinspection - v0.49.0 -  Sunday, November 6th, 2016, 6:23:01 PM 
+sarine.viewer.3dfullinspection - v0.49.0 -  Wednesday, November 9th, 2016, 3:12:33 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
 ###
 
@@ -46,7 +46,7 @@ class FullInspection extends Viewer
     isLocal = qs.getValue("isLocal") == "true" 
     @resourcesPrefix = options.baseUrl + "atomic/v1/assets/"
     @setMagnifierLibName()
-    @cdn_subdomains = cdn_subdomains || [];
+    @cdn_subdomains = if typeof window.cdn_subdomains isnt 'undefined' then window.cdn_subdomains else []
     @resources = [
       {element:'script',src:'jquery-ui.js'},
       {element:'script',src:'jquery.ui.ipad.altfix.js'},
@@ -336,7 +336,7 @@ class FullInspection extends Viewer
       @images = {}
       @totals = {}
       @stone = options.stone
-      @cdn_subdomains = cdn_subdomains
+      @cdn_subdomains = if typeof window.cdn_subdomains isnt 'undefined' then window.cdn_subdomains else []
       @density = options.density || 1
       @fetchTimer
       

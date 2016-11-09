@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.49.0 -  Sunday, November 6th, 2016, 6:23:01 PM 
+sarine.viewer.3dfullinspection - v0.49.0 -  Wednesday, November 9th, 2016, 3:12:33 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -95,7 +95,7 @@ sarine.viewer.3dfullinspection - v0.49.0 -  Sunday, November 6th, 2016, 6:23:01 
       isLocal = qs.getValue("isLocal") === "true";
       this.resourcesPrefix = options.baseUrl + "atomic/v1/assets/";
       this.setMagnifierLibName();
-      this.cdn_subdomains = cdn_subdomains || [];
+      this.cdn_subdomains = typeof window.cdn_subdomains !== 'undefined' ? window.cdn_subdomains : [];
       this.resources = [
         {
           element: 'script',
@@ -538,7 +538,7 @@ sarine.viewer.3dfullinspection - v0.49.0 -  Sunday, November 6th, 2016, 6:23:01 
         this.images = {};
         this.totals = {};
         this.stone = options.stone;
-        this.cdn_subdomains = cdn_subdomains;
+        this.cdn_subdomains = typeof window.cdn_subdomains !== 'undefined' ? window.cdn_subdomains : [];
         this.density = options.density || 1;
         this.fetchTimer;
         this.shard_imgs_loaded = {
