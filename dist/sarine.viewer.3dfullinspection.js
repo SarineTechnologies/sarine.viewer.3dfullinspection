@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.49.0 -  Wednesday, November 9th, 2016, 3:12:33 PM 
+sarine.viewer.3dfullinspection - v0.50.0 -  Thursday, November 10th, 2016, 3:40:51 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -1338,9 +1338,11 @@ sarine.viewer.3dfullinspection - v0.49.0 -  Wednesday, November 9th, 2016, 3:12:
               var hasRemovedTrasform;
               hasRemovedTrasform = false;
               setTimeout((function() {
-                var currentStyle, magnifyImage;
+                var currentStyle;
                 if (!hasRemovedTrasform) {
-                  magnifyImage = $('.cloudzoom-zoom-inside img');
+                  $('.cloudzoom-tint').css({
+                    'background-color': 'transparent'
+                  });
                   if (magnifyImage.length > 0) {
                     magnifyImage.removeClass('flip180');
                     if (isFlipped) {
