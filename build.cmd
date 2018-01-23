@@ -1,1 +1,0 @@
-grunt --gruntfile Gruntfile.js build
