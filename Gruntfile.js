@@ -49,12 +49,12 @@ module.exports = function(grunt) {
                 sourceMap : true
             },
             build: {
-                src: target + 'dist/<%= config.name %>.js',
-                dest: target + 'dist/<%= config.name %>.min.js'
+                src: config.dist.root + '/<%= config.name %>.js',
+                dest: config.dist.root + '/<%= config.name %>.min.js'
             },
             bundle: {
-                src: target + 'dist/<%= config.name %>.bundle.js',
-                dest: target + 'dist/<%= config.name %>.bundle.min.js'
+                src: config.dist.root + '/<%= config.name %>.bundle.js',
+                dest: config.dist.root + '/<%= config.name %>.bundle.min.js'
             }
         },
         coffeescript_concat: {
@@ -70,7 +70,7 @@ module.exports = function(grunt) {
                     join: true,
                     extDot: 'last'
                 },
-                dest: target + 'dist/<%= config.name %>.js',
+                dest: config.dist.root + '/<%= config.name %>.js',
                 src: [target + 'coffee/<%= config.name %>.coffee']
 
             },
@@ -79,23 +79,15 @@ module.exports = function(grunt) {
                     join: true,
                     extDot: 'last'
                 },
-                dest: target + 'dist/<%= config.name %>.bundle.js',
+                dest: config.dist.root + '/<%= config.name %>.bundle.js',
                 src: [target + 'coffee/<%= config.name %>.bundle.coffee']
 
             }
         },
         copy: {
             bundle: {
-                dest: target + 'dist/<%= config.name %>.config',
+                dest: config.dist.root + '/<%= config.name %>.config',
                 src: [target + '<%= config.name %>.config']
-            },
-            dist_root_files: {
-                files: [{
-                        cwd: 'dist/',
-                        src: '**',
-                        dest: config.dist.root,
-                        expand: true
-                    }]
             }
         }
     })
@@ -112,8 +104,7 @@ module.exports = function(grunt) {
         'uglify',
         'clean:postbuild',
         'copyVersion',
-        'copy:bundle',
-        'copy:dist_root_files'
+        'copy:bundle'
     ]);
     grunt.registerMultiTask('commentsCoffee', 'Remove comments from production code', function() {
         this.files[0].src.forEach(function(file) {
