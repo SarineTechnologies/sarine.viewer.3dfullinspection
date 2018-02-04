@@ -23,35 +23,30 @@ module.exports = function(grunt) {
                 }
             }
         },
-        gitcommit: {
-            all: {
-                options: {
-                    message: "<%= config.message %>",
-                    force: true
-                },
-                files: {
-                    src: files
-                }
+        concat: {
+            coffee: {
+                src: [target + 'coffee/<%= config.name %>.coffee'],
+                dest: target + 'coffee/<%= config.name %>.coffee',
             },
-            bower: {
-                options: {
-                    message: "release : <%= config.version %>",
-                    force: true
-                },
-                files: {
-                    src: ["bower.json", "package.json"]
-                }
-            }
+            coffeebundle: {
+                src: [config.coreFiles , target + 'coffee/<%= config.name %>.bundle.coffee'],
+                dest: target + 'coffee/<%= config.name %>.bundle.coffee',
+            }        
         },
-        gitpush: {
-            all: {
-                options: {
-                    branch: "<%= branch %>",
-                    force: true
-                },
-                files: {
-                    src: files
-                }
+        uglify: {
+            options: {
+                preserveComments: 'some',
+                sourceMap : true,
+                banner: '###!\n<%= config.name %> - v<%= config.version %> - ' +
+                        ' <%= grunt.template.today("dddd, mmmm dS, yyyy, h:MM:ss TT") %> ' + '\n ' + grunt.file.read("copyright.txt") + '\n###'             
+            },
+            build: {
+                src: config.dist.root + '/<%= config.name %>.js',
+                dest: config.dist.root + '/<%= config.name %>.min.js'
+            },
+            bundle: {
+                src: config.dist.root + '/<%= config.name %>.bundle.js',
+                dest: config.dist.root + '/<%= config.name %>.bundle.min.js'
             }
         },
         gitadd: {
@@ -66,41 +61,103 @@ module.exports = function(grunt) {
         },
         gitpull: {
             build: {
-                options: {
-                    force: true
+                option: {
+                    join: true,
+                    extDot: 'last'
                 },
-                files: {
-                    src: files
-                }
+                dest: config.dist.root + '/<%= config.name %>.js',
+                src: [target + 'coffee/<%= config.name %>.coffee']
+
+            },
+            bundle: {
+                option: {
+                    join: true,
+                    extDot: 'last'
+                },
+                dest: config.dist.root + '/<%= config.name %>.bundle.js',
+                src: [target + 'coffee/<%= config.name %>.bundle.coffee']
+
             }
         },
-        prompt: {
-            all: {
-                options: {
-                    questions: [{
-                        config: 'config.customBranch',
-                        type: 'confirm',
-                        message: 'create new branch base on the folder name - ' + dirname
-                    }, {
-                        config: 'config.message',
-                        type: 'input',
-                        message: 'comment:\n',
-                        default: 'commit'
-                    }],
-                    then: function(results, done) {
-                        grunt.log.writeln(results["config.customBranch"])
-                        grunt.config.set('branch', 'dev')
-                        if (results["config.customBranch"]) {
-                            grunt.config.set('branch', dirname);
-                            grunt.task.run('gitcheckout:task');
-                        }
-                        done();
-                        return true;
-                    }
-                }
+        copy: {
+            bundle: {
+                dest: config.dist.root + '/<%= config.name %>.config',
+                src: [target + '<%= config.name %>.config']
             }
         }
     })
-    grunt.registerTask('commit', ['prompt', 'gitadd', 'gitcommit:all', 'gitpush']);
-    grunt.registerTask('release-git', ['release:' + grunt.file.readJSON("bower.json")["version"]]);
+    grunt.registerTask('build', [
+        'clean:build',
+        'clean:bundlecoffee',
+        'coffeescript_concat',
+        'concat:coffeebundle',
+        'coffee:bundle',
+        'concat:coffee',
+        'coffee:build',
+        'uglify',
+        'clean:postbuild',
+        'copyVersion',
+        'copy:bundle',
+        'clean:bundlecoffee' //remove bundle.coffe file - not necessary
+    ]);
+
+    grunt.registerTask('copyVersion' , 'copy version from package.json to sarine.viewer.clarity.config' , function (){
+        var packageFile = grunt.file.readJSON(target + 'package.json');
+        var configFileName = target + packageFile.name + '.config';
+        var copyFile = null;
+        if (grunt.file.exists(configFileName))
+            copyFile = grunt.file.readJSON(configFileName);
+        
+        if (copyFile == null)
+            copyFile = {};
+
+        copyFile.version = packageFile.version;
+        grunt.file.write(configFileName , JSON.stringify(copyFile));
+    });
+
+    function decideDist()
+    {
+        if(process.env.buildFor == 'deploy')
+        {
+            grunt.log.writeln("dist is github folder");
+
+            return {
+                root: 'app/dist/'
+            }
+        }
+        else
+        {
+            grunt.log.writeln("dist is local");
+
+            return {
+                root: '../../../dist/content/viewers/atomic/v1/js/'
+            }
+        }
+    }
+
+    function getCoreFiles()
+    {
+        var core;
+
+        if(process.env.buildFor == 'deploy')
+        {
+            core = 
+            [
+                'node_modules/sarine.viewer/coffee/sarine.viewer.coffee'
+            ]
+
+            grunt.log.writeln("taking core files from node_modules");
+        }
+        else
+        {
+            core = 
+            [
+                '../../core/sarine.viewer/coffee/sarine.viewer.coffee'
+            ]
+
+            grunt.log.writeln("taking core files from parent folder");
+        }
+
+        return core;
+    }
 };
