@@ -1,27 +1,27 @@
 'use strict';
 module.exports = function(grunt) {
-    var path = require("path");
-    var dirname = __dirname.split(path.sep)
-    dirname.pop();
-    dirname = dirname.pop();
-    var branch = "dev"
     require('load-grunt-tasks')(grunt)
-    var files = ["Gruntfile.js", "copyright.txt", "GruntfileBundle.js", "package.json", "dist/*.js", "coffee/*.coffee", "bower.json", "release.cmd", "commit.cmd", ".gitignore"]
-    var message = "commit"
+    var target = grunt.option('target') || "";
+    var config = {};
+	config.dist = decideDist();
+    config.coreFiles = getCoreFiles();
+    
     grunt.initConfig({
-        config: grunt.file.readJSON("bower.json"),
-        version: {
-            project: {
-                src: ['bower.json', 'package.json']
-            }
+        config: grunt.file.readJSON(target + "package.json"),
+        clean: {
+            build: [target + "lib/", target + "dist/", target + "build/"],
+            bundlecoffee: [target + "coffee/*.bundle.coffee"],
+            postbuild: [target + "build/"]
         },
-        gitcheckout: {
-            task: {
-                options: {
-                    branch: "<%= branch %>",
-                    overwrite: true
-                }
-            }
+        commentsCoffee: {
+            coffee: {
+                src: [target + 'coffee/<%= config.name %>.coffee'],
+                dest: target + 'coffee/<%= config.name %>.coffee',
+            },
+            coffeeBundle: {
+                src: [target + 'coffee/<%= config.name %>.bundle.coffee'],
+                dest: target + 'coffee/<%= config.name %>.bundle.coffee',
+            },
         },
         concat: {
             coffee: {
@@ -49,17 +49,14 @@ module.exports = function(grunt) {
                 dest: config.dist.root + '/<%= config.name %>.bundle.min.js'
             }
         },
-        gitadd: {
-            firstTimer: {
-                option: {
-                    force: true
-                },
-                files: {
-                    src: files
-                }
+        coffeescript_concat: {
+            bundle: {
+                src: [target + 'lib/add/*.coffee', target + 'coffee/*.coffee', target + '!coffee/*.bundle.coffee'],
+                dest: target + 'coffee/<%= config.name %>.bundle.coffee'
+
             }
         },
-        gitpull: {
+        coffee: {
             build: {
                 option: {
                     join: true,
