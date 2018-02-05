@@ -37,8 +37,8 @@ module.exports = function(grunt) {
             options: {
                 preserveComments: 'some',
                 sourceMap : true,
-                banner: '###!\n<%= config.name %> - v<%= config.version %> - ' +
-                        ' <%= grunt.template.today("dddd, mmmm dS, yyyy, h:MM:ss TT") %> ' + '\n ' + grunt.file.read("copyright.txt") + '\n###'             
+                banner: '/*\n<%= config.name %> - v<%= config.version %> - ' +
+                        ' <%= grunt.template.today("dddd, mmmm dS, yyyy, h:MM:ss TT") %> ' + '\n ' + grunt.file.read("copyright.txt") + '\n*/'             
             },
             build: {
                 src: config.dist.root + '/<%= config.name %>.js',
