@@ -3,8 +3,14 @@ class FullInspection extends Viewer
   qs = undefined
   magnifierLibName = null
   isBucket = window.location.pathname.indexOf('/bucket') isnt -1
-  reqsPerHostAllowed = 6; # Requests per Hostname 
   
+  if location.protocol == "https:"
+    ## for http/2 support disable domain sharding and disable limit number of concurrent http requests
+    reqsPerHostAllowed = 1000;  
+    window.cdn_subdomains = [window.cdn_subdomains[0]]
+  else
+    reqsPerHostAllowed = 6; # 6 Requests per Hostname 
+    
   constructor: (options) -> 
     qs = new queryString()
     isLocal = qs.getValue("isLocal") == "true" 
