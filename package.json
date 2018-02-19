@@ -35,5 +35,10 @@
   "version": "0.51.3",
   "engines": {
     "node": "4.5.0"
+  },
+   "scripts": {
+    "build": "npm install && grunt build",
+    "dev": "grunt dev"
   }
+  
 }
