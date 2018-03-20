@@ -1,0 +1,457 @@
+/*
+sarine.viewer.3dfullinspection.assets - v0.15.0 -  Monday, October 10th, 2016, 3:42:10 PM 
+*/
+
+.inspect-stone .viewport {
+    position:relative;
+    top:0; 
+    left:0;
+    width: 100%;
+    height: 100%;
+}  
+
+
+.inspect-stone {
+    position:relative;
+    overflow:hidden;
+    outline:0; 
+    width:100%;
+    height: 100%;
+}
+
+.inspect-stone .viewport img ,.inspect-stone .viewport canvas{
+    position:absolute;
+    top:0;
+    left:0;    
+}
+
+.inspect-stone .viewport {
+    position:relative;
+    top:0;
+    left:0;
+}
+
+.inspect-stone.large .viewport {
+    height:100%;
+    width:100%;
+    max-width: 480px;
+    max-height: 480px;
+    overflow:hidden;
+}
+.inspect-stone.large #main-image,.inspect-stone.large #main-canvas{
+    z-index: -1;
+}
+.inspect-stone.large  #main-canvas{
+    z-index: 1;
+}
+.inspect-stone.large #main-image,#main-canvas {
+    height:100%;
+    width:100%;
+}
+
+.inspect-stone #sprite-image, .inspect-stone.sprite #main-image,#main-canvas {
+    visibility:hidden;
+}
+
+
+.inspect-stone #main-image,#main-canvas,.inspect-stone.sprite #sprite-image {
+    visibility:visible;
+}
+
+
+.border_radius_full {
+    border-radius:5px;
+    -moz-border-radius:5px;
+    -webkit-border-radius:5px;
+}
+
+.border_radius_left {
+    border-radius:5px 0 0 5px;
+    -moz-border-radius:5px 0 0 5px;
+    -webkit-border-radius:5px 0 0 5px;
+}
+#diamond_viewer {
+    width:480px;
+}
+
+.no_stone {
+    /*background:url(../IMG/no_stone.png) no-repeat center center!important;*/
+}
+
+.flip {
+    transform:rotate(180deg);
+    -ms-transform:rotate(180deg);
+    -webkit-transform:rotate(180deg);
+    -o-transform:rotate(180deg);
+    -moz-transform:rotate(180deg);
+}
+
+
+.mglass_wrapper {
+    /*cursor:url(blank.cur),default;*/
+    z-index:600;
+}
+.viewport.flip .mglass_picture_box #main-canvas {
+    /*cursor:url(blank.cur),default;*/
+    z-index:-1 !important;
+}
+.mglass_picture_box {
+    zoom:1;
+    z-index:600;
+}
+
+.mglass_viewer {
+    position:absolute;
+    visibility:hidden;
+    width: 70%;
+    height: 70%;
+    z-index:600;
+    overflow:hidden;
+    -moz-border-radius:10px;
+    -webkit-border-radius:10px;
+    -khtml-border-radius:10px;
+    border-radius:10px;
+    -webkit-box-shadow:0 4px 16px rgba(50,50,50,.75);
+    -moz-box-shadow:0 4px 16px rgba(50,50,50,.75);
+    box-shadow:0 4px 16px rgba(50,50,50,.75);
+    cursor: none;
+}
+
+
+.inspect-stone>.buttons
+{
+    position:absolute;
+    z-index: 999;
+    float:right;
+    text-align: right;
+    list-style-type: none;
+    right:0;
+    top:0;
+    margin:10px;
+}
+
+.inspect-stone>.buttons>li
+{
+    background: #404040; /* Old browsers */
+    background: -moz-linear-gradient(top,  #404040 0%, #202020 100%); /* FF3.6+ */
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#404040), color-stop(100%,#202020)); /* Chrome,Safari4+ */
+    background: -webkit-linear-gradient(top,  #404040 0%,#202020 100%); /* Chrome10+,Safari5.1+ */
+    background: -o-linear-gradient(top,  #404040 0%,#202020 100%); /* Opera 11.10+ */
+    background: -ms-linear-gradient(top,  #404040 0%,#202020 100%); /* IE10+ */
+    background: linear-gradient(to bottom,  #404040 0%,#202020 100%); /* W3C */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#404040', endColorstr='#202020',GradientType=0 ); /* IE6-9 */
+    height:50px;
+    width:50px;
+    float:right;
+    border-radius: 3px 3px 3px 3px;
+    overflow: hidden;
+}
+
+.inspect-stone>.buttons>li.magnify,.inspect-stone>.buttons>li.arrow-left {
+     border-radius: 10px 3px 3px 10px;
+ }
+.inspect-stone>.buttons>li.menu,.inspect-stone>.buttons>li.arrow-right {
+    border-radius: 3px 10px 10px 3px;
+}
+
+.inspect-stone>.buttons>li:not(:last-child) {
+     border-left: 1px solid #0f0f0f;
+ }
+.inspect-stone>.buttons>li:not(:first-child) {
+    border-right: 1px solid #484848;
+}
+.inspect-stone>.buttons>li>i
+{
+    width:50px;
+    height:50px;
+}
+.inspect-stone>.buttons>li.selected {
+    background: #313131; /* Old browsers */
+    background: -moz-linear-gradient(top,  #313131 0%, #010101 100%); /* FF3.6+ */
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#313131), color-stop(100%,#010101)); /* Chrome,Safari4+ */
+    background: -webkit-linear-gradient(top,  #313131 0%,#010101 100%); /* Chrome10+,Safari5.1+ */
+    background: -o-linear-gradient(top,  #313131 0%,#010101 100%); /* Opera 11.10+ */
+    background: -ms-linear-gradient(top,  #313131 0%,#010101 100%); /* IE10+ */
+    background: linear-gradient(to bottom,  #313131 0%,#010101 100%); /* W3C */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#313131', endColorstr='#010101',GradientType=0 ); /* IE6-9 */
+
+}
+
+.inspect-stone>.buttons>li.disabled
+{
+    background: #6c6c6c; /* Old browsers */
+    background: -moz-linear-gradient(top,  #6c6c6c 0%, #393939 100%); /* FF3.6+ */
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#6c6c6c), color-stop(100%,#393939)); /* Chrome,Safari4+ */
+    background: -webkit-linear-gradient(top,  #6c6c6c 0%,#393939 100%); /* Chrome10+,Safari5.1+ */
+    background: -o-linear-gradient(top,  #6c6c6c 0%,#393939 100%); /* Opera 11.10+ */
+    background: -ms-linear-gradient(top,  #6c6c6c 0%,#393939 100%); /* IE10+ */
+    background: linear-gradient(to bottom,  #6c6c6c 0%,#393939 100%); /* W3C */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#6c6c6c', endColorstr='#393939',GradientType=0 ); /* IE6-9 */
+}
+
+.inspect-stone>.buttons>li>i
+{
+    background: url('3dfullinspection_buttons.png') no-repeat 0px 0px;
+    display:inline-block;
+    height: 32px;
+    width: 32px;
+    margin: 9px 9px;
+}
+.inspect-stone>.buttons>li.menu>i
+{
+    background-position: 3px -38px;
+    width: 30px;
+    height: 21px;
+    margin: 15px 10px;
+}
+
+.inspect-stone>.buttons>li.arrow-left>i
+{
+    background-position: 2px -58px;
+    width: 10px;
+    height: 10px;
+    margin: 20px 7px;
+}
+.inspect-stone>.buttons>li.arrow-left,.inspect-stone>.buttons>li.arrow-right
+{
+    width:25px;
+}
+
+.inspect-stone>.buttons>li.arrow-right>i
+{
+    background-position: -7px -58px;
+    width: 10px;
+    height: 10px;
+    margin: 20px 7px;
+}
+
+
+.inspect-stone>.buttons>li.bottom>i
+{
+    background-position: -2px -156px;
+}
+.inspect-stone>.buttons>li.top>i
+{
+    background-position: -2px -190px;
+}
+.inspect-stone>.buttons>li.side>i
+{
+    background-position: -3px -223px;
+}
+
+.inspect-stone>.buttons>li.focus_in>i
+{
+    background-position: -2px -96px;
+    height: 30px;
+    width: 40px;
+    margin: 10px 4px;
+}
+.inspect-stone>.buttons>li.focus_out>i
+{
+    background-position: -1px -126px;
+    height: 30px;
+    width: 40px;
+    margin: 10px 4px;
+}
+.inspect-stone>.buttons>li.magnify>i
+{
+    background-position: -1px -66px;
+    width:31px
+}
+
+/* SELECTED BUTTONS */
+/* To many CSS due to the bad packaging of icon sprite file. */
+.inspect-stone>.buttons>li.bottom.selected>i
+{
+    background-position: -35px -156px;
+}
+.inspect-stone>.buttons>li.top.selected>i
+{
+    background-position: -35px -190px;
+}
+.inspect-stone>.buttons>li.side.selected>i
+{
+    background-position: -39px -223px;
+}
+
+.inspect-stone>.buttons>li.focus_in.selected>i
+{
+    background-position: -43px -96px;
+}
+.inspect-stone>.buttons>li.focus_out.selected>i
+{
+    background-position: -40px -126px;
+}
+.inspect-stone>.buttons>li.magnify.selected>i
+{
+    background-position: -31px -66px;
+}
+
+
+/*
+Accordion magic
+*/
+
+.inspect-stone>.buttons>li
+{
+    transition: all 300ms ease;
+    transition-property: border-radius, width, border;
+}
+
+.inspect-stone>.buttons.close>li.top,
+.inspect-stone>.buttons.close>li.side,
+.inspect-stone>.buttons.close>li.bottom,
+.inspect-stone>.buttons.close>li.focus_in,
+.inspect-stone>.buttons.close>li.focus_out,
+.inspect-stone>.buttons.close>li.magnify,
+.inspect-stone>.buttons.close>li.arrow-right
+{
+    width:0px;
+    border:0px;
+}
+
+.inspect-stone>.buttons.open>li.menu,
+.inspect-stone>.buttons.open>li.arrow-left
+{
+    width:0px;
+    border:0px;
+}
+
+.inspect-stone>.stone_number
+{
+    color: #505050;
+    text-shadow: 1px 1px rgba(255,255,255,.25);
+    position: absolute;
+    margin: -31px 0 0 19px;
+    z-index: 500;
+}
+
+
+/* cursor for magnifier */
+.mglass_inner_html{
+    background-color: #343434;
+    opacity: 0.65;
+    position: absolute;
+    bottom: 0;
+    left: 33.3%;
+    width: 33.3%;
+    height: 16%;
+    
+}
+.viewport.flip .mglass_inner_html{
+    top:0!important;
+}
+
+.mglass_inner_html .dummy {
+    padding-top: 100%; /* forces 1:1 aspect ratio */
+}
+.mglass_inner_html .img-container{
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font: 0/0 a;
+}
+.mglass_inner_html .img-container:before {
+    content: ' ';
+    display: inline-block;
+    vertical-align: middle;
+    height: 100%;
+}
+.mglass_inner_html .img-container > img{
+     vertical-align: middle;
+    display: inline-block;
+    position: relative;
+}
+
+/*
+ Cloud Zoom CSS. (c)2012-2015 Star Plugins.
+*/
+
+/* CSS for lens */
+.cloudzoom-lens {
+    border:5px solid #888;
+    width:100px;
+    height:100px;
+    box-shadow: -0px -0px 10px rgba(0,0,0,0.40);
+    cursor:crosshair;
+    z-index: 9999;
+}
+/* CSS for zoom window. */
+.cloudzoom-zoom {
+    border:1px solid #888;
+    width:600px;
+    height:200px;
+    box-shadow: -0px -0px 10px rgba(0,0,0,0.40);
+    z-index: 9999;
+}
+/* CSS for zoom window in 'inside' mode. */
+.cloudzoom-zoom-inside {
+    border:none;
+    box-shadow:none;
+    z-index: 9999;
+}
+
+/* CSS for captions */
+.cloudzoom-caption {
+    display:none;   /* CSS captions should be hidden initially */
+    text-align: left;
+    background-color:#000;
+    color:#fff;
+    font-weight:bold;
+    padding:10px;
+    font-family: sans-serif;
+    font-size:11px;
+
+}
+
+/* A blank image */
+.cloudzoom-blank {
+    background-image:url(blank.png);
+}
+
+/* The animated ajax loading image */
+.cloudzoom-ajax-loader {
+    background-image:url(ajax-loader.gif);
+    width:32px;
+    height:32px;
+}
+
+#magnify-image{
+    margin-top: 7%;
+}
+
+#closeMagnify{
+    cursor: pointer;
+    font-size: 25px;
+    text-decoration: none;
+    position: absolute;
+    left: 10px;
+}
+
+#closeMagnify-container{
+    width: 100%;
+    height: 30px;
+}
+
+#magnify-image-container::before{
+    background-image: none !important;
+}
+
+.flip180 {
+    -webkit-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+    transform: rotate(180deg);
+}
+
+img.flip180 {
+    -webkit-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+    transform: rotate(180deg);
+}  
