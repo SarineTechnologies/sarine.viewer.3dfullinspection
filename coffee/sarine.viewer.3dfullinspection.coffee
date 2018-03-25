@@ -1099,12 +1099,22 @@ class FullInspection extends Viewer
       ).bind('xy',(e, data) =>
         $('.xy').html((if @viewer.metadata.multi_focus() then "#{@viewer.focus}:" else "") + "#{data.y}:#{data.x}")
         @update_focus_buttons()
+        @viewer.widget.trigger('view_mode_out') if $('.buttons li:not(.magnify, .clickable, .focus_out, .focus_in)').hasClass("selected")
         @inactivate_button($('.buttons li'))
-        @activate_button($(".buttons .#{@viewer.view_mode()}")) if @viewer.view_mode()
+        if @viewer.view_mode()
+          @activate_button($(".buttons .#{@viewer.view_mode()}"))
+          @viewer.widget.trigger(@viewer.view_mode())
       ).bind('preload_xy', (e, data) =>
         $('.preload_xy').html("Preload center moved to #{data.y}:#{data.x}")
-      )
+       )
 
+      $('.viewer.loupe3DFullInspection').bind('bottom_view middle_view top_view', (e, data) =>
+          @viewer[e.type]()
+          $(document).mouseup()
+        ).bind('magnify', (e, data) =>
+          $('.magnify').click()
+         )
+      
       $('.inspect-stone').css('background-color', "#" + @viewer.metadata.background)  #Legacy instead of canvas
       if @viewer.metadata.background != '000' && @viewer.metadata.background != '000000' && @viewer.metadata.background != 'black'
         $('.inspect-stone').addClass('dark')
@@ -1177,6 +1187,7 @@ class FullInspection extends Viewer
           @inactivate_button $(".magnify")
           $(".buttons li:not(.magnify)").removeClass("disabled");
           @update_focus_buttons()
+          @viewer.widget.trigger("magnify_out")
         else
           @viewer.active = true
           if(magnifierLibName == 'mglass')
