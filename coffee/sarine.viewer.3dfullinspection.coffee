@@ -9,7 +9,7 @@ class FullInspection extends Viewer
     reqsPerHostAllowed = 1000;  
     window.cdn_subdomains = [window.cdn_subdomains[0]]
   else
-    reqsPerHostAllowed = 6; # 6 Requests per Hostname 
+    reqsPerHostAllowed = 1000; # 6 Requests per Hostname 
     
   constructor: (options) -> 
     qs = new queryString()
@@ -347,7 +347,8 @@ class FullInspection extends Viewer
             src = @src(x, y, focus)
             
             if (@cdn_subdomains.length && !isBucket && !isLocal)
-              shard = @cdn_subdomains[(x + y) % @cdn_subdomains.length]; 
+              # shard =  @cdn_subdomains[0]  
+              shard =  @cdn_subdomains[(x + y) % @cdn_subdomains.length]; 
               src = @replace_subdomain(src, shard)
             
             if (!@queue[shard])
