@@ -9,7 +9,7 @@ class FullInspection extends Viewer
     reqsPerHostAllowed = 1000;  
     window.cdn_subdomains = [window.cdn_subdomains[0]]
   else
-    reqsPerHostAllowed = 1000; # 6 Requests per Hostname 
+    reqsPerHostAllowed = 6; # 6 Requests per Hostname 
     
   constructor: (options) -> 
     qs = new queryString()
