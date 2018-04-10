@@ -73,18 +73,27 @@ class FullInspection extends Viewer
 
 
   convertElement :() =>
-    url = @resourcesPrefix+"3dfullinspection.html" +  cacheVersion
-
- 
-    $.get url, (innerHtml) =>
-      compiled = $(innerHtml)
-      $(".buttons",compiled).remove() if(@element.attr("menu")=="false" || @loupe3dConfig && @loupe3dConfig.menu == false )
-      $(".stone_number",compiled).remove() if(@element.attr("coordinates")=="false")
-
-      @conteiner = compiled
-      @element.css {width:"100%", height:"100%"}
-      # compiled.find('canvas').attr({width:@element.width(), height: @element.height()})
-      @element.append(compiled)
+    if(@element.attr("menu")=="true" || @loupe3dConfig && @loupe3dConfig.menu == true)
+      url = @resourcesPrefix+"3dfullinspection.html" +  cacheVersion
+      $.get url, (innerHtml) =>
+        compiled = $(innerHtml)
+        $(".stone_number",compiled).remove() if(@element.attr("coordinates")=="false")
+        @conteiner = compiled
+        @element.append(compiled)
+    else
+      @element.append '<div class="inspect-stone">
+                        <div class="viewport">
+                            <canvas id="main-canvas" width="480" height="480"></canvas>
+                            <img id="main-image" style="display:none;" >
+                            <img id="sprite-image" style="display:none;">
+                        </div>
+                        <div id="info_inspection" style="display:none;"></div>
+                        <div class="stone_number">
+                            <i class="stone_number_text xy">0:22:15</i>
+                        </div>
+                      </div>'
+      $(".stone_number", @element).remove() if(@element.attr("coordinates")=="false")
+    @element.css {width:"100%", height:"100%"}
     @element
 
   
