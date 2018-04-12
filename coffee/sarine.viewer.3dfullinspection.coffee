@@ -14,14 +14,14 @@ class FullInspection extends Viewer
     @resources = [
       {element:'script',src:'jquery-ui.js'},
       {element:'script',src:'jquery.ui.ipad.altfix.js'},
-      {element:'script',src:'momentum.js'},
-      {element:'link',src:'inspection.css'}
+      {element:'script',src:'3dfullinspection/momentum.js'},
+      {element:'link',src:'3dfullinspection/inspection.css'}
     ]
     
     if(magnifierLibName == 'cloudzoom')
       @resources.push {element:'script',src:'cloudzoom.js'}
     else if(magnifierLibName == 'mglass')
-      @resources.push {element:'script',src:'mglass.js'}
+      @resources.push {element:'script',src:'3dfullinspection/mglass.js'}
       
     super(options)
     {@jsonsrc, @src} = options
@@ -32,7 +32,7 @@ class FullInspection extends Viewer
   isSupportedMagnifier: (libName) ->
     return [ 'mglass', 'cloudzoom' ].filter((libItem)->
         return libItem == libName
-      ).length == 1
+      ).length == 1 
 
   setMagnifierLibName: () ->
     magnifierLibName = 'mglass'
@@ -76,7 +76,7 @@ class FullInspection extends Viewer
 
 
   convertElement :() =>
-    url = @resourcesPrefix+"3dfullinspection.html" +  cacheVersion
+    url = @resourcesPrefix+"3dfullinspection/3dfullinspection.html" +  cacheVersion
 
  
     $.get url, (innerHtml) =>
@@ -837,7 +837,7 @@ class FullInspection extends Viewer
     initMagnify: (image_source)->
       if(magnifierLibName == 'mglass')
         @viewer.MGlass = new MGlass 'main-canvas', image_source, {
-          background: @viewer.metadata.background,innerHTML : "<div class='mglass_inner_html'><div class='dummy'></div><div class='img-container'><img src='#{@viewer.resourcesPrefix}move_cursor.png' alt='move'/></div></div>"}, arguments.callee
+          background: @viewer.metadata.background,innerHTML : "<div class='mglass_inner_html'><div class='dummy'></div><div class='img-container'><img src='#{@viewer.resourcesPrefix}3dfullinspection/move_cursor.png' alt='move'/></div></div>"}, arguments.callee
       else if magnifierLibName == 'cloudzoom'
         magnifyOptions = {
           zoomImage: image_source,

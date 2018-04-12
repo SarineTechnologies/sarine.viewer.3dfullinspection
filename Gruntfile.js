@@ -138,7 +138,7 @@ module.exports = function(grunt) {
 
             return {
                 root: 'app/dist/',
-                assets : 'app/assets/'
+                assets : 'app/assets/3dfullinspection/'
             }
         }
         else
@@ -147,7 +147,7 @@ module.exports = function(grunt) {
 
             return {
                 root: '../../../dist/content/viewers/atomic/v1/js/',
-                assets :'../../../dist/content/viewers/atomic/v1/assets/'
+                assets :'../../../dist/content/viewers/atomic/v1/assets/3dfullinspection/'
             }
         }
     }
