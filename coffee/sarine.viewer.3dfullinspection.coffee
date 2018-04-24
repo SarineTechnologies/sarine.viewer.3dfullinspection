@@ -149,6 +149,8 @@ class FullInspection extends Viewer
 
     @first_init_defer
   full_init : () =>
+    if(@element.find('.no_stone').length > 0)
+      @element.trigger('noStone')
 
     @full_init_defer.resolve(@) unless @viewerBI
     return @full_init_defer unless @viewerBI
