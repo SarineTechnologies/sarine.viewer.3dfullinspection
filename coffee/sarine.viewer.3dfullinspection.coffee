@@ -855,12 +855,14 @@ class FullInspection extends Viewer
           permaZoom: true
         }
 
-        widgetContainer = $(".slider-wrap")
+        iframeContainer = $("body.loupe3DFullInspection")
+        widgetContainer = $(".slider-wrap.w2\\.0")
         dashboardContainer = $('.slide--loupe3d')
         magnifyImageContainer = $('#magnify-image-container')
         magnifyInstance = $('#magnify-image')
         closeButton = $('#closeMagnify')
         dashboardContent = dashboardContainer.find('.content')
+        iframeContent = iframeContainer.find('.loupe3DFullInspection')
         isFlipped = $('.viewport').hasClass('flip')
         if(magnifyImageContainer.length == 0)
           sliderHeight = $('.slider-wrap').last().height()
@@ -885,15 +887,29 @@ class FullInspection extends Viewer
               'height': dashboardContent.innerHeight()
             })
             dashboardContainer.append magnifyImageContainer
-            
+
             if (dashboardContent.innerWidth() < dashboardContent.innerHeight()) # portrait
               magnifySize = dashboardContent.innerWidth() - 15 # margins
-            else # landscape  
+            else # landscape 
               magnifySize = dashboardContent.innerHeight() - 30 - 15 # 30 is height of close
             
             magnifyInstance.css 'width', magnifySize + 'px'
             magnifyInstance.css 'height', magnifySize + 'px'
+          else if(iframeContainer.length)
+            magnifyImageContainer.attr('class', 'viewer')
+            magnifyImageContainer.css({
+              'height': iframeContent.innerHeight(),
+              'width': iframeContent.innerWidth()
+              'background-color': '#' + @viewer.metadata.background
+            })
+            $(".slider-wrap").append magnifyImageContainer
 
+            magnifySize = iframeContent.innerWidth() - 30 - 15 # 30 is height of close
+            magnifyInstance.css({
+              'height': magnifySize + 'px'
+              'width': magnifySize + 'px'
+              'margin': '0 0 0 22.5px'
+            })
 
         magnifyInstance.unbind 'cloudzoom_start_zoom'
         closeButton.unbind 'click'
@@ -933,6 +949,8 @@ class FullInspection extends Viewer
           widgetContainer.not('#magnify-image-container').css('margin-top', '-5000px')
         else if(dashboardContainer.length > 0)
           dashboardContent.hide()
+        else if(iframeContainer.length > 0)
+          iframeContent.hide()
         magnifyImageContainer.show()
 
         $(window).on 'orientationchange', ((event) =>
@@ -948,6 +966,8 @@ class FullInspection extends Viewer
             widgetContainer.not('#magnify-image-container').css('margin-top': 0)
           else if(dashboardContainer.length > 0)
             dashboardContent.show()
+          else if(iframeContainer.length > 0)
+            iframeContent.show()
           magnifyImageContainer.hide()
           @viewer.inspection = false
           $('.cloudzoom-zoom-inside').remove()
