@@ -3,9 +3,16 @@ class FullInspection extends Viewer
   qs = undefined
   magnifierLibName = null
   isBucket = window.location.pathname.indexOf('/bucket') isnt -1
-  reqsPerHostAllowed = 6; # Requests per Hostname 
-  
+  reqsPerHostAllowed = 0
+
   constructor: (options) -> 
+
+    if @isHTTP2()
+      ## for http/2 support disable limit number of concurrent http requests
+      reqsPerHostAllowed = 1000;  
+    else
+      reqsPerHostAllowed = 6; # 6 Requests per Hostname for http/1.1  
+    
     qs = new queryString()
     isLocal = qs.getValue("isLocal") == "true" 
     @resourcesPrefix = options.baseUrl + "atomic/v1/assets/"
@@ -341,7 +348,8 @@ class FullInspection extends Viewer
             src = @src(x, y, focus)
             
             if (@cdn_subdomains.length && !isBucket && !isLocal)
-              shard = @cdn_subdomains[(x + y) % @cdn_subdomains.length]; 
+              # shard =  @cdn_subdomains[0]  
+              shard =  @cdn_subdomains[(x + y) % @cdn_subdomains.length]; 
               src = @replace_subdomain(src, shard)
             
             if (!@queue[shard])
