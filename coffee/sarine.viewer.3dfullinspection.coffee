@@ -6,8 +6,8 @@ class FullInspection extends Viewer
   reqsPerHostAllowed = 0
 
   constructor: (options) -> 
-
-    if @isHTTP2()
+    
+    if Device.isHTTP2()
       ## for http/2 support disable limit number of concurrent http requests
       reqsPerHostAllowed = 1000;  
     else
