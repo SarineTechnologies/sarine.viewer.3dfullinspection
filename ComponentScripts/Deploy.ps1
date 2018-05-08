@@ -27,7 +27,7 @@ else{
 	$siteUri = "http://viewer-api-$envId.$envName.sarine.com/viewer/v2/cache/sarine.viewer.3dfullinspection"
 }
 
-
+Write-Output "Accessing viewer service in Uri $siteUri..."
 Invoke-WebRequest -Uri  $siteUri -UseBasicParsing
 
 Write-Output "Completed Successfully"
