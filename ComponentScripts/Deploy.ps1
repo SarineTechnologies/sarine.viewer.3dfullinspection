@@ -14,7 +14,7 @@ Param(
 #Including global variables
 . "$env:ModulesPath\envConfig.ps1"
 
-$targetPathWithoutEnvPrefix = "viewers/atomic/v1/js"
+$targetPathWithoutEnvPrefix = "content/viewers/atomic/v1/js"
 
 #Create site
 Write-Output "Creating s3 site..."

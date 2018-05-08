@@ -7,6 +7,6 @@ Param(
 )
 . "$env:ModulesPath\envConfig.ps1"
 
-$targetPathWithoutEnvPrefix = "viewers/atomic/v1/js/sarine.viewer.3dfullinspection.bundle.js"
+$targetPathWithoutEnvPrefix = "content/viewers/atomic/v1/js/sarine.viewer.3dfullinspection.bundle.js"
 
 & "$env:ModulesPath\s3health.ps1" -EnvName $envName -envId $envId -envType $envType -WebSiteFolder $iisAppName -targetPathWithoutEnvPrefix $targetPathWithoutEnvPrefix
