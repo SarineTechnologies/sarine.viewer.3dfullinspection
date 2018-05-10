@@ -6,32 +6,33 @@ class FullInspection extends Viewer
   reqsPerHostAllowed = 0
 
   constructor: (options) -> 
-
-    if @isHTTP2()
+    
+    if Device.isHTTP2()
       ## for http/2 support disable limit number of concurrent http requests
       reqsPerHostAllowed = 1000;  
     else
       reqsPerHostAllowed = 6; # 6 Requests per Hostname for http/1.1  
     
     qs = new queryString()
-    isLocal = qs.getValue("isLocal") == "true" 
+    isLocal = qs.getValue("isLocal") == "true"
     @resourcesPrefix = options.baseUrl + "atomic/v1/assets/"
+    @atomVersion = options.atomVersion
     @setMagnifierLibName()
     @cdn_subdomains = if typeof window.cdn_subdomains isnt 'undefined' then window.cdn_subdomains else []
     @resources = [
-      {element:'script',src:'jquery-ui.js'},
-      {element:'script',src:'jquery.ui.ipad.altfix.js'},
-      {element:'script',src:'3dfullinspection/momentum.js'},
-      {element:'link',src:'3dfullinspection/inspection.css'}
+      { element: 'script', src: 'jquery-ui.js?' + cacheAssetsVersion },
+      { element: 'script', src: 'jquery.ui.ipad.altfix.js?' + cacheAssetsVersion },
+      { element: 'script', src: '3dfullinspection/momentum.js?' + @atomVersion },
+      { element: 'link', src: '3dfullinspection/inspection.css?' + @atomVersion }
     ]
     
     if(magnifierLibName == 'cloudzoom')
-      @resources.push {element:'script',src:'cloudzoom.js'}
+      @resources.push { element: 'script', src: 'cloudzoom.js?' + cacheAssetsVersion }
     else if(magnifierLibName == 'mglass')
-      @resources.push {element:'script',src:'3dfullinspection/mglass.js'}
+      @resources.push { element: 'script', src: '3dfullinspection/mglass.js?' + @atomVersion }
       
     super(options)
-    {@jsonsrc, @src} = options
+    { @jsonsrc, @src } = options
     
     if(@cdn_subdomains.length && !isBucket && !isLocal) 
       @src = options.src.replace(/\/[^.]*/, '//' + @cdn_subdomains[0])
@@ -70,11 +71,11 @@ class FullInspection extends Viewer
       if(resource.element == 'script')
         $(document.body).append(element)
         element.onload = element.onreadystatechange = ()-> triggerCallback(callback)
-        element.src = @resourcesPrefix + resource.src + cacheVersion
+        element.src = @resourcesPrefix + resource.src
         element.type= "text/javascript"
 
       else
-        element.href = @resourcesPrefix + resource.src + cacheVersion
+        element.href = @resourcesPrefix + resource.src
         element.rel= "stylesheet"
         element.type= "text/css"
         $(document.head).prepend(element) 
@@ -83,7 +84,7 @@ class FullInspection extends Viewer
 
 
   convertElement :() =>
-    url = @resourcesPrefix+"3dfullinspection/3dfullinspection.html" +  cacheVersion
+    url = @resourcesPrefix+"3dfullinspection/3dfullinspection.html?" +  @atomVersion
 
  
     $.get url, (innerHtml) =>
@@ -103,7 +104,7 @@ class FullInspection extends Viewer
     @full_init_defer = $.Deferred()
     stone = ""
     start = (metadata) =>
-      @viewerBI =  new ViewerBI(first_init: @first_init_defer, full_init:@full_init_defer, src:@src, x: 0, y: metadata.vertical_angles.indexOf(90), stone: stone, friendlyName: "temp", cdn_subdomains: @cdn_subdomains, metadata: metadata, debug: false, resourcesPrefix : @resourcesPrefix)
+      @viewerBI =  new ViewerBI(first_init: @first_init_defer, full_init:@full_init_defer, src:@src, x: 0, y: metadata.vertical_angles.indexOf(90), stone: stone, friendlyName: "temp", cdn_subdomains: @cdn_subdomains, metadata: metadata, debug: false, resourcesPrefix : @resourcesPrefix, atomVersion: @atomVersion)
       @UIlogic = new UI(@viewerBI, auto_play: true)
       @UIlogic.go()
 
@@ -485,7 +486,8 @@ class FullInspection extends Viewer
       @dest = options.src
       @first_init_defer = options.first_init
       @full_init_defer = options.full_init
-      @resourcesPrefix = options.resourcesPrefix     
+      @resourcesPrefix = options.resourcesPrefix
+      @atomVersion = options.atomVersion
       @reset()
       @context = $('#main-canvas')[0].getContext("2d")
 
@@ -845,7 +847,7 @@ class FullInspection extends Viewer
     initMagnify: (image_source)->
       if(magnifierLibName == 'mglass')
         @viewer.MGlass = new MGlass 'main-canvas', image_source, {
-          background: @viewer.metadata.background,innerHTML : "<div class='mglass_inner_html'><div class='dummy'></div><div class='img-container'><img src='#{@viewer.resourcesPrefix}3dfullinspection/move_cursor.png' alt='move'/></div></div>"}, arguments.callee
+          background: @viewer.metadata.background,innerHTML : "<div class='mglass_inner_html'><div class='dummy'></div><div class='img-container'><img src='#{@viewer.resourcesPrefix}3dfullinspection/move_cursor.png?#{@viewer.atomVersion}' alt='move'/></div></div>"}, arguments.callee
       else if magnifierLibName == 'cloudzoom'
         magnifyOptions = {
           zoomImage: image_source,
