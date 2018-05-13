@@ -21,10 +21,10 @@ Write-Output "Creating s3 site..."
 & "$env:ModulesPath\s3sync.ps1" -EnvName $envName -envId $envId -envType $envType -WebSiteFolder $iisAppName -targetPathWithoutEnvPrefix $targetPathWithoutEnvPrefix -maxAge 31536000
 
 if($envType -eq "prod"){
-	$siteUri = "http://viewer-api.sarine.com/cache/v2/sarine.viewer.rough"
+	$siteUri = "http://viewer-api.sarine.com/cache/v2/sarine.viewer.3dfullinspection"
 }
 else{
-	$siteUri = "http://viewer-api-$envId.$envName.sarine.com/cache/v2/sarine.viewer.rough"
+	$siteUri = "http://viewer-api-$envId.$envName.sarine.com/cache/v2/sarine.viewer.3dfullinspection"
 }
 
 Write-Output "Accessing viewer service in Uri $siteUri..."
