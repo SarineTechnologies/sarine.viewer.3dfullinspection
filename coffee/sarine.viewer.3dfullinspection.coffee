@@ -1,3 +1,16 @@
+window.x_log = (point) =>
+    window.timer = window.timer || []
+    
+    currTime = window.performance.now() + window.performance.timing.navigationStart;
+    prevTime = if window.timer.length then window.timer[window.timer.length - 1].t else 0;
+    
+    window.timer.push({
+      point: point
+      t: currTime,
+      fromprev: currTime - prevTime
+    })
+
+
 class FullInspection extends Viewer 
   isLocal = false
   qs = undefined
@@ -26,6 +39,12 @@ class FullInspection extends Viewer
       { element: 'link', src: '3dfullinspection/inspection.css?' + @atomVersion }
     ]
     
+    @first_init_defer = $.Deferred()
+    @full_init_defer = $.Deferred()
+    @metadata = undefined
+    @jsonResult = undefined
+    @stone = ""
+
     if(magnifierLibName == 'cloudzoom')
       @resources.push { element: 'script', src: 'cloudzoom.js?' + cacheAssetsVersion }
     else if(magnifierLibName == 'mglass')
@@ -98,16 +117,60 @@ class FullInspection extends Viewer
       @element.append(compiled)
     @element
 
-  
   first_init : () =>
-    @first_init_defer = $.Deferred()
-    @full_init_defer = $.Deferred()
-    stone = ""
-    start = (metadata) =>
-      @viewerBI =  new ViewerBI(first_init: @first_init_defer, full_init:@full_init_defer, src:@src, x: 0, y: metadata.vertical_angles.indexOf(90), stone: stone, friendlyName: "temp", cdn_subdomains: @cdn_subdomains, metadata: metadata, debug: false, resourcesPrefix : @resourcesPrefix, atomVersion: @atomVersion)
-      @UIlogic = new UI(@viewerBI, auto_play: true)
-      @UIlogic.go()
+    x_log('first_init start');
+    # @first_init_defer = $.Deferred()
+    # @full_init_defer = $.Deferred()
+    # @metadata = undefined
+    # stone = ""
 
+    # start = (metadata) =>
+    #   x_log('first_init ViewerBI finished');
+    #   @viewerBI =  new ViewerBI(first_init: @first_init_defer, full_init:@full_init_defer, src:@src, x: 0, y: metadata.vertical_angles.indexOf(90), stone: stone, friendlyName: "temp", cdn_subdomains: @cdn_subdomains, metadata: metadata, debug: false, resourcesPrefix : @resourcesPrefix, atomVersion: @atomVersion)
+    #   @UIlogic = new UI(@viewerBI, auto_play: true)
+    #   @UIlogic.go()
+    
+    # ##TODO -new json end-point     
+    # if !isLocal     
+    #   descriptionPath = @src + @jsonsrc 
+    # else
+    #   localInspectionBaseUrl = @src.substr 0, @src.indexOf('ImageRepo') 
+    #   localStoneMeasureUrl = @src.slice @src.indexOf('ImageRepo/') + 10, @src.lastIndexOf('/')
+    #   localStoneMeasureUrlArr = localStoneMeasureUrl.split '/'
+    #   descriptionPath = localInspectionBaseUrl + 'GetLocalJson?stoneId=' + localStoneMeasureUrlArr[0] + "&measureId=" + localStoneMeasureUrlArr[1] + "&viewer=inspection"
+
+    # $.getJSON descriptionPath, (result) =>  
+    #   stone = result.StoneId + "_" + result.MeasurementId
+    #   result = if isLocal then JSON.parse(result) else result
+    #   metadata = new Metadata(
+    #     size_x: result.number_of_x_images
+    #     flip_from_y: result.number_of_y_images
+    #     background: result.background
+    #     vertical_angles: result.vertical_angles
+    #     num_focus_points: result.num_focus_points
+    #     shooting_parameters: result.shooting_parameters,
+    #     image_size : result.ImageSize || 480
+    #     sprite_factor : result.SpriteFactor || 4
+    #   )
+    #   @preloadAssets ()-> start metadata
+    #   @first_init_defer.resolve(@)
+    #   x_log('first_init getjson');
+
+    # .fail =>
+    #   checkNdelete = () =>
+    #     if ($(".inspect-stone",@element).length)
+    #       $(".inspect-stone",@element).addClass("no_stone")
+    #       $(".buttons",@element).remove()
+    #       $(".stone_number",@element).remove()
+    #       $(".inspect-stone",@element).css("background", "url('"+@callbackPic+"') no-repeat center center")
+    #       $(".inspect-stone",@element).css("width", "480px") # @TODO: Change to dynamic
+    #       $(".inspect-stone",@element).css("height", "480px")
+    #     else
+    #       setTimeout checkNdelete, 50
+    #   checkNdelete()
+
+    #   @first_init_defer.resolve(@)
+    
     ##TODO -new json end-point     
     if !isLocal     
       descriptionPath = @src + @jsonsrc 
@@ -118,21 +181,11 @@ class FullInspection extends Viewer
       descriptionPath = localInspectionBaseUrl + 'GetLocalJson?stoneId=' + localStoneMeasureUrlArr[0] + "&measureId=" + localStoneMeasureUrlArr[1] + "&viewer=inspection"
 
     $.getJSON descriptionPath, (result) =>  
-      stone = result.StoneId + "_" + result.MeasurementId
+      @stone = result.StoneId + "_" + result.MeasurementId
       result = if isLocal then JSON.parse(result) else result
-      metadata = new Metadata(
-        size_x: result.number_of_x_images
-        flip_from_y: result.number_of_y_images
-        background: result.background
-        vertical_angles: result.vertical_angles
-        num_focus_points: result.num_focus_points
-        shooting_parameters: result.shooting_parameters,
-        image_size : result.ImageSize || 480
-        sprite_factor : result.SpriteFactor || 4
-      )
-      @preloadAssets ()-> start metadata
-
-
+      @jsonResult = result
+      @first_init_defer.resolve(@)
+      x_log('first_init getjson');
 
     .fail =>
       checkNdelete = () =>
@@ -150,14 +203,51 @@ class FullInspection extends Viewer
       @first_init_defer.resolve(@)
 
     @first_init_defer
+
   full_init : () =>
+    x_log('full_init');
 
-    @full_init_defer.resolve(@) unless @viewerBI
-    return @full_init_defer unless @viewerBI
+    _t = @
+    start = (metadata) =>
+      x_log('first_init ViewerBI finished');
+      @viewerBI =  new ViewerBI(first_init: @first_init_defer, full_init:@full_init_defer, src:@src, x: 0, y: metadata.vertical_angles.indexOf(90), stone: _t.stone, friendlyName: "temp", cdn_subdomains: @cdn_subdomains, metadata: metadata, debug: false, resourcesPrefix : @resourcesPrefix, atomVersion: @atomVersion)
+      @UIlogic = new UI(@viewerBI, auto_play: true)
+      @UIlogic.go()
+      if(@element.attr("active") isnt undefined)
+        @viewerBI.preloader.go()
+        @viewerBI.show(true)
 
-    if(@element.attr("active") isnt undefined)
-      @viewerBI.preloader.go()
-      @viewerBI.show(true)
+    # @metadata = new Metadata(
+    #   size_x: @jsonResult.number_of_x_images
+    #   flip_from_y: @jsonResult.number_of_y_images
+    #   background: @jsonResult.background
+    #   vertical_angles: @jsonResult.vertical_angles
+    #   num_focus_points: @jsonResult.num_focus_points
+    #   shooting_parameters: @jsonResult.shooting_parameters,
+    #   image_size : @jsonResult.ImageSize || 480
+    #   sprite_factor : @jsonResult.SpriteFactor || 4
+    # )
+    
+    @preloadAssets ()-> start new Metadata(
+      size_x: _t.jsonResult.number_of_x_images
+      flip_from_y: _t.jsonResult.number_of_y_images
+      background: _t.jsonResult.background
+      vertical_angles: _t.jsonResult.vertical_angles
+      num_focus_points: _t.jsonResult.num_focus_points
+      shooting_parameters: _t.jsonResult.shooting_parameters,
+      image_size : _t.jsonResult.ImageSize || 480
+      sprite_factor : _t.jsonResult.SpriteFactor || 4
+    )
+
+
+
+
+    # @full_init_defer.resolve(@) unless @viewerBI
+    # return @full_init_defer unless @viewerBI
+
+    # if(@element.attr("active") isnt undefined)
+    #   @viewerBI.preloader.go()
+    #   @viewerBI.show(true)
     
     @full_init_defer
   nextImage : ()->
@@ -302,6 +392,7 @@ class FullInspection extends Viewer
 
   class Preloader
     constructor: (@callback, @widget, @metadata, options) ->
+      x_log('Preloader constructor');
       @version = 0
       @dest = options.src
       @clear_queue() 
@@ -332,6 +423,7 @@ class FullInspection extends Viewer
             @loaded++ if @has(x, y, focus)
             total++
       @totals[@cache_key()] = total
+      x_log('Preloader configure end');
 
     clear_queue: ->
       @version++
@@ -468,10 +560,11 @@ class FullInspection extends Viewer
 
   class ViewerBI
     constructor: (options) ->
+      x_log('ViewerBI constructor');        
       @widget = $(".inspect-stone")
       @viewport = $(".inspect-stone > .viewport")
       @inited = false
-      @first_hit = true
+      # @first_hit = true
       @debug = options.debug
       @metadata = options.metadata
       @stone = options.stone
@@ -501,13 +594,13 @@ class FullInspection extends Viewer
 
     img_ready: (trans, x, y, focus, src) =>
       if @preloader.total() == @preloader.loaded
+        x_log('ViewerBI callback img_ready full_init_defer end ' + @preloader.total() + " " + @preloader.loaded);      
         @full_init_defer.resolve(@)
 
 
-      if(@first_hit)
-        @first_hit = false
-        @first_init_defer.resolve(@)
-        
+      # if(@first_hit)
+      #   @first_hit = false
+        # @first_init_defer.resolve(@)
 
 
       @widget.trigger('high_quality',
