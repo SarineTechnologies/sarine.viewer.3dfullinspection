@@ -15,10 +15,16 @@ Param(
 . "$env:ModulesPath\envConfig.ps1"
 
 $targetPathWithoutEnvPrefix = "content/viewers/atomic/v1/js"
-
+$sourceRelativePath = "dist"
 #Create site
-Write-Output "Creating s3 site..."
-& "$env:ModulesPath\s3sync.ps1" -EnvName $envName -envId $envId -envType $envType -WebSiteFolder $iisAppName -targetPathWithoutEnvPrefix $targetPathWithoutEnvPrefix -maxAge 31536000
+Write-Output "Copy js files to s3.."
+& "$env:ModulesPath\s3sync.ps1" -EnvName $envName -envId $envId -envType $envType -WebSiteFolder $iisAppName -targetPathWithoutEnvPrefix $targetPathWithoutEnvPrefix -maxAge 31536000 -sourceRelativePath $sourceRelativePath
+
+Write-Output "Copy assets files to s3.."
+$targetPathWithoutEnvPrefix = "content/viewers/atomic/v1/assets"
+$sourceRelativePath = "assets"
+& "$env:ModulesPath\s3sync.ps1" -EnvName $envName -envId $envId -envType $envType -WebSiteFolder $iisAppName -targetPathWithoutEnvPrefix $targetPathWithoutEnvPrefix -maxAge 31536000 -sourceRelativePath $sourceRelativePath
+
 
 if($envType -eq "prod"){
 	$siteUri = "http://viewer-api.sarine.com/cache/v2/sarine.viewer.3dfullinspection"
