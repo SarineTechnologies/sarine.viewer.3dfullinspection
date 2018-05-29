@@ -7,14 +7,15 @@ class FullInspection extends Viewer
 
   constructor: (options) -> 
     
-    if Device.isHTTP2()
+    qs = new queryString()
+    isLocal = qs.getValue("isLocal") == "true"
+    
+    if Device.isHTTP2() && !isLocal
       ## for http/2 support disable limit number of concurrent http requests
       reqsPerHostAllowed = 1000;  
     else
       reqsPerHostAllowed = 6; # 6 Requests per Hostname for http/1.1  
     
-    qs = new queryString()
-    isLocal = qs.getValue("isLocal") == "true"
     @resourcesPrefix = options.baseUrl + "atomic/v1/assets/"
     @atomVersion = options.atomVersion
     @setMagnifierLibName()
