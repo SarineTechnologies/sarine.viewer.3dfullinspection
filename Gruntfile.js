@@ -82,7 +82,16 @@ module.exports = function(grunt) {
                 src: [target + '<%= config.name %>.config']
             },
             assets:{
-               cwd: target +'assets/' , expand: true, src: ['*'], dest: config.dist.assets
+               cwd: target +'assets/', 
+               expand: true,
+               src: ['*'], 
+               dest: config.dist.assets
+            },
+            loupelocal_static_files: {
+                expand: true,
+                cwd: target +'loupelocal.static/',
+                src: ['*'],
+                dest: config.dist.root
             }
         }        ,
          watch: {
@@ -111,7 +120,8 @@ module.exports = function(grunt) {
         'copyVersion',
         'copy:bundle',
         'copy:assets',
-        'clean:bundlecoffee' //remove bundle.coffe file - not necessary
+        'clean:bundlecoffee', //remove bundle.coffe file - not necessary
+        'copy:loupelocal_static_files'
     ]);
 
     grunt.registerTask('dev', ['build', 'watch']);
