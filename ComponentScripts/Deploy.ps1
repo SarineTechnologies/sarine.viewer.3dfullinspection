@@ -28,13 +28,18 @@ $sourceRelativePath = "assets"
 
 if($envType -eq "prod"){
 	$siteUri = "http://viewer-api.sarine.com/cache/v2/sarine.viewer.3dfullinspection"
+	$siteUriLocal = "http://viewer-api.sarine.com/cache/v2/sarine.viewer.3dfullinspection.local"
 }
 else{
 	$siteUri = "http://viewer-api-$envId.$envName.sarine.com/cache/v2/atom/sarine.viewer.3dfullinspection"
+	$siteUriLocal = "http://viewer-api-$envId.$envName.sarine.com/cache/v2/atom/sarine.viewer.3dfullinspection.local"
 }
 
 Write-Output "Accessing viewer service in Uri $siteUri..."
 Invoke-WebRequest -Uri  $siteUri -UseBasicParsing
+
+Write-Output "Accessing viewer service in Uri $siteUriLocal..."
+Invoke-WebRequest -Uri  $siteUriLocal -UseBasicParsing
 
 Write-Output "Completed Successfully"
 #Stop-Transcript
