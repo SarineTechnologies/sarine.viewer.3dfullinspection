@@ -29,30 +29,31 @@
       this.resourcesPrefix = options.baseUrl + "atomic/v1/assets/";
       this.setMagnifierLibName();
       this.cdn_subdomains = typeof window.cdn_subdomains !== 'undefined' ? window.cdn_subdomains : [];
+      this.atomVersion = options.atomVersion;
       this.resources = [
         {
           element: 'script',
-          src: 'jquery-ui.js'
+          src: 'jquery-ui.js?' + cacheAssetsVersion
         }, {
           element: 'script',
-          src: 'jquery.ui.ipad.altfix.js'
+          src: 'jquery.ui.ipad.altfix.js?' + cacheAssetsVersion
         }, {
           element: 'script',
-          src: 'momentum.js'
+          src: '3dfullinspection/momentum.js?' + this.atomVersion
         }, {
           element: 'link',
-          src: 'inspection.css'
+          src: '3dfullinspection/inspection.css?' + this.atomVersion
         }
       ];
       if (magnifierLibName === 'cloudzoom') {
         this.resources.push({
           element: 'script',
-          src: 'cloudzoom.js'
+          src: 'cloudzoom.js?' + cacheAssetsVersion
         });
       } else if (magnifierLibName === 'mglass') {
         this.resources.push({
           element: 'script',
-          src: 'mglass.js'
+          src: '3dfullinspection/mglass.js?' + this.atomVersion
         });
       }
       FullInspection.__super__.constructor.call(this, options);
@@ -123,7 +124,7 @@
 
     FullInspection.prototype.convertElement = function() {
       var url;
-      url = this.resourcesPrefix + "3dfullinspection.html" + cacheVersion;
+      url = this.resourcesPrefix + "3dfullinspection/3dfullinspection.html?" + this.atomVersion;
       $.get(url, (function(_this) {
         return function(innerHtml) {
           var compiled;
