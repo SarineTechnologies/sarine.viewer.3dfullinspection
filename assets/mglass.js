@@ -74,21 +74,37 @@ function MGlass(imageId, largeImageSrc, configObject, deleteCallback) {
             var tempX = tempPosition[0], 
                 tempY = tempPosition[1];
 
-            if(left > leftMin  && left < leftMax){                
-                mglassViewer.style.left = left + "px";
-                var tempY = mglassViewer.style.backgroundPosition.split(' ')[1];
-                var validY = typeof tempY === "undefined" || tempY.indexOf('px') !== -1;
-                //mglassViewer.style.backgroundPositionX = (-dstX) + "px "; //backgroundPositionX not supported by Firefox              
-                mglassViewer.style.backgroundPosition = (-dstX) + "px " +  (validY ? tempY : "");
-            }
+            console.log('mag tempX, tempY, left, leftMin, leftMax', tempX, tempY, left, leftMin, leftMax);
+            // if(left > leftMin  && left < leftMax){                
+            //     mglassViewer.style.left = left + "px";
+            //     var tempY = mglassViewer.style.backgroundPosition.split(' ')[1];
+            //     var validY = typeof tempY === "undefined" || tempY.indexOf('px') !== -1;
+            //     //mglassViewer.style.backgroundPositionX = (-dstX) + "px "; //backgroundPositionX not supported by Firefox              
+            //     mglassViewer.style.backgroundPosition = (-dstX) + "px " +  (validY ? tempY : "");
+            //     console.log('mag left > leftMin  && left < leftMax', mglassViewer.style.backgroundPosition);                
+            // }
                 
-            if(top > topMin && top < topMax){                 
-                mglassViewer.style.top =  top + "px";
-                var tempX = mglassViewer.style.backgroundPosition.split(' ')[0];
-                var validX = typeof tempX === "undefined" || tempX.indexOf('px') !== -1;
-                //mglassViewer.style.backgroundPositionY = (-dstY) + "px "; //backgroundPositionY not supported by Firefox
-                mglassViewer.style.backgroundPosition = (validX ? (tempX + " ") : "")  +  (-dstY) + "px";                         
-            }                            
+            // if(top > topMin && top < topMax){                 
+            //     mglassViewer.style.top =  top + "px";
+            //     var tempX = mglassViewer.style.backgroundPosition.split(' ')[0];
+            //     var validX = typeof tempX === "undefined" || tempX.indexOf('px') !== -1;
+            //     //mglassViewer.style.backgroundPositionY = (-dstY) + "px "; //backgroundPositionY not supported by Firefox
+            //     mglassViewer.style.backgroundPosition = (validX ? (tempX + " ") : "")  +  (-dstY) + "px";
+            //     console.log('mag top > topMin && top < topMax', mglassViewer.style.backgroundPosition);                         
+            // }
+            
+            mglassViewer.style.left = left + "px";
+            mglassViewer.style.top =  top + "px";
+            
+            var tempY = mglassViewer.style.backgroundPosition.split(' ')[1];
+            var tempX = mglassViewer.style.backgroundPosition.split(' ')[0];
+            
+            var validY = typeof tempY === "undefined" || tempY.indexOf('px') !== -1;
+            var validX = typeof tempX === "undefined" || tempX.indexOf('px') !== -1;
+            
+            mglassViewer.style.backgroundPositionX = (-dstX) + "px ";// +  (validY ? tempY : "");
+            mglassViewer.style.backgroundPositionY = (-dstY) + "px";
+            
 
         } else {            
             //mglassViewer.style.visibility = 'hidden';
