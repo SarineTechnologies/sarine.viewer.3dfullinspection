@@ -92,7 +92,6 @@ class FullInspection extends Viewer
 
   convertElement :() =>
     url = @resourcesPrefix+"3dfullinspection/3dfullinspection.html?" +  @atomVersion
-
  
     $.get url, (innerHtml) =>
       compiled = $(innerHtml)
@@ -169,8 +168,13 @@ class FullInspection extends Viewer
       @stone = result.StoneId + "_" + result.MeasurementId
       result = if isLocal then JSON.parse(result) else result
       @jsonResult = result
-      @first_init_defer.resolve(@)
 
+      img = new Image();
+      img.onload = =>
+        $('#main-canvas')[0].getContext("2d").drawImage(img,0,0,480,480)
+        @first_init_defer.resolve(@)
+      img.src = stones[0].viewers.loupe3DFullInspection + "/480_70/img_0_19_0.jpg"
+      
     .fail =>
       checkNdelete = () =>
         if ($(".inspect-stone",@element).length)
@@ -443,7 +447,7 @@ class FullInspection extends Viewer
               y: y
               focus: focus
               trans: @trans
-              version: @version
+              version: @version      
       @prioritize()
       @preload(@queue)
     
