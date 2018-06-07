@@ -164,17 +164,20 @@ class FullInspection extends Viewer
       localStoneMeasureUrlArr = localStoneMeasureUrl.split '/'
       descriptionPath = localInspectionBaseUrl + 'GetLocalJson?stoneId=' + localStoneMeasureUrlArr[0] + "&measureId=" + localStoneMeasureUrlArr[1] + "&viewer=inspection"
 
+    _t = @
     $.getJSON descriptionPath, (result) =>  
       @stone = result.StoneId + "_" + result.MeasurementId
       result = if isLocal then JSON.parse(result) else result
       @jsonResult = result
-
-      img = new Image();
-      img.onload = =>
-        $('#main-canvas')[0].getContext("2d").drawImage(img,0,0,480,480)
-        @first_init_defer.resolve(@)
-      img.src = stones[0].viewers.loupe3DFullInspection + "/480_70/img_0_19_0.jpg"
       
+      @preloadAssets(() ->
+        img = new Image();
+        img.onload = =>
+          $('#main-canvas')[0].getContext("2d").drawImage(img, 378, 126, 126, 126, 0, 0, 480, 480)
+          _t.first_init_defer.resolve(@)
+        img.src = stones[0].viewers.loupe3DFullInspection + "/InspectionSprites/252_126_30_sprite.jpg"
+      )
+
     .fail =>
       checkNdelete = () =>
         if ($(".inspect-stone",@element).length)
@@ -223,7 +226,7 @@ class FullInspection extends Viewer
     #   sprite_factor : @jsonResult.SpriteFactor || 4
     # )
     
-    @preloadAssets ()-> start new Metadata(
+    start new Metadata(
       size_x: _t.jsonResult.number_of_x_images
       flip_from_y: _t.jsonResult.number_of_y_images
       background: _t.jsonResult.background
