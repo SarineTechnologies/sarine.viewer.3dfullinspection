@@ -175,6 +175,8 @@ class FullInspection extends Viewer
         img.onload = =>
           $('#main-canvas')[0].getContext("2d").drawImage(img, 378, 126, 126, 126, 0, 0, 480, 480)
           _t.first_init_defer.resolve(@)
+        img.error = =>
+          _t.first_init_defer.resolve(@)
         img.src = stones[0].viewers.loupe3DFullInspection + "/InspectionSprites/252_126_30_sprite.jpg"
       )
 
