@@ -61,20 +61,6 @@ class FullInspection extends FullInspectionBase
 
 
 
-  convertElement :() =>
-    url = @resourcesPrefix+"3dfullinspection/3dfullinspection.html?" +  @atomVersion
-
- 
-    $.get url, (innerHtml) =>
-      compiled = $(innerHtml)
-      $(".buttons",compiled).remove() if(@element.attr("menu")=="false")
-      $(".stone_number",compiled).remove() if(@element.attr("coordinates")=="false")
-
-      @conteiner = compiled
-      @element.css {width:"100%", height:"100%"}
-      # compiled.find('canvas').attr({width:@element.width(), height: @element.height()})
-      @element.append(compiled)
-    @element
 
   
   first_init : () =>
