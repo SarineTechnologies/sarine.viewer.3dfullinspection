@@ -231,7 +231,7 @@ class FullInspection extends FullInspectionBase
     #   @viewerBI.preloader.go()
     #   @viewerBI.show(true)
     
-        @full_init_defer
+    @full_init_defer
 
 
   class ViewerBI extends ViewerBIBase

@@ -24,14 +24,14 @@ module.exports = function(grunt) {
             },
         },
         concat: {
-            coffee: {
-                src: [target + 'coffee/<%= config.name %>.coffee'],
-                dest: target + 'coffee/<%= config.name %>.coffee',
-            },
             coffeebundle: {
-                src: [config.coreFiles , target + 'coffee/<%= config.name %>.bundle.coffee'],
+                src: [config.coreFiles, target + 'coffee/<%= config.name %>.base.coffee', target + 'coffee/<%= config.name %>.coffee'],
                 dest: target + 'coffee/<%= config.name %>.bundle.coffee',
-            }        
+            },
+            coffeeBundleLocal: {
+                src: [config.coreFiles, target + 'coffee/<%= config.name %>.base.coffee', target + 'coffee/<%= config.name %>.local.coffee'],
+                dest: target + 'coffee/<%= config.name %>.local.bundle.coffee',
+            }
         },
         uglify: {
             options: {
@@ -40,32 +40,16 @@ module.exports = function(grunt) {
                 banner: '/*\n<%= config.name %> - v<%= config.version %> - ' +
                         ' <%= grunt.template.today("dddd, mmmm dS, yyyy, h:MM:ss TT") %> ' + '\n ' + grunt.file.read("copyright.txt") + '\n*/'             
             },
-            build: {
-                src: config.dist.root + '/<%= config.name %>.js',
-                dest: config.dist.root + '/<%= config.name %>.min.js'
-            },
             bundle: {
                 src: config.dist.root + '/<%= config.name %>.bundle.js',
                 dest: config.dist.root + '/<%= config.name %>.bundle.min.js'
-            }
-        },
-        coffeescript_concat: {
-            bundle: {
-                src: [target + 'lib/add/*.coffee', target + 'coffee/*.coffee', target + '!coffee/*.bundle.coffee'],
-                dest: target + 'coffee/<%= config.name %>.bundle.coffee'
-
+            },
+            bundleLocal: {
+                src: config.dist.root + '/<%= config.name %>.local.bundle.js',
+                dest: config.dist.root + '/<%= config.name %>.local.bundle.min.js'
             }
         },
         coffee: {
-            build: {
-                option: {
-                    join: true,
-                    extDot: 'last'
-                },
-                dest: config.dist.root + '/<%= config.name %>.js',
-                src: [target + 'coffee/<%= config.name %>.coffee']
-
-            },
             bundle: {
                 option: {
                     join: true,
@@ -73,6 +57,15 @@ module.exports = function(grunt) {
                 },
                 dest: config.dist.root + '/<%= config.name %>.bundle.js',
                 src: [target + 'coffee/<%= config.name %>.bundle.coffee']
+
+            },
+            bundleLocal: {
+                option: {
+                    join: true,
+                    extDot: 'last'
+                },
+                dest: config.dist.root + '/<%= config.name %>.local.bundle.js',
+                src: [target + 'coffee/<%= config.name %>.local.bundle.coffee']
 
             }
         },
@@ -91,12 +84,6 @@ module.exports = function(grunt) {
                src: ['*'], 
                dest: config.dist.assets
             },
-            loupelocal_static_files: {
-                expand: true,
-                cwd: target +'loupelocal.static/',
-                src: ['*'],
-                dest: config.dist.root
-            }
         }        ,
          watch: {
                 options: {
@@ -114,19 +101,21 @@ module.exports = function(grunt) {
     grunt.registerTask('build', [
         'clean:build',
         'clean:bundlecoffee',
-        'coffeescript_concat',
-        'concat:coffeebundle',
-        'coffee:bundle',
-        'concat:coffee',
-        'coffee:build',
-        'uglify',
+        
+        'concat:coffeebundle', // viewer-base + our-coffee -> bundle.coffee
+        'coffee:bundle',       // bundle.coffee -> bundle.js in root
+
+        'concat:coffeeBundleLocal', // viewer-base + our-local-coffee -> local.bundle.coffee
+        'coffee:bundleLocal',        // local.bundle.coffee -> local.bundle.js in root
+
+        'uglify',              // *.bundle.js -> *.bundle.min.js
+
         'clean:postbuild',
         'copyVersion',
         'copy:bundle',
         'copy:bundleLocal',
         'copy:assets',
-        'clean:bundlecoffee', //remove bundle.coffe file - not necessary
-        'copy:loupelocal_static_files'
+        'clean:bundlecoffee',   // remove bundle.coffee file - to keep this repo clean of output files
     ]);
 
     grunt.registerTask('dev', ['build', 'watch']);

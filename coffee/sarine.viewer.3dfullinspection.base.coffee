@@ -1103,7 +1103,7 @@ class FullInspectionBase extends Viewer
 
 
 
-@FullInspection = FullInspection
+@FullInspectionBase = FullInspectionBase
 
 ### Query string hepler ###
 class window.queryString
