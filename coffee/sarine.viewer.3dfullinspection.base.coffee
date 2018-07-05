@@ -1,35 +1,4 @@
-class FullInspection extends Viewer 
-  isLocal = false
-  qs = undefined
-  magnifierLibName = null
-  isBucket = window.location.pathname.indexOf('/bucket') isnt -1
-  reqsPerHostAllowed = 6; # Requests per Hostname 
-  
-  constructor: (options) -> 
-    qs = new queryString()
-    isLocal = qs.getValue("isLocal") == "true" 
-    @resourcesPrefix = options.baseUrl + "atomic/v1/assets/"
-    @setMagnifierLibName()
-    @cdn_subdomains = if typeof window.cdn_subdomains isnt 'undefined' then window.cdn_subdomains else []
-    
-    @atomVersion = options.atomVersion
-    @resources = [
-      { element: 'script', src: 'jquery-ui.js?' + cacheAssetsVersion },
-      { element: 'script', src: 'jquery.ui.ipad.altfix.js?' + cacheAssetsVersion },
-      { element: 'script', src: '3dfullinspection/momentum.js?' + @atomVersion },
-      { element: 'link', src: '3dfullinspection/inspection.css?' + @atomVersion }
-    ]
-    
-    if(magnifierLibName == 'cloudzoom')
-      @resources.push { element: 'script', src: 'cloudzoom.js?' + cacheAssetsVersion }
-    else if(magnifierLibName == 'mglass')
-      @resources.push { element: 'script', src: '3dfullinspection/mglass.js?' + @atomVersion }
-
-    super(options)
-    {@jsonsrc, @src} = options
-    
-    if(@cdn_subdomains.length && !isBucket && !isLocal) 
-      @src = options.src.replace(/\/[^.]*/, '//' + @cdn_subdomains[0])
+class FullInspectionBase extends Viewer 
 
   isSupportedMagnifier: (libName) ->
     return [ 'mglass', 'cloudzoom' ].filter((libItem)->
@@ -48,115 +17,13 @@ class FullInspection extends Viewer
       magnifierLibName = currentExperience[0].magnifierLibName
       return
 
-  preloadAssets: (callback)=>
 
-    loaded = 0
-    totalScripts = @resources.map (elm)-> elm.element =='script'
-    triggerCallback = (callback) ->
-      loaded++
-      if(loaded == totalScripts.length-1 && callback!=undefined )
-        setTimeout( ()=> 
-          callback() 
-        ,500) 
-
-    element
-    for resource in @resources
-      element = document.createElement(resource.element)
-      if(resource.element == 'script')
-        $(document.body).append(element)
-        element.onload = element.onreadystatechange = ()-> triggerCallback(callback)
-        element.src = @resourcesPrefix + resource.src + cacheVersion
-        element.type= "text/javascript"
-
-      else
-        element.href = @resourcesPrefix + resource.src + cacheVersion
-        element.rel= "stylesheet"
-        element.type= "text/css"
-        $(document.head).prepend(element) 
-
-
-
-
-  convertElement :() =>
-    url = @resourcesPrefix+"3dfullinspection/3dfullinspection.html?" +  @atomVersion
- 
-    $.get url, (innerHtml) =>
-      compiled = $(innerHtml)
-      $(".buttons",compiled).remove() if(@element.attr("menu")=="false")
-      $(".stone_number",compiled).remove() if(@element.attr("coordinates")=="false")
-
-      @conteiner = compiled
-      @element.css {width:"100%", height:"100%"}
-      # compiled.find('canvas').attr({width:@element.width(), height: @element.height()})
-      @element.append(compiled)
-    @element
-
-  
-  first_init : () =>
-    @first_init_defer = $.Deferred()
-    @full_init_defer = $.Deferred()
-    stone = ""
-    start = (metadata) =>
-      @viewerBI =  new ViewerBI(first_init: @first_init_defer, full_init:@full_init_defer, src:@src, x: 0, y: metadata.vertical_angles.indexOf(90), stone: stone, friendlyName: "temp", cdn_subdomains: @cdn_subdomains, metadata: metadata, debug: false, resourcesPrefix : @resourcesPrefix)
-      @UIlogic = new UI(@viewerBI, auto_play: true)
-      @UIlogic.go()
-
-    ##TODO -new json end-point     
-    if !isLocal     
-      descriptionPath = @src + @jsonsrc 
-    else
-      localInspectionBaseUrl = @src.substr 0, @src.indexOf('ImageRepo') 
-      localStoneMeasureUrl = @src.slice @src.indexOf('ImageRepo/') + 10, @src.lastIndexOf('/')
-      localStoneMeasureUrlArr = localStoneMeasureUrl.split '/'
-      descriptionPath = localInspectionBaseUrl + 'GetLocalJson?stoneId=' + localStoneMeasureUrlArr[0] + "&measureId=" + localStoneMeasureUrlArr[1] + "&viewer=inspection"
-
-    $.getJSON descriptionPath, (result) =>  
-      stone = result.StoneId + "_" + result.MeasurementId
-      result = if isLocal then JSON.parse(result) else result
-      metadata = new Metadata(
-        size_x: result.number_of_x_images
-        flip_from_y: result.number_of_y_images
-        background: result.background
-        vertical_angles: result.vertical_angles
-        num_focus_points: result.num_focus_points
-        shooting_parameters: result.shooting_parameters,
-        image_size : result.ImageSize || 480
-        sprite_factor : result.SpriteFactor || 4
-      )
-      @preloadAssets ()-> start metadata
-
-
-
-    .fail =>
-      checkNdelete = () =>
-        if ($(".inspect-stone",@element).length)
-          $(".inspect-stone",@element).addClass("no_stone")
-          $(".buttons",@element).remove()
-          $(".stone_number",@element).remove()
-          $(".inspect-stone",@element).css("background", "url('"+@callbackPic+"') no-repeat center center")
-          $(".inspect-stone",@element).css("width", "480px") # @TODO: Change to dynamic
-          $(".inspect-stone",@element).css("height", "480px")
-        else
-          setTimeout checkNdelete, 50
-      checkNdelete()
-
-      @first_init_defer.resolve(@)
-
-    @first_init_defer
-  full_init : () =>
-
-    @full_init_defer.resolve(@) unless @viewerBI
-    return @full_init_defer unless @viewerBI
-
-    if(@element.attr("active") isnt undefined)
-      @viewerBI.preloader.go()
-      @viewerBI.show(true)
-    
-    @full_init_defer
   nextImage : ()->
     console.log "FullInspection: nextImage"
+
   play: () ->
     @element.attr("active","true")
+
   stop: () ->
     @element.attr("active","false")
 
@@ -172,6 +39,10 @@ class FullInspection extends Viewer
     background: "000000"
     machineEndPoint: "http://localhost:8735/Sarin.Agent"
     local: false
+
+
+# -----------------------------------
+
 
   class Metadata
     constructor: (options) ->
@@ -292,6 +163,9 @@ class FullInspection extends Viewer
 
     multi_focus: ->
       @shooting_parameters? || @num_focus_points > 1
+
+
+# -----------------------------------
 
   class Preloader
     constructor: (@callback, @widget, @metadata, options) ->
@@ -458,78 +332,31 @@ class FullInspection extends Viewer
         @load_image(x, y, focus, src)
       ,timeoutMl)
 
-  class ViewerBI
-    constructor: (options) ->
-      @widget = $(".inspect-stone")
-      @viewport = $(".inspect-stone > .viewport")
-      @inited = false
-      @first_hit = true
-      @debug = options.debug
-      @metadata = options.metadata
-      @stone = options.stone
-      @friendlyName = options.friendlyName
-      @density = options.density || 1
-      @x = options.x
-      @y = options.y
-      @focus = @metadata.initial_focus
-      @preloader = new Preloader(@img_ready, @widget, @metadata, options)
-      @mode = 'large'
-      @inspection = false
-      @dest = options.src
-      @first_init_defer = options.first_init
-      @full_init_defer = options.full_init
-      @resourcesPrefix = options.resourcesPrefix     
-      @reset()
-      @context = $('#main-canvas')[0].getContext("2d")
+
+
+  class ViewerBIBase
 
     reset: ->
       @stop()
       @widget.trigger('reset')
 
+
     configure: (@trans) ->
       @stop()
       @preloader.configure @trans, @x, @y
 
-    img_ready: (trans, x, y, focus, src) =>
-      if @preloader.total() == @preloader.loaded
-        @full_init_defer.resolve(@)
-
-
-      if(@first_hit)
-        @first_hit = false
-        @first_init_defer.resolve(@)
-        
-
-
-      @widget.trigger('high_quality',
-        loaded: Math.floor(@preloader.loaded / @density), total: Math.floor(@preloader.total() / @density))
-      if x == @x && y == @y && focus == @focus && trans == @trans
-        className = @widget[0].className
-        @widget.removeClass('sprite')
-        imageChanged = ($('#main-image').attr('src') != src)
-        
-        if @preloader.cdn_subdomains.length && !isBucket && !isLocal
-          src = @preloader.replace_subdomain(src, @preloader.cdn_subdomains[(x + y) % @preloader.cdn_subdomains.length])
-        
-        if imageChanged || className != @widget[0].className 
-          $('#main-image').attr(src: src)
-          $('#main-image')[0].onload = (img)->
-            $('#main-canvas')[0].getContext("2d").drawImage(img.target,0,0,480,480)
-          $('#main-canvas')[0].getContext("2d").drawImage($('#main-image')[0],0,0,480,480)
-        @viewport.attr(class: @flip_class())
-      else
-        @viewport
-      @viewport
 
     left: (delta = 1) ->
       return if typeof @.MGlass != 'undefined' && @.MGlass.isActive
       @direction = 'left'
       @move_horizontal(delta)
 
+
     right: (delta = 1) ->
       return if typeof @.MGlass != 'undefined' && @.MGlass.isActive
       @direction = 'right'
       @move_horizontal(delta)
+
 
     move_horizontal: (delta) ->
       return if !@active
@@ -537,6 +364,7 @@ class FullInspection extends Viewer
       delta = -delta if @direction == 'right'
       @x = @metadata.inc_x(@x, delta)
       @show()
+
 
     up: (delta = 1) ->
       return if !@active
@@ -549,6 +377,8 @@ class FullInspection extends Viewer
         @x = @metadata.inc_x(@x, new_x - @x)
       @fix_focus()
       @show()
+
+
     down: (delta = 1) ->
       return if !@active
       return if typeof @.MGlass != 'undefined' && @.MGlass.isActive
@@ -560,10 +390,16 @@ class FullInspection extends Viewer
         @x = @metadata.inc_x(@x, new_x - @x)
       @fix_focus()
       @show()
+
+
     flip: ->
       @y >= @metadata.flip_from_y
+
+
     flip_class: ->
       if @flip() then "viewport flip" else "viewport"
+
+
     fix_focus: ->
       if @metadata.supported_focus_indexes(@x, @y).indexOf(@focus) is -1
         @focus = @metadata.default_focus(@x, @y)
@@ -571,6 +407,8 @@ class FullInspection extends Viewer
 
     at_top: ->
       @y == @metadata.flip_from_y - 1
+
+
     top_view: ->
       @direction = 'up'
       y_top = @metadata.vertical_angles.indexOf(90)
@@ -579,8 +417,11 @@ class FullInspection extends Viewer
       return if !@active
       @show()
 
+
     at_bottom: ->
       @y is @metadata.vertical_angles.indexOf(-90)
+
+
     bottom_view: ->
       @direction = 'up'
       y_bottom = @metadata.vertical_angles.indexOf(-90)
@@ -589,10 +430,13 @@ class FullInspection extends Viewer
       return if !@active
       @show()
 
+
     at_middle: ->
       @y is @metadata.vertical_angles.indexOf(0)
 
+
     magnify: ->
+
 
     middle_view: ->
       @direction = 'up'
@@ -602,20 +446,25 @@ class FullInspection extends Viewer
       return if !@active
       @show()
 
+
     view_mode: ->
       return 'top' if @at_top()
       return 'side' if @at_middle()
       return 'bottom' if @at_bottom()
       return null
 
+
     stop: ->
       clearInterval(@player) if @player
+
 
     play: ->
       @stop()
       @player = setInterval(=>
         @left()
         @metadata.speed * @density)
+
+
     show: (force) ->
       @widget.trigger('xy', x: @x, y: @y)
       clearTimeout(@timeout) if @timeout
@@ -647,6 +496,7 @@ class FullInspection extends Viewer
       sprite_prefix = "zoom_#{@size}_#{sprite_size}_#{config.sprite_quality}_"
       $("#info_inspection").removeClass().addClass "" + sprite_prefix + @stone + "_img_" + @metadata.image_name(x, y)
 
+
     load_from_sprite: ->
       info = @sprite_info()
       bpy = info.css("background-position-y")
@@ -666,7 +516,8 @@ class FullInspection extends Viewer
         @widget.addClass('sprite')
         #viewSize = Math.floor(@size / @metadata.sprite_factors[1])
         viewSize = Math.floor(@size / @metadata.sprite_factor)
-        $('#sprite-image').attr(src: src,rawdata_size : @metadata.image_size).css(top: top, left: left)[0].onload = ()-> 
+        $('#sprite-image').attr(src: src,rawdata_size : @metadata.image_size).css(top: top, left: left)[0].onload = ()->
+
           rawdata_size = parseInt($(this).attr('rawdata_size'))
           sx = parseInt($(this).css("left").match(/\d+/g)[0])*-1
           sy = parseInt($(this).css("top").match(/\d+/g)[0])*-1
@@ -675,11 +526,13 @@ class FullInspection extends Viewer
         $('#main-canvas')[0].getContext("2d").drawImage($('#sprite-image')[0],sprite_left*-1,sprite_top*-1,viewSize,viewSize,0,0,480,480)
         @viewport.attr(class: @flip_class())
 
+
     get_sprite_image: (info) ->
       match = info.css("background-image").match(/url\("?([^"]*)"?\)/)
       if match then match[1] else null
 
-    load_stylesheet: (href, sprite_size, callback) -> #Polling for getting actual sprite image
+
+    load_stylesheet: (href, sprite_size, callback, callbackRunViewerBI) -> #Polling for getting actual sprite image
       if config.local
         callback()
         return
@@ -711,34 +564,42 @@ class FullInspection extends Viewer
                 height: (@metadata.sprite_num_y * sprite_size) * @size / sprite_size
                 #$('#main-canvas')[0].getContext("2d").drawImage(@widget.find('#sprite-image')[0],0,0,480,480,parseInt($(this).css("left").match(/\d+/g)[0])*-1,parseInt($(this).css("top").match(/\d+/g)[0])*-1,480*4,480*4)
             callback()
+            callbackRunViewerBI()
         else
           setTimeout(check, 50)
       check()
 
-    zoom_large: ->
+
+    zoom_large: (callbackRunViewerBI) ->
       @widget.removeClass('small').addClass('large')
       @mode = 'large'
-      @zoom(@metadata.image_size , @metadata.hq_trans(), 0)
+      @zoom(@metadata.image_size , @metadata.hq_trans(), 0, callbackRunViewerBI)
 
-    zoom_small: ->
+
+    zoom_small: (callbackRunViewerBI) ->
       @widget.removeClass('large').addClass('small')
       @mode = 'small'
-      @zoom(320, "c_scale,h_320,q_#{@metadata.image_quality},w_320", 0)
+      @zoom(320, "c_scale,h_320,q_#{@metadata.image_quality},w_320", 0, callbackRunViewerBI)
+
 
     mode: ->
       return @mode
+
 
     change_focus: (focus) ->
       @focus = focus
       @show()
 
+
     next_focus: ->
       @metadata.next_focus(@x, @y, @focus)
+
 
     prev_focus: ->
       @metadata.prev_focus(@x, @y, @focus)
 
-    zoom: (size, trans) ->
+
+    zoom: (size, trans, callbackRunViewerBI) ->
       @currentDownloadImagesLabel = size + "_" + trans
       @currentDownloadImagesTimeStart = new Date()
       @size = size
@@ -764,9 +625,13 @@ class FullInspection extends Viewer
       if !isLocal
         @load_stylesheet(small_css_url, @sprite_size, =>
           @widget.trigger('low_quality')
-        )
+        , callbackRunViewerBI)
 
-  class UI
+
+# -----------------------------------------
+
+
+  class UIBase
     constructor: (@viewer, options) ->
       @auto_play = options.auto_play
 
@@ -835,10 +700,13 @@ class FullInspection extends Viewer
       @viewer.play()
       return false
 
+    
     initMagnify: (image_source)->
       if(magnifierLibName == 'mglass')
         @viewer.MGlass = new MGlass 'main-canvas', image_source, {
-          background: @viewer.metadata.background,innerHTML : "<div class='mglass_inner_html'><div class='dummy'></div><div class='img-container'><img src='#{@viewer.resourcesPrefix}move_cursor.png' alt='move'/></div></div>"}, arguments.callee
+          background: @viewer.metadata.background,
+          innerHTML : mglassInnerHtml() },
+          arguments.callee
       else if magnifierLibName == 'cloudzoom'
         magnifyOptions = {
           zoomImage: image_source,
@@ -1004,7 +872,7 @@ class FullInspection extends Viewer
         return false
   
     
-    go: ->
+    go: (callbackRunViewerBI) ->
 
       @viewer.inited = true
       @update_focus_buttons()
@@ -1212,9 +1080,9 @@ class FullInspection extends Viewer
         return
 
       if @viewer.metadata.initial_zoom == 'small'
-        @viewer.zoom_small()
+        @viewer.zoom_small(callbackRunViewerBI)
       else
-        @viewer.zoom_large()
+        @viewer.zoom_large(callbackRunViewerBI)
       @update_focus_buttons()
 
 
