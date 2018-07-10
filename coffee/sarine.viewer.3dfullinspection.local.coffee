@@ -1,8 +1,5 @@
 class FullInspection extends FullInspectionBase
-  isLocal = false
   qs = undefined
-  magnifierLibName = null
-  isBucket = window.location.pathname.indexOf('/bucket') isnt -1
   reqsPerHostAllowed = 6; # Requests per Hostname 
   
   constructor: (options) -> 
@@ -20,9 +17,9 @@ class FullInspection extends FullInspectionBase
       { element: 'link', src: '3dfullinspection/inspection.css?' + @atomVersion }
     ]
     
-    if(magnifierLibName == 'cloudzoom')
+    if(@magnifierLibName == 'cloudzoom')
       @resources.push { element: 'script', src: 'cloudzoom.js?' + cacheAssetsVersion }
-    else if(magnifierLibName == 'mglass')
+    else if(@magnifierLibName == 'mglass')
       @resources.push { element: 'script', src: '3dfullinspection/mglass.js?' + @atomVersion }
 
     super(options)
@@ -190,3 +187,4 @@ class FullInspection extends FullInspectionBase
     mglassInnerHtml: ->
       "<div class='mglass_inner_html'><div class='dummy'></div><div class='img-container'><img src='#{@viewer.resourcesPrefix}move_cursor.png' alt='move'/></div></div>"
 
+@FullInspection = FullInspection

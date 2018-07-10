@@ -1,49 +1,6 @@
-class FullInspectionBase extends Viewer 
+STRIDE_X = 4
 
-  isSupportedMagnifier: (libName) ->
-    return [ 'mglass', 'cloudzoom' ].filter((libItem)->
-        return libItem == libName
-      ).length == 1
-
-  setMagnifierLibName: () ->
-    magnifierLibName = 'mglass'
-    currentExperience = []
-
-    if configuration.experiences
-      currentExperience = configuration.experiences.filter (exper)->
-        return exper.atom == 'loupe3DFullInspection'
-
-    if(currentExperience.length == 1 && currentExperience[0].magnifierLibName && @isSupportedMagnifier(currentExperience[0].magnifierLibName))
-      magnifierLibName = currentExperience[0].magnifierLibName
-      return
-
-
-  convertElement :() =>
-    url = @resourcesPrefix+"3dfullinspection/3dfullinspection.html?" +  @atomVersion
- 
-    $.get url, (innerHtml) =>
-      compiled = $(innerHtml)
-      $(".buttons",compiled).remove() if(@element.attr("menu")=="false")
-      $(".stone_number",compiled).remove() if(@element.attr("coordinates")=="false")
-
-      @conteiner = compiled
-      @element.css {width:"100%", height:"100%"}
-      # compiled.find('canvas').attr({width:@element.width(), height: @element.height()})
-      @element.append(compiled)
-    @element
-
-
-  nextImage : ()->
-    console.log "FullInspection: nextImage"
-
-  play: () ->
-    @element.attr("active","true")
-
-  stop: () ->
-    @element.attr("active","false")
-
-  STRIDE_X = 4
-  config =
+config =
     sprite_factors: "2,4" 
     image_quality: 70
     sprite_quality: 30
@@ -55,11 +12,7 @@ class FullInspectionBase extends Viewer
     machineEndPoint: "http://localhost:8735/Sarin.Agent"
     local: false
 
-
-# -----------------------------------
-
-
-  class Metadata
+class Metadata
     constructor: (options) ->
       # string options, overrideable in url
       for option in ["background", "initial_zoom", "sprite_factors", "shooting_parameters", "local"]
@@ -182,7 +135,11 @@ class FullInspectionBase extends Viewer
 
 # -----------------------------------
 
-  class Preloader
+
+isBucket = window.location.pathname.indexOf('/bucket') isnt -1
+isLocal = false
+
+class Preloader
     constructor: (@callback, @widget, @metadata, options) ->
       @version = 0
       @dest = options.src
@@ -348,8 +305,10 @@ class FullInspectionBase extends Viewer
       ,timeoutMl)
 
 
+# -----------------------------------------
 
-  class ViewerBIBase
+
+class ViewerBIBase
 
     reset: ->
       @stop()
@@ -579,7 +538,9 @@ class FullInspectionBase extends Viewer
                 height: (@metadata.sprite_num_y * sprite_size) * @size / sprite_size
                 #$('#main-canvas')[0].getContext("2d").drawImage(@widget.find('#sprite-image')[0],0,0,480,480,parseInt($(this).css("left").match(/\d+/g)[0])*-1,parseInt($(this).css("top").match(/\d+/g)[0])*-1,480*4,480*4)
             callback()
-            callbackRunViewerBI()
+            
+            if(callbackRunViewerBI)
+              callbackRunViewerBI()
         else
           setTimeout(check, 50)
       check()
@@ -646,9 +607,10 @@ class FullInspectionBase extends Viewer
 # -----------------------------------------
 
 
-  class UIBase
+class UIBase
     constructor: (@viewer, options) ->
       @auto_play = options.auto_play
+      @magnifierLibName = options.magnifierLibName
 
     disable_button: (buttons) ->
       $(buttons).each((index, button) =>
@@ -717,12 +679,12 @@ class FullInspectionBase extends Viewer
 
     
     initMagnify: (image_source)->
-      if(magnifierLibName == 'mglass')
+      if(@magnifierLibName == 'mglass')
         @viewer.MGlass = new MGlass 'main-canvas', image_source, {
           background: @viewer.metadata.background,
-          innerHTML : mglassInnerHtml() },
+          innerHTML : @mglassInnerHtml() },
           arguments.callee
-      else if magnifierLibName == 'cloudzoom'
+      else if @magnifierLibName == 'cloudzoom'
         magnifyOptions = {
           zoomImage: image_source,
           zoomPosition: 'inside',
@@ -1063,7 +1025,7 @@ class FullInspectionBase extends Viewer
           @update_focus_buttons()
         else
           @viewer.active = true
-          if(magnifierLibName == 'mglass')
+          if(@magnifierLibName == 'mglass')
             $(document).mouseup (e)=>
               container = $ ".mglass_viewer,.magnify"
               if !container.is(e.target) and container.has(e.target).length == 0
@@ -1101,9 +1063,55 @@ class FullInspectionBase extends Viewer
       @update_focus_buttons()
 
 
+# -----------------------------------
 
 
-@FullInspectionBase = FullInspectionBase
+class FullInspectionBase extends Viewer 
+  
+  magnifierLibName = null
+
+  isSupportedMagnifier: (libName) ->
+    return [ 'mglass', 'cloudzoom' ].filter((libItem)->
+        return libItem == libName
+      ).length == 1
+
+  setMagnifierLibName: () ->
+    @magnifierLibName = 'mglass'
+    currentExperience = []
+
+    if configuration.experiences
+      currentExperience = configuration.experiences.filter (exper)->
+        return exper.atom == 'loupe3DFullInspection'
+
+    if(currentExperience.length == 1 && currentExperience[0].magnifierLibName && @isSupportedMagnifier(currentExperience[0].magnifierLibName))
+      @magnifierLibName = currentExperience[0].magnifierLibName
+      return
+
+
+  convertElement :() =>
+    url = @resourcesPrefix+"3dfullinspection/3dfullinspection.html?" +  @atomVersion
+ 
+    $.get url, (innerHtml) =>
+      compiled = $(innerHtml)
+      $(".buttons",compiled).remove() if(@element.attr("menu")=="false")
+      $(".stone_number",compiled).remove() if(@element.attr("coordinates")=="false")
+
+      @conteiner = compiled
+      @element.css {width:"100%", height:"100%"}
+      # compiled.find('canvas').attr({width:@element.width(), height: @element.height()})
+      @element.append(compiled)
+    @element
+
+
+  nextImage : ()->
+    console.log "FullInspectionBase: nextImage"
+
+  play: () ->
+    @element.attr("active","true")
+
+  stop: () ->
+    @element.attr("active","false")
+
 
 ### Query string hepler ###
 class window.queryString

@@ -1,8 +1,75 @@
+
+class ViewerBI extends ViewerBIBase
+    constructor: (options) ->      
+      @widget = $(".inspect-stone")
+      @viewport = $(".inspect-stone > .viewport")
+      @inited = false
+      # @first_hit = true
+      @debug = options.debug
+      @metadata = options.metadata
+      @stone = options.stone
+      @friendlyName = options.friendlyName
+      @density = options.density || 1
+      @x = options.x
+      @y = options.y
+      @focus = @metadata.initial_focus
+      @preloader = new Preloader(@img_ready, @widget, @metadata, options)
+      @mode = 'large'
+      @inspection = false
+      @dest = options.src
+      @first_init_defer = options.first_init
+      @full_init_defer = options.full_init
+      @resourcesPrefix = options.resourcesPrefix
+      @atomVersion = options.atomVersion
+      @reset()
+      @context = $('#main-canvas')[0].getContext("2d")
+
+
+    img_ready: (trans, x, y, focus, src) =>
+      if @preloader.total() == @preloader.loaded    
+        @full_init_defer.resolve(@)
+
+
+      # if(@first_hit)
+      #   @first_hit = false
+        # @first_init_defer.resolve(@)
+
+
+      @widget.trigger('high_quality',
+        loaded: Math.floor(@preloader.loaded / @density), 
+        total: Math.floor(@preloader.total() / @density)
+      )
+
+      if x == @x && y == @y && focus == @focus && trans == @trans
+        className = @widget[0].className
+        @widget.removeClass('sprite')
+        imageChanged = ($('#main-image').attr('src') != src)
+        
+        if @preloader.cdn_subdomains.length && !isBucket && !isLocal
+          src = @preloader.replace_subdomain(src, @preloader.cdn_subdomains[(x + y) % @preloader.cdn_subdomains.length])
+        
+        if imageChanged || className != @widget[0].className 
+          $('#main-image').attr(src: src)
+          $('#main-image')[0].onload = (img)->
+            $('#main-canvas')[0].getContext("2d").drawImage(img.target,0,0,480,480)
+          $('#main-canvas')[0].getContext("2d").drawImage($('#main-image')[0],0,0,480,480)
+        @viewport.attr(class: @flip_class())
+      else
+        @viewport
+      @viewport
+
+
+
+      
+class UI extends UIBase
+
+    mglassInnerHtml: ->
+      "<div class='mglass_inner_html'><div class='dummy'></div><div class='img-container'><img src='#{@viewer.resourcesPrefix}3dfullinspection/move_cursor.png?#{@viewer.atomVersion}' alt='move'/></div></div>"
+    
+
+
 class FullInspection extends FullInspectionBase
-  isLocal = false
   qs = undefined
-  magnifierLibName = null
-  isBucket = window.location.pathname.indexOf('/bucket') isnt -1
   reqsPerHostAllowed = 0
 
   constructor: (options) -> 
@@ -33,9 +100,9 @@ class FullInspection extends FullInspectionBase
     @jsonResult = undefined
     @stone = ""
 
-    if(magnifierLibName == 'cloudzoom')
+    if(@magnifierLibName == 'cloudzoom')
       @resources.push { element: 'script', src: 'cloudzoom.js?' + cacheAssetsVersion }
-    else if(magnifierLibName == 'mglass')
+    else if(@magnifierLibName == 'mglass')
       @resources.push { element: 'script', src: '3dfullinspection/mglass.js?' + @atomVersion }
       
     super(options)
@@ -184,7 +251,7 @@ class FullInspection extends FullInspectionBase
     _t = @
     start = (metadata) =>
       @viewerBI =  new ViewerBI(first_init: @first_init_defer, full_init:@full_init_defer, src:@src, x: 0, y: metadata.vertical_angles.indexOf(90), stone: _t.stone, friendlyName: "temp", cdn_subdomains: @cdn_subdomains, metadata: metadata, debug: false, resourcesPrefix : @resourcesPrefix, atomVersion: @atomVersion)
-      @UIlogic = new UI(@viewerBI, auto_play: true)
+      @UIlogic = new UI(@viewerBI, {auto_play: true, magnifierLibName: @magnifierLibName})
       
       if (isLocal)
         @UIlogic.go()
@@ -233,73 +300,4 @@ class FullInspection extends FullInspectionBase
     
     @full_init_defer
 
-
-  class ViewerBI extends ViewerBIBase
-    constructor: (options) ->      
-      @widget = $(".inspect-stone")
-      @viewport = $(".inspect-stone > .viewport")
-      @inited = false
-      # @first_hit = true
-      @debug = options.debug
-      @metadata = options.metadata
-      @stone = options.stone
-      @friendlyName = options.friendlyName
-      @density = options.density || 1
-      @x = options.x
-      @y = options.y
-      @focus = @metadata.initial_focus
-      @preloader = new Preloader(@img_ready, @widget, @metadata, options)
-      @mode = 'large'
-      @inspection = false
-      @dest = options.src
-      @first_init_defer = options.first_init
-      @full_init_defer = options.full_init
-      @resourcesPrefix = options.resourcesPrefix
-      @atomVersion = options.atomVersion
-      @reset()
-      @context = $('#main-canvas')[0].getContext("2d")
-
-
-    img_ready: (trans, x, y, focus, src) =>
-      if @preloader.total() == @preloader.loaded    
-        @full_init_defer.resolve(@)
-
-
-      # if(@first_hit)
-      #   @first_hit = false
-        # @first_init_defer.resolve(@)
-
-
-      @widget.trigger('high_quality',
-        loaded: Math.floor(@preloader.loaded / @density), 
-        total: Math.floor(@preloader.total() / @density)
-      )
-
-      if x == @x && y == @y && focus == @focus && trans == @trans
-        className = @widget[0].className
-        @widget.removeClass('sprite')
-        imageChanged = ($('#main-image').attr('src') != src)
-        
-        if @preloader.cdn_subdomains.length && !isBucket && !isLocal
-          src = @preloader.replace_subdomain(src, @preloader.cdn_subdomains[(x + y) % @preloader.cdn_subdomains.length])
-        
-        if imageChanged || className != @widget[0].className 
-          $('#main-image').attr(src: src)
-          $('#main-image')[0].onload = (img)->
-            $('#main-canvas')[0].getContext("2d").drawImage(img.target,0,0,480,480)
-          $('#main-canvas')[0].getContext("2d").drawImage($('#main-image')[0],0,0,480,480)
-        @viewport.attr(class: @flip_class())
-      else
-        @viewport
-      @viewport
-
-
-
-      
-  class UI extends UIBase
-
-    mglassInnerHtml: ->
-      "<div class='mglass_inner_html'><div class='dummy'></div><div class='img-container'><img src='#{@viewer.resourcesPrefix}3dfullinspection/move_cursor.png?#{@viewer.atomVersion}' alt='move'/></div></div>"
-    
-
-
+@FullInspection = FullInspection
