@@ -250,7 +250,7 @@ class FullInspection extends FullInspectionBase
 
     _t = @
     start = (metadata) =>
-      @viewerBI =  new ViewerBI(first_init: @first_init_defer, full_init:@full_init_defer, src:@src, x: 0, y: metadata.vertical_angles.indexOf(90), stone: _t.stone, friendlyName: "temp", cdn_subdomains: @cdn_subdomains, metadata: metadata, debug: false, resourcesPrefix : @resourcesPrefix, atomVersion: @atomVersion)
+      @viewerBI =  new ViewerBI(first_init: @first_init_defer, full_init:@full_init_defer, src:@src, x: 0, y: metadata.vertical_angles.indexOf(90), stone: _t.stone, friendlyName: "temp", cdn_subdomains: @cdn_subdomains, metadata: metadata, debug: false, resourcesPrefix : @resourcesPrefix, atomVersion: @atomVersion, reqsPerHostAllowed: reqsPerHostAllowed)
       @UIlogic = new UI(@viewerBI, {auto_play: true, magnifierLibName: @magnifierLibName})
       
       if (isLocal)

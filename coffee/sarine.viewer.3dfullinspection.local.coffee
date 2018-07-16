@@ -1,6 +1,5 @@
 class FullInspection extends FullInspectionBase
   qs = undefined
-  reqsPerHostAllowed = 6; # Requests per Hostname 
   
   constructor: (options) -> 
     qs = new queryString()
@@ -65,7 +64,8 @@ class FullInspection extends FullInspectionBase
     @full_init_defer = $.Deferred()
     stone = ""
     start = (metadata) =>
-      @viewerBI =  new ViewerBI(first_init: @first_init_defer, full_init:@full_init_defer, src:@src, x: 0, y: metadata.vertical_angles.indexOf(90), stone: stone, friendlyName: "temp", cdn_subdomains: @cdn_subdomains, metadata: metadata, debug: false, resourcesPrefix : @resourcesPrefix)
+      #use 6 requests per hostname for HTTP/1.1
+      @viewerBI =  new ViewerBI(first_init: @first_init_defer, full_init:@full_init_defer, src:@src, x: 0, y: metadata.vertical_angles.indexOf(90), stone: stone, friendlyName: "temp", cdn_subdomains: @cdn_subdomains, metadata: metadata, debug: false, resourcesPrefix : @resourcesPrefix, reqsPerHostAllowed: 6)
       @UIlogic = new UI(@viewerBI, auto_play: true)
       @UIlogic.go()
 
@@ -160,7 +160,8 @@ class FullInspection extends FullInspectionBase
 
 
       @widget.trigger('high_quality',
-        loaded: Math.floor(@preloader.loaded / @density), total: Math.floor(@preloader.total() / @density))
+        loaded: Math.floor(@preloader.loaded / @density),
+        total:  Math.floor(@preloader.total() / @density))
       if x == @x && y == @y && focus == @focus && trans == @trans
         className = @widget[0].className
         @widget.removeClass('sprite')

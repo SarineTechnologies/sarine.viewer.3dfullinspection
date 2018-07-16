@@ -141,6 +141,7 @@ isLocal = false
 
 class Preloader
     constructor: (@callback, @widget, @metadata, options) ->
+      @reqsPerHostAllowed = options.reqsPerHostAllowed
       @version = 0
       @dest = options.src
       @clear_queue() 
@@ -209,6 +210,7 @@ class Preloader
     
     circle_distance: (x1, x2, size) ->
       Math.min((x1 - x2 + size) % size, (x2 - x1 + size) % size)
+
     prioritize: ->
       # later in the array is proccessed earlier
       for shard, queue of @queue
@@ -236,7 +238,7 @@ class Preloader
           @loaded++ if was_new
           @callback(trans, x, y, focus, src)
           ++@shard_imgs_loaded[shard]
-          if !shard || @shard_imgs_loaded[shard] >= reqsPerHostAllowed
+          if !shard || @shard_imgs_loaded[shard] >= @reqsPerHostAllowed
             @preload(queue, shard)            
       img.onerror = img.onload
 
@@ -245,7 +247,7 @@ class Preloader
 
     load_img_shard: (queue, shard) ->
       r = 0
-      while r < reqsPerHostAllowed
+      while r < @reqsPerHostAllowed
         entry = queue[shard].pop()
         if entry
           @load_image(entry.x, entry.y, entry.focus, entry.src, queue, shard)
@@ -253,7 +255,7 @@ class Preloader
 
     preload: (queue, shard) ->
       return if !queue || queue.length == 0
-      if shard && @shard_imgs_loaded[shard] >= reqsPerHostAllowed
+      if shard && @shard_imgs_loaded[shard] >= @reqsPerHostAllowed
         @shard_imgs_loaded[shard] = 0;
         
       if !shard
