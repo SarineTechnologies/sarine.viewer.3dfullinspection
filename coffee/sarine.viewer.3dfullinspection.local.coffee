@@ -66,7 +66,7 @@ class FullInspection extends FullInspectionBase
     start = (metadata) =>
       #use 6 requests per hostname for HTTP/1.1
       @viewerBI =  new ViewerBI(first_init: @first_init_defer, full_init:@full_init_defer, src:@src, x: 0, y: metadata.vertical_angles.indexOf(90), stone: stone, friendlyName: "temp", cdn_subdomains: @cdn_subdomains, metadata: metadata, debug: false, resourcesPrefix : @resourcesPrefix, reqsPerHostAllowed: 6)
-      @UIlogic = new UI(@viewerBI, auto_play: true)
+      @UIlogic = new UI(@viewerBI, {auto_play: true, magnifierLibName: @magnifierLibName})
       @UIlogic.go()
 
     ##TODO -new json end-point     
