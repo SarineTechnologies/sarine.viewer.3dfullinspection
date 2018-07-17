@@ -73,44 +73,20 @@ class FullInspection extends FullInspectionBase
   reqsPerHostAllowed = 0
 
   constructor: (options) -> 
-    
-    qs = new queryString()
-    isLocal = qs.getValue("isLocal") == "true"
-    
     if Device.isHTTP2() && !isLocal
       ## for http/2 support disable limit number of concurrent http requests
       reqsPerHostAllowed = 1000;  
     else
       reqsPerHostAllowed = 6; # 6 Requests per Hostname for http/1.1  
-    
-    @resourcesPrefix = options.baseUrl + "atomic/v1/assets/"
-    @atomVersion = options.atomVersion
-    @setMagnifierLibName()
-    @cdn_subdomains = if typeof window.cdn_subdomains isnt 'undefined' then window.cdn_subdomains else []
-    @resources = [
-      { element: 'script', src: 'jquery-ui.js?' + cacheAssetsVersion },
-      { element: 'script', src: 'jquery.ui.ipad.altfix.js?' + cacheAssetsVersion },
-      { element: 'script', src: '3dfullinspection/momentum.js?' + @atomVersion },
-      { element: 'link', src: '3dfullinspection/inspection.css?' + @atomVersion }
-    ]
-    
+        
     @first_init_defer = $.Deferred()
     @full_init_defer = $.Deferred()
     @metadata = undefined
     @jsonResult = undefined
     @stone = ""
 
-    if(@magnifierLibName == 'cloudzoom')
-      @resources.push { element: 'script', src: 'cloudzoom.js?' + cacheAssetsVersion }
-    else if(@magnifierLibName == 'mglass')
-      @resources.push { element: 'script', src: '3dfullinspection/mglass.js?' + @atomVersion }
-      
     super(options)
-    { @jsonsrc, @src } = options
     
-    if(@cdn_subdomains.length && !isBucket && !isLocal) 
-      @src = options.src.replace(/\/[^.]*/, '//' + @cdn_subdomains[0])
-
 
   preloadAssets: (callback)=>
 

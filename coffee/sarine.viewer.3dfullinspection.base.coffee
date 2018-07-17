@@ -1072,6 +1072,33 @@ class FullInspectionBase extends Viewer
   
   magnifierLibName = null
 
+  constructor: (options) -> 
+    qs = new queryString()
+    isLocal = qs.getValue("isLocal") == "true"
+    @resourcesPrefix = options.baseUrl + "atomic/v1/assets/"
+    @atomVersion = options.atomVersion
+    @setMagnifierLibName()
+    @cdn_subdomains = if typeof window.cdn_subdomains isnt 'undefined' then window.cdn_subdomains else []
+    @resources = [
+      { element: 'script', src: 'jquery-ui.js?' + cacheAssetsVersion },
+      { element: 'script', src: 'jquery.ui.ipad.altfix.js?' + cacheAssetsVersion },
+      { element: 'script', src: '3dfullinspection/momentum.js?' + @atomVersion },
+      { element: 'link', src: '3dfullinspection/inspection.css?' + @atomVersion }
+    ]
+    
+    if(@magnifierLibName == 'cloudzoom')
+      @resources.push { element: 'script', src: 'cloudzoom.js?' + cacheAssetsVersion }
+    else if(@magnifierLibName == 'mglass')
+      @resources.push { element: 'script', src: '3dfullinspection/mglass.js?' + @atomVersion }
+      
+    super(options)
+    { @jsonsrc, @src } = options
+    
+    if(@cdn_subdomains.length && !isBucket && !isLocal) 
+      @src = options.src.replace(/\/[^.]*/, '//' + @cdn_subdomains[0])
+
+
+
   isSupportedMagnifier: (libName) ->
     return [ 'mglass', 'cloudzoom' ].filter((libItem)->
         return libItem == libName
