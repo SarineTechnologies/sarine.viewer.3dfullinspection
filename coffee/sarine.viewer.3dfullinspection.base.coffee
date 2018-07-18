@@ -577,7 +577,7 @@ class ViewerBIBase
       @metadata.prev_focus(@x, @y, @focus)
 
 
-    zoom: (size, trans, callbackRunViewerBI) ->
+    zoom: (size, trans, arg, callbackRunViewerBI) ->
       @currentDownloadImagesLabel = size + "_" + trans
       @currentDownloadImagesTimeStart = new Date()
       @size = size
