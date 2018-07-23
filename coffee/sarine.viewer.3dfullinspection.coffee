@@ -68,8 +68,9 @@ class FullInspection extends Viewer
     triggerCallback = (callback) ->
       loaded++
       if(loaded == totalScripts.length-1 && callback!=undefined )
-        setTimeout( ()=> 
-          callback() 
+        paTimer = setTimeout( ()=> 
+          callback()
+          clearTimeout paTimer 
         ,500) 
 
     element
@@ -171,27 +172,24 @@ class FullInspection extends Viewer
       @jsonResult = result
       
       @preloadAssets(() ->
-        clearTimeout @fetchSprites
-        @fetchSprites = setTimeout( =>
-          # load 252_126_30_sprite
-          img = new Image()
-          img.onload = =>
-            $('#main-canvas')[0].getContext("2d").drawImage(img, 378, 126, 126, 126, 0, 0, 480, 480)
+        # load 252_126_30_sprite
+        img = new Image()
+        img.onload = =>
+          $('#main-canvas')[0].getContext("2d").drawImage(img, 378, 126, 126, 126, 0, 0, 480, 480)
+          _t.first_init_defer.resolve(@)
+        
+        img.onerror = =>
+          # load 480_120_30_sprite if 252_126_30_sprite not found 
+          console.log "252_126_30_sprite not found"
+          img2 = new Image()
+          img2.onload = =>
+            $('#main-canvas')[0].getContext("2d").drawImage(img2, 378, 126, 126, 126, 0, 0, 480, 480)
             _t.first_init_defer.resolve(@)
-          
-          img.onerror = =>
-            # load 480_120_30_sprite if 252_126_30_sprite not found 
-            console.log "252_126_30_sprite not found"
-            img2 = new Image()
-            img2.onload = =>
-              $('#main-canvas')[0].getContext("2d").drawImage(img2, 378, 126, 126, 126, 0, 0, 480, 480)
-              _t.first_init_defer.resolve(@)
-            img2.onerror = =>
-              _t.first_init_defer.resolve(@)
-            img2.src = stones[0].viewers.loupe3DFullInspection + "/InspectionSprites/480_120_30_sprite.jpg"
+          img2.onerror = =>
+            _t.first_init_defer.resolve(@)
+          img2.src = stones[0].viewers.loupe3DFullInspection + "/InspectionSprites/480_120_30_sprite.jpg"
 
-          img.src = stones[0].viewers.loupe3DFullInspection + "/InspectionSprites/252_126_30_sprite.jpg"
-        , 100)
+        img.src = stones[0].viewers.loupe3DFullInspection + "/InspectionSprites/252_126_30_sprite.jpg"
       )
 
     .fail =>
@@ -204,7 +202,10 @@ class FullInspection extends Viewer
           $(".inspect-stone",@element).css("width", "480px") # @TODO: Change to dynamic
           $(".inspect-stone",@element).css("height", "480px")
         else
-          setTimeout checkNdelete, 50
+          checkNdeleteTimer = setTimeout (=> 
+            checkNdelete()
+            clearTimeout checkNdeleteTimer
+          ), 50
       checkNdelete()
 
       @first_init_defer.resolve(@)
@@ -568,6 +569,7 @@ class FullInspection extends Viewer
         return @callback(@trans, x, y, focus, src) if @has(x, y, focus)
 
         @load_image(x, y, focus, src)
+        clearTimeout @fetchTimer
       ,timeoutMl)
 
   class ViewerBI
@@ -830,7 +832,10 @@ class FullInspection extends Viewer
             callback()
             callbackRunViewerBI()
         else
-          setTimeout(check, 50)
+          ct = setTimeout(=>
+            check()
+            clearTimeout ct
+          , 50)
       check()
 
     zoom_large: (callbackRunViewerBI) ->
@@ -1013,7 +1018,7 @@ class FullInspection extends Viewer
 
         magnifyInstance.bind 'cloudzoom_start_zoom', (=>
           hasRemovedTrasform = false
-          setTimeout (=>
+          mgTimeout = setTimeout (=>
             if(!hasRemovedTrasform)
               
               # fix of Bug 87323:Magnifier has a white line on Safari Mac
@@ -1029,6 +1034,7 @@ class FullInspection extends Viewer
                   magnifyImage.attr 'style', currentStyle
                   magnifyImage.attr 'class', 'flip180'
                   hasRemovedTrasform = true
+            clearTimeout mgTimeout
           ), 300
           return
         )
@@ -1302,7 +1308,10 @@ class FullInspection extends Viewer
             $(document).mouseup (e)=>
               container = $ ".mglass_viewer,.magnify"
               if !container.is(e.target) and container.has(e.target).length == 0
-                setTimeout (()=> $(".magnify").click() ), 0
+                mgTimer = setTimeout (=> 
+                  $(".magnify").click()
+                  clearTimeout mgTimer 
+                ), 0
 
           $(".buttons li:not(.magnify)").addClass("disabled");
           $(".magnify").show();
@@ -1386,5 +1395,4 @@ class queryStringImpl
       canonicalParams[key.toLowerCase()] = value
       count += 1
     return [params, canonicalParams, count]
-
 
