@@ -12,7 +12,7 @@ class FullInspection extends Viewer
     
     if Device.isHTTP2() && !isLocal
       ## for http/2 support disable limit number of concurrent http requests
-      reqsPerHostAllowed = 1000;  
+      reqsPerHostAllowed = 100;  
     else
       reqsPerHostAllowed = 6; # 6 Requests per Hostname for http/1.1  
     
@@ -173,24 +173,23 @@ class FullInspection extends Viewer
       
       @preloadAssets(() ->
         # load 252_126_30_sprite
-        # img = new Image()
-        # img.onload = =>
-        #   $('#main-canvas')[0].getContext("2d").drawImage(img, 378, 126, 126, 126, 0, 0, 480, 480)
-        #   _t.first_init_defer.resolve(@)
+        img = new Image()
+        img.onload = =>
+          $('#main-canvas')[0].getContext("2d").drawImage(img, 378, 126, 126, 126, 0, 0, 480, 480)
+          _t.first_init_defer.resolve(@)
         
-        # img.onerror = =>
-        #   # load 480_120_30_sprite if 252_126_30_sprite not found 
-        #   console.log "252_126_30_sprite not found"
-        #   img2 = new Image()
-        #   img2.onload = =>
-        #     $('#main-canvas')[0].getContext("2d").drawImage(img2, 378, 126, 126, 126, 0, 0, 480, 480)
-        #     _t.first_init_defer.resolve(@)
-        #   img2.onerror = =>
-        #     _t.first_init_defer.resolve(@)
-        #   img2.src = stones[0].viewers.loupe3DFullInspection + "/InspectionSprites/480_120_30_sprite.jpg"
+        img.onerror = =>
+          # load 480_120_30_sprite if 252_126_30_sprite not found 
+          console.log "252_126_30_sprite not found"
+          img2 = new Image()
+          img2.onload = =>
+            $('#main-canvas')[0].getContext("2d").drawImage(img2, 378, 126, 126, 126, 0, 0, 480, 480)
+            _t.first_init_defer.resolve(@)
+          img2.onerror = =>
+            _t.first_init_defer.resolve(@)
+          img2.src = stones[0].viewers.loupe3DFullInspection + "/InspectionSprites/480_120_30_sprite.jpg"
 
-        # img.src = stones[0].viewers.loupe3DFullInspection + "/InspectionSprites/252_126_30_sprite.jpg"
-        _t.first_init_defer.resolve(@)
+        img.src = stones[0].viewers.loupe3DFullInspection + "/InspectionSprites/252_126_30_sprite.jpg"
       )
 
     .fail =>
