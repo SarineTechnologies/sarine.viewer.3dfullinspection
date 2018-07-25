@@ -15,7 +15,7 @@ class FullInspection extends Viewer
     #   reqsPerHostAllowed = 100;  
     # else
     #   reqsPerHostAllowed = 6; # 6 Requests per Hostname for http/1.1  
-    reqsPerHostAllowed = 6;
+    reqsPerHostAllowed = 50;
 
     @resourcesPrefix = options.baseUrl + "atomic/v1/assets/"
     @atomVersion = options.atomVersion
