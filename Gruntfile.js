@@ -80,6 +80,22 @@ module.exports = function(grunt) {
             bundle: {
                 dest: config.dist.root + '/<%= config.name %>.config',
                 src: [target + '<%= config.name %>.config']
+            },
+            bundleLocal: {
+                dest: config.dist.root + '/<%= config.name %>.local.config',
+                src: [target + '<%= config.name %>.local.config']
+            },
+            assets:{
+               cwd: target +'assets/', 
+               expand: true,
+               src: ['*'], 
+               dest: config.dist.assets
+            },
+            loupelocal_static_files: {
+                expand: true,
+                cwd: target +'loupelocal.static/',
+                src: ['*'],
+                dest: config.dist.root
             }
         }        ,
          watch: {
@@ -107,7 +123,10 @@ module.exports = function(grunt) {
         'clean:postbuild',
         'copyVersion',
         'copy:bundle',
-        'clean:bundlecoffee' //remove bundle.coffe file - not necessary
+        'copy:bundleLocal',
+        'copy:assets',
+        'clean:bundlecoffee', //remove bundle.coffe file - not necessary
+        'copy:loupelocal_static_files'
     ]);
 
     grunt.registerTask('dev', ['build', 'watch']);
@@ -115,7 +134,10 @@ module.exports = function(grunt) {
     grunt.registerTask('copyVersion' , 'copy version from package.json to sarine.viewer.clarity.config' , function (){
         var packageFile = grunt.file.readJSON(target + 'package.json');
         var configFileName = target + packageFile.name + '.config';
+        var configFileNameLocal = target + packageFile.name + '.local.config';
         var copyFile = null;
+        var copyFileLocal = null;
+        
         if (grunt.file.exists(configFileName))
             copyFile = grunt.file.readJSON(configFileName);
         
@@ -124,6 +146,15 @@ module.exports = function(grunt) {
 
         copyFile.version = packageFile.version;
         grunt.file.write(configFileName , JSON.stringify(copyFile));
+
+        if (grunt.file.exists(configFileNameLocal))
+            copyFileLocal = grunt.file.readJSON(configFileNameLocal);
+        
+        if (copyFileLocal == null)
+            copyFileLocal = {};
+
+        copyFileLocal.version = packageFile.version;
+        grunt.file.write(configFileNameLocal , JSON.stringify(copyFileLocal));
     });
 
     function decideDist()
@@ -133,7 +164,8 @@ module.exports = function(grunt) {
             grunt.log.writeln("dist is github folder");
 
             return {
-                root: 'app/dist/'
+                root: 'app/dist/',
+                assets : 'app/assets/3dfullinspection/'
             }
         }
         else
@@ -141,7 +173,8 @@ module.exports = function(grunt) {
             grunt.log.writeln("dist is local");
 
             return {
-                root: '../../../dist/content/viewers/atomic/v1/js/'
+                root: '../../../dist/content/viewers/atomic/v1/js/',
+                assets :'../../../dist/content/viewers/atomic/v1/assets/3dfullinspection/'
             }
         }
     }
