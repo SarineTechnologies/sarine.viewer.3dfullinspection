@@ -51,7 +51,7 @@ module.exports = function(grunt) {
         },
         coffeescript_concat: {
             bundle: {
-                src: [target + 'lib/add/*.coffee', target + 'coffee/*.coffee', target + '!coffee/*.bundle.coffee'],
+                src: [target + 'lib/add/*.coffee', target + 'coffee/*.coffee', target + '!coffee/*.bundle.coffee', target + '!coffee/*.local.coffee'],
                 dest: target + 'coffee/<%= config.name %>.bundle.coffee'
 
             }
