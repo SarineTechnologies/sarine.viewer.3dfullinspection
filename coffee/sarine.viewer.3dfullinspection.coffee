@@ -1128,7 +1128,10 @@ class FullInspection extends Viewer
           $(document).mouseup (e)=>
             container = $ ".mglass_viewer,.magnify"
             if !container.is(e.target) and container.has(e.target).length == 0
-              setTimeout (()=> @clickMagnify() ), 0
+              mgTimer = setTimeout (=> 
+                  @clickMagnify()
+                  clearTimeout mgTimer 
+                ), 0
 
         $(".buttons li:not(.magnify)").addClass("disabled");
         $(".magnify").show();
