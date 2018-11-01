@@ -4,13 +4,17 @@ class FullInspection extends Viewer
   magnifierLibName = null
   isBucket = window.location.pathname.indexOf('/bucket') isnt -1
   reqsPerHostAllowed = 0
+  isWebpSupported = false
+  supportedExtentions = {"webp" : ".webp" , "jpg" : ".jpg"}
+  imageExtension = supportedExtentions.jpg
 
   constructor: (options) -> 
     
     qs = new queryString()
     isLocal = qs.getValue("isLocal") == "true"
-    
-    if Device.isHTTP2() && !isLocal
+    isWebpSupported = Device.isSupportsWebp()
+
+    if isWebpSupported && !isLocal
       ## for http/2 support disable limit number of concurrent http requests
       reqsPerHostAllowed = 50;  
     else
@@ -178,18 +182,40 @@ class FullInspection extends Viewer
           $('#main-canvas')[0].getContext("2d").drawImage(img, 378, 126, 126, 126, 0, 0, 480, 480)
           _t.first_init_defer.resolve(@)
         
+        if isWebpSupported
+          imageExtension = supportedExtentions.webp
+
         img.onerror = =>
           # load 480_120_30_sprite if 252_126_30_sprite not found 
           console.log "252_126_30_sprite not found"
-          img2 = new Image()
-          img2.onload = =>
-            $('#main-canvas')[0].getContext("2d").drawImage(img2, 378, 126, 126, 126, 0, 0, 480, 480)
-            _t.first_init_defer.resolve(@)
-          img2.onerror = =>
-            _t.first_init_defer.resolve(@)
-          img2.src = stones[0].viewers.loupe3DFullInspection + "/InspectionSprites/480_120_30_sprite.jpg"
+          if imageExtension == supportedExtentions.webp
+            imageExtension = supportedExtentions.jpg
+            img2 = new Image()
+            img2.onload = =>
+              $('#main-canvas')[0].getContext("2d").drawImage(img2, 378, 126, 126, 126, 0, 0, 480, 480)
+              _t.first_init_defer.resolve(@)
+            img2.onerror = =>
+              img3 = new Image()
+              img3.onload = =>
+                $('#main-canvas')[0].getContext("2d").drawImage(img3, 378, 126, 126, 126, 0, 0, 480, 480)
+                _t.first_init_defer.resolve(@)
+              img3.onerror = =>
+                _t.first_init_defer.resolve(@)
 
-        img.src = stones[0].viewers.loupe3DFullInspection + "/InspectionSprites/252_126_30_sprite.jpg"
+              img3.src = stones[0].viewers.loupe3DFullInspection + "/InspectionSprites/480_120_30_sprite" + imageExtension
+
+            img2.src = stones[0].viewers.loupe3DFullInspection + "/InspectionSprites/252_126_30_sprite" + imageExtension
+          else
+            img2 = new Image()
+            img2.onload = =>
+              $('#main-canvas')[0].getContext("2d").drawImage(img2, 378, 126, 126, 126, 0, 0, 480, 480)
+              _t.first_init_defer.resolve(@)
+            img2.onerror = =>
+              _t.first_init_defer.resolve(@)
+
+            img2.src = stones[0].viewers.loupe3DFullInspection + "/InspectionSprites/480_120_30_sprite" + imageExtension
+
+        img.src = stones[0].viewers.loupe3DFullInspection + "/InspectionSprites/252_126_30_sprite" + imageExtension
       )
 
     .fail =>
@@ -541,11 +567,13 @@ class FullInspection extends Viewer
         format: "jpg"
         quality: trans.quality ? config.image_quality,
         height:  trans.height ? config.image_size
-       
+      
+      attrs.format = imageExtension
+
       if !isLocal
-        @dest + "/" +  attrs.height + "_" + attrs.quality + "/img_" + @metadata.image_name(x, y, focus)+ ".jpg"
+        @dest + "/" +  attrs.height + "_" + attrs.quality + "/img_" + @metadata.image_name(x, y, focus)+ attrs.format
       else
-        @dest + "/" +  "merge" + "/img_" + @metadata.image_name(x, y, focus)+ ".jpg"
+        @dest + "/" +  "merge" + "/img_" + @metadata.image_name(x, y, focus)+ attrs.format
 
     fetch: (x, y, focus = null) ->
       # Remember current position to prioritize preload better
