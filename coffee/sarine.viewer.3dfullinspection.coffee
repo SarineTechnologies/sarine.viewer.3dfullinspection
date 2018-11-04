@@ -180,6 +180,7 @@ class FullInspection extends Viewer
         img = new Image()
         img.onload = =>
           $('#main-canvas')[0].getContext("2d").drawImage(img, 378, 126, 126, 126, 0, 0, 480, 480)
+          $('#main-canvas #sprite-image').css('background-image' , img.src)
           _t.first_init_defer.resolve(@)
         
         if isWebpSupported
@@ -193,11 +194,13 @@ class FullInspection extends Viewer
             img2 = new Image()
             img2.onload = =>
               $('#main-canvas')[0].getContext("2d").drawImage(img2, 378, 126, 126, 126, 0, 0, 480, 480)
+              $('#main-canvas #sprite-image').css('background-image' , img2.src)
               _t.first_init_defer.resolve(@)
             img2.onerror = =>
               img3 = new Image()
               img3.onload = =>
                 $('#main-canvas')[0].getContext("2d").drawImage(img3, 378, 126, 126, 126, 0, 0, 480, 480)
+                $('#main-canvas #sprite-image').css('background-image' , img3.src)
                 _t.first_init_defer.resolve(@)
               img3.onerror = =>
                 _t.first_init_defer.resolve(@)
@@ -209,6 +212,7 @@ class FullInspection extends Viewer
             img2 = new Image()
             img2.onload = =>
               $('#main-canvas')[0].getContext("2d").drawImage(img2, 378, 126, 126, 126, 0, 0, 480, 480)
+              $('#main-canvas #sprite-image').css('background-image' , img2.src)
               _t.first_init_defer.resolve(@)
             img2.onerror = =>
               _t.first_init_defer.resolve(@)
