@@ -181,7 +181,6 @@ class FullInspection extends Viewer
         img = new Image()
         img.onload = =>
           $('#main-canvas')[0].getContext("2d").drawImage(img, 378, 126, 126, 126, 0, 0, 480, 480)
-          $('#sprite-image').attr('src' ,  img.src)
           spriteSrc = img.src
           _t.first_init_defer.resolve(@)
         
@@ -196,14 +195,12 @@ class FullInspection extends Viewer
             img2 = new Image()
             img2.onload = =>
               $('#main-canvas')[0].getContext("2d").drawImage(img2, 378, 126, 126, 126, 0, 0, 480, 480)
-              $('#sprite-image').attr('src' ,  img2.src)
               spriteSrc = img2.src
               _t.first_init_defer.resolve(@)
             img2.onerror = =>
               img3 = new Image()
               img3.onload = =>
                 $('#main-canvas')[0].getContext("2d").drawImage(img3, 378, 126, 126, 126, 0, 0, 480, 480)
-                $('#sprite-image').attr('src' ,  img3.src)
                 spriteSrc = img3.src
                 _t.first_init_defer.resolve(@)
               img3.onerror = =>
@@ -216,7 +213,6 @@ class FullInspection extends Viewer
             img2 = new Image()
             img2.onload = =>
               $('#main-canvas')[0].getContext("2d").drawImage(img2, 378, 126, 126, 126, 0, 0, 480, 480)
-              $('#sprite-image').attr('src' ,  img2.src)
               spriteSrc = img2.src
               _t.first_init_defer.resolve(@)
             img2.onerror = =>
@@ -254,18 +250,11 @@ class FullInspection extends Viewer
       @viewerBI =  new ViewerBI(first_init: @first_init_defer, full_init:@full_init_defer, src:@src, x: 0, y: metadata.vertical_angles.indexOf(90), stone: _t.stone, friendlyName: "temp", cdn_subdomains: @cdn_subdomains, metadata: metadata, debug: false, resourcesPrefix : @resourcesPrefix, atomVersion: @atomVersion)
       @UIlogic = new UI(@viewerBI, auto_play: true)
       
-      if (isLocal)
-        @UIlogic.go()
-        if(_t.element.attr("active") isnt undefined)
-          _t.viewerBI.preloader.go()
-          _t.viewerBI.show(true)
-      else 
-        @UIlogic.go(() ->
+      @UIlogic.go(() ->
           if(_t.element.attr("active") isnt undefined)
             _t.viewerBI.preloader.go()
             _t.viewerBI.show(true)
         )
-      
 
     # @metadata = new Metadata(
     #   size_x: @jsonResult.number_of_x_images
@@ -793,8 +782,12 @@ class FullInspection extends Viewer
             this.show(true)
           , 50)
           # If we have a sprite for this image - show itfetch
-          return @load_from_sprite() if x % STRIDE_X == 0
-        @load_from_sprite()
+          if x % STRIDE_X == 0
+            $("#info_inspection").css('background-image' ,  'url('+ spriteSrc+ ')')
+            @load_from_sprite()
+          else
+            $("#info_inspection").css('background-image' , '')
+        @load_from_sprite() if x % STRIDE_X == 0
       @preloader.fetch(@x, @y, @focus)
         
 
@@ -815,18 +808,23 @@ class FullInspection extends Viewer
       top = -top_i * @size * (@sprite_size) / @sprite_size
 
       left = sprite_left * @size / @sprite_size
-      @widget.addClass('sprite')
-      #viewSize = Math.floor(@size / @metadata.sprite_factors[1])
-      viewSize = Math.floor(@size / @metadata.sprite_factor)
-      $('#sprite-image').attr(src: spriteSrc,rawdata_size : @metadata.image_size).css(top: top, left: left)[0].onload = ()->
+      src = @get_sprite_image(info)
+      if src
+        console.log('get from sprite');
+        @widget.addClass('sprite')
+        #viewSize = Math.floor(@size / @metadata.sprite_factors[1])
+        viewSize = Math.floor(@size / @metadata.sprite_factor)
+        $('#sprite-image').attr(src: src,rawdata_size : @metadata.image_size).css(top: top, left: left)[0].onload = ()->
 
-        rawdata_size = parseInt($(this).attr('rawdata_size'))
-        sx = parseInt($(this).css("left").match(/\d+/g)[0])*-1
-        sy = parseInt($(this).css("top").match(/\d+/g)[0])*-1
-        $('#main-canvas')[0].getContext("2d").drawImage(this,sx,sy,viewSize,viewSize,0,0,480,480)
-      
-      $('#main-canvas')[0].getContext("2d").drawImage($('#sprite-image')[0],sprite_left*-1,sprite_top*-1,viewSize,viewSize,0,0,480,480)
-      @viewport.attr(class: @flip_class())
+          rawdata_size = parseInt($(this).attr('rawdata_size'))
+          sx = parseInt($(this).css("left").match(/\d+/g)[0])*-1
+          sy = parseInt($(this).css("top").match(/\d+/g)[0])*-1
+          $('#main-canvas')[0].getContext("2d").drawImage(this,sx,sy,viewSize,viewSize,0,0,480,480)
+        
+        $('#main-canvas')[0].getContext("2d").drawImage($('#sprite-image')[0],sprite_left*-1,sprite_top*-1,viewSize,viewSize,0,0,480,480)
+        @viewport.attr(class: @flip_class())
+      else
+        console.log('not sprite');
 
     get_sprite_image: (info) ->
       match = info.css("background-image").match(/url\("?([^"]*)"?\)/)
@@ -846,24 +844,30 @@ class FullInspection extends Viewer
       size = @size
       check = => 
         info = @sprite_info(sprite_size, 0, 0)
-        img = new Image()
-        img.src = spriteSrc
-        img.startLoadStamp = new Date()
-        if img.complete
-          img.cached = true
+        src = @get_sprite_image(info)
+        if src?
+          img = new Image()
+          img.src = src
+          img.startLoadStamp = new Date()
+          if img.complete
+            img.cached = true
+          else
+            img.cached = false
+          img.onload = => 
+            img.endLoadStamp = new Date()
+            totalTime = (img.endLoadStamp.getTime() - img.startLoadStamp.getTime())
+            if size == @size
+              @widget.find('#sprite-image').css
+                width: (@metadata.sprite_num_x * sprite_size) * @size / sprite_size
+                height: (@metadata.sprite_num_y * sprite_size) * @size / sprite_size
+                #$('#main-canvas')[0].getContext("2d").drawImage(@widget.find('#sprite-image')[0],0,0,480,480,parseInt($(this).css("left").match(/\d+/g)[0])*-1,parseInt($(this).css("top").match(/\d+/g)[0])*-1,480*4,480*4)
+            callback()
+            callbackRunViewerBI()
         else
-          img.cached = false
-        img.onload = => 
-          img.endLoadStamp = new Date()
-          totalTime = (img.endLoadStamp.getTime() - img.startLoadStamp.getTime())
-          if size == @size
-            @widget.find('#sprite-image').css
-              width: (@metadata.sprite_num_x * sprite_size) * @size / sprite_size
-              height: (@metadata.sprite_num_y * sprite_size) * @size / sprite_size
-              #$('#main-canvas')[0].getContext("2d").drawImage(@widget.find('#sprite-image')[0],0,0,480,480,parseInt($(this).css("left").match(/\d+/g)[0])*-1,parseInt($(this).css("top").match(/\d+/g)[0])*-1,480*4,480*4)
-          callback()
-          callbackRunViewerBI()
-
+          ct = setTimeout(=>
+            check()
+            clearTimeout ct
+          , 50)
       check()
 
     zoom_large: (callbackRunViewerBI) ->
