@@ -5,7 +5,7 @@ class FullInspection extends Viewer
   isBucket = window.location.pathname.indexOf('/bucket') isnt -1
   reqsPerHostAllowed = 0
   isWebpSupported = false
-  supportedExtentions = {"webp" : ".jpg" , "jpg" : ".jpg"}
+  supportedExtentions = {"webp" : ".webp" , "jpg" : ".jpg"}
   imageExtension = supportedExtentions.jpg
   spriteSrc = undefined
 
