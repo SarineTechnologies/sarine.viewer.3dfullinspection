@@ -571,7 +571,7 @@ class FullInspection extends Viewer
       if !isLocal
         @dest + "/" +  attrs.height + "_" + attrs.quality + "/img_" + @metadata.image_name(x, y, focus)+ attrs.format
       else
-        @dest + "/" +  "merge" + "/img_" + @metadata.image_name(x, y, focus)+ attrs.format
+        @dest + "/" +  "merge" + "/img_" + @metadata.image_name(x, y, focus)+ ".jpg" #local machine does not support webp
 
     fetch: (x, y, focus = null) ->
       # Remember current position to prioritize preload better
