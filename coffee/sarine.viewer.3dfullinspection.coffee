@@ -4,13 +4,18 @@ class FullInspection extends Viewer
   magnifierLibName = null
   isBucket = window.location.pathname.indexOf('/bucket') isnt -1
   reqsPerHostAllowed = 0
+  isWebpSupported = false
+  supportedExtentions = {"webp" : ".webp" , "jpg" : ".jpg"}
+  imageExtension = supportedExtentions.jpg
+  spriteSrc = undefined
 
   constructor: (options) -> 
     
     qs = new queryString()
     isLocal = qs.getValue("isLocal") == "true"
-    
-    if Device.isHTTP2() && !isLocal
+    isWebpSupported = Device.isSupportsWebp()
+
+    if isWebpSupported && !isLocal
       ## for http/2 support disable limit number of concurrent http requests
       reqsPerHostAllowed = 50;  
     else
@@ -176,20 +181,46 @@ class FullInspection extends Viewer
         img = new Image()
         img.onload = =>
           $('#main-canvas')[0].getContext("2d").drawImage(img, 378, 126, 126, 126, 0, 0, 480, 480)
+          spriteSrc = img.src
           _t.first_init_defer.resolve(@)
         
+        if isWebpSupported
+          imageExtension = supportedExtentions.webp
+
         img.onerror = =>
           # load 480_120_30_sprite if 252_126_30_sprite not found 
           console.log "252_126_30_sprite not found"
-          img2 = new Image()
-          img2.onload = =>
-            $('#main-canvas')[0].getContext("2d").drawImage(img2, 378, 126, 126, 126, 0, 0, 480, 480)
-            _t.first_init_defer.resolve(@)
-          img2.onerror = =>
-            _t.first_init_defer.resolve(@)
-          img2.src = stones[0].viewers.loupe3DFullInspection + "/InspectionSprites/480_120_30_sprite.jpg"
+          if imageExtension == supportedExtentions.webp
+            imageExtension = supportedExtentions.jpg
+            img2 = new Image()
+            img2.onload = =>
+              $('#main-canvas')[0].getContext("2d").drawImage(img2, 378, 126, 126, 126, 0, 0, 480, 480)
+              spriteSrc = img2.src
+              _t.first_init_defer.resolve(@)
+            img2.onerror = =>
+              img3 = new Image()
+              img3.onload = =>
+                $('#main-canvas')[0].getContext("2d").drawImage(img3, 378, 126, 126, 126, 0, 0, 480, 480)
+                spriteSrc = img3.src
+                _t.first_init_defer.resolve(@)
+              img3.onerror = =>
+                _t.first_init_defer.resolve(@)
 
-        img.src = stones[0].viewers.loupe3DFullInspection + "/InspectionSprites/252_126_30_sprite.jpg"
+              img3.src = stones[0].viewers.loupe3DFullInspection + "/InspectionSprites/480_120_30_sprite" + imageExtension
+
+            img2.src = stones[0].viewers.loupe3DFullInspection + "/InspectionSprites/252_126_30_sprite" + imageExtension
+          else
+            img2 = new Image()
+            img2.onload = =>
+              $('#main-canvas')[0].getContext("2d").drawImage(img2, 378, 126, 126, 126, 0, 0, 480, 480)
+              spriteSrc = img2.src
+              _t.first_init_defer.resolve(@)
+            img2.onerror = =>
+              _t.first_init_defer.resolve(@)
+
+            img2.src = stones[0].viewers.loupe3DFullInspection + "/InspectionSprites/480_120_30_sprite" + imageExtension
+
+        img.src = stones[0].viewers.loupe3DFullInspection + "/InspectionSprites/252_126_30_sprite" + imageExtension
       )
 
     .fail =>
@@ -219,18 +250,11 @@ class FullInspection extends Viewer
       @viewerBI =  new ViewerBI(first_init: @first_init_defer, full_init:@full_init_defer, src:@src, x: 0, y: metadata.vertical_angles.indexOf(90), stone: _t.stone, friendlyName: "temp", cdn_subdomains: @cdn_subdomains, metadata: metadata, debug: false, resourcesPrefix : @resourcesPrefix, atomVersion: @atomVersion)
       @UIlogic = new UI(@viewerBI, auto_play: true)
       
-      if (isLocal)
-        @UIlogic.go()
-        if(_t.element.attr("active") isnt undefined)
-          _t.viewerBI.preloader.go()
-          _t.viewerBI.show(true)
-      else 
-        @UIlogic.go(() ->
+      @UIlogic.go(() ->
           if(_t.element.attr("active") isnt undefined)
             _t.viewerBI.preloader.go()
             _t.viewerBI.show(true)
         )
-      
 
     # @metadata = new Metadata(
     #   size_x: @jsonResult.number_of_x_images
@@ -541,11 +565,13 @@ class FullInspection extends Viewer
         format: "jpg"
         quality: trans.quality ? config.image_quality,
         height:  trans.height ? config.image_size
-       
+      
+      attrs.format = imageExtension
+
       if !isLocal
-        @dest + "/" +  attrs.height + "_" + attrs.quality + "/img_" + @metadata.image_name(x, y, focus)+ ".jpg"
+        @dest + "/" +  attrs.height + "_" + attrs.quality + "/img_" + @metadata.image_name(x, y, focus)+ attrs.format
       else
-        @dest + "/" +  "merge" + "/img_" + @metadata.image_name(x, y, focus)+ ".jpg"
+        @dest + "/" +  "merge" + "/img_" + @metadata.image_name(x, y, focus)+ ".jpg" #local machine does not support webp
 
     fetch: (x, y, focus = null) ->
       # Remember current position to prioritize preload better
@@ -756,8 +782,12 @@ class FullInspection extends Viewer
             this.show(true)
           , 50)
           # If we have a sprite for this image - show itfetch
-          return @load_from_sprite() if x % STRIDE_X == 0
-        @load_from_sprite()
+          if x % STRIDE_X == 0
+            $("#info_inspection").css('background-image' ,  'url('+ spriteSrc+ ')')
+            @load_from_sprite()
+          else
+            $("#info_inspection").css('background-image' , '')
+        @load_from_sprite() if x % STRIDE_X == 0
       @preloader.fetch(@x, @y, @focus)
         
 
@@ -778,9 +808,9 @@ class FullInspection extends Viewer
       top = -top_i * @size * (@sprite_size) / @sprite_size
 
       left = sprite_left * @size / @sprite_size
-
       src = @get_sprite_image(info)
       if src
+        console.log('get from sprite');
         @widget.addClass('sprite')
         #viewSize = Math.floor(@size / @metadata.sprite_factors[1])
         viewSize = Math.floor(@size / @metadata.sprite_factor)
@@ -793,6 +823,8 @@ class FullInspection extends Viewer
         
         $('#main-canvas')[0].getContext("2d").drawImage($('#sprite-image')[0],sprite_left*-1,sprite_top*-1,viewSize,viewSize,0,0,480,480)
         @viewport.attr(class: @flip_class())
+      else
+        console.log('not sprite');
 
     get_sprite_image: (info) ->
       match = info.css("background-image").match(/url\("?([^"]*)"?\)/)
