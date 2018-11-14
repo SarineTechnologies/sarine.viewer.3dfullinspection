@@ -197,12 +197,14 @@ class FullInspection extends Viewer
             img2.onload = =>
               $('#main-canvas')[0].getContext("2d").drawImage(img2, 378, 126, 126, 126, 0, 0, 480, 480)
               spriteSrc = img2.src
+              $("#info_inspection").css('background-image' ,  'url('+ spriteSrc+ ')')
               _t.first_init_defer.resolve(@)
             img2.onerror = =>
               img3 = new Image()
               img3.onload = =>
                 $('#main-canvas')[0].getContext("2d").drawImage(img3, 378, 126, 126, 126, 0, 0, 480, 480)
                 spriteSrc = img3.src
+                $("#info_inspection").css('background-image' ,  'url('+ spriteSrc+ ')')
                 _t.first_init_defer.resolve(@)
               img3.onerror = =>
                 _t.first_init_defer.resolve(@)
@@ -215,6 +217,7 @@ class FullInspection extends Viewer
             img2.onload = =>
               $('#main-canvas')[0].getContext("2d").drawImage(img2, 378, 126, 126, 126, 0, 0, 480, 480)
               spriteSrc = img2.src
+              $("#info_inspection").css('background-image' ,  'url('+ spriteSrc+ ')')
               _t.first_init_defer.resolve(@)
             img2.onerror = =>
               _t.first_init_defer.resolve(@)
