@@ -182,6 +182,7 @@ class FullInspection extends Viewer
         img.onload = =>
           $('#main-canvas')[0].getContext("2d").drawImage(img, 378, 126, 126, 126, 0, 0, 480, 480)
           spriteSrc = img.src
+          $("#info_inspection").css('background-image' ,  'url('+ spriteSrc+ ')')
           _t.first_init_defer.resolve(@)
         
         if isWebpSupported
