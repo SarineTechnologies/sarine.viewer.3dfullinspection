@@ -23,7 +23,6 @@ class FullInspection extends Viewer
     
     @resourcesPrefix = options.baseUrl + "atomic/v1/assets/"
     @atomVersion = options.atomVersion
-    @setMagnifierLibName()
     @cdn_subdomains = if typeof window.cdn_subdomains isnt 'undefined' then window.cdn_subdomains else []
     @resources = [
       { element: 'script', src: 'jquery-ui.js?' + cacheAssetsVersion },
@@ -31,6 +30,8 @@ class FullInspection extends Viewer
       { element: 'script', src: '3dfullinspection/momentum.js?' + @atomVersion },
       { element: 'link', src: '3dfullinspection/inspection.css?' + @atomVersion }
     ]
+    @loupe3dConfig = if window.configuration.experiences then window.configuration.experiences.filter((i)-> return i.atom == 'loupe3DFullInspection')[0] else null
+    @setMagnifierLibName()
     
     @first_init_defer = $.Deferred()
     @full_init_defer = $.Deferred()
@@ -56,14 +57,10 @@ class FullInspection extends Viewer
 
   setMagnifierLibName: () ->
     magnifierLibName = 'mglass'
-    currentExperience = []
 
-    if configuration.experiences
-      currentExperience = configuration.experiences.filter (exper)->
-        return exper.atom == 'loupe3DFullInspection'
+    if(@loupe3dConfig && @loupe3dConfig.magnifierLibName && @isSupportedMagnifier(@loupe3dConfig.magnifierLibName))
 
-    if(currentExperience.length == 1 && currentExperience[0].magnifierLibName && @isSupportedMagnifier(currentExperience[0].magnifierLibName))
-      magnifierLibName = currentExperience[0].magnifierLibName
+      magnifierLibName = @loupe3dConfig.magnifierLibName
       return
 
   preloadAssets: (callback)=>
@@ -97,17 +94,27 @@ class FullInspection extends Viewer
 
 
   convertElement :() =>
-    url = @resourcesPrefix+"3dfullinspection/3dfullinspection.html?" +  @atomVersion
- 
-    $.get url, (innerHtml) =>
-      compiled = $(innerHtml)
-      $(".buttons",compiled).remove() if(@element.attr("menu")=="false")
-      $(".stone_number",compiled).remove() if(@element.attr("coordinates")=="false")
-
-      @conteiner = compiled
-      @element.css {width:"100%", height:"100%"}
-      # compiled.find('canvas').attr({width:@element.width(), height: @element.height()})
-      @element.append(compiled)
+    if(@element.attr("menu")=="true" || @loupe3dConfig && @loupe3dConfig.menu == true)
+      url = @resourcesPrefix+"3dfullinspection/3dfullinspection.html?" +  @atomVersion
+      $.get url, (innerHtml) =>
+        compiled = $(innerHtml)
+        $(".stone_number",compiled).remove() if(@element.attr("coordinates")=="false")
+        @conteiner = compiled
+        @element.append(compiled)
+    else
+      @element.append '<div class="inspect-stone">
+                        <div class="viewport">
+                            <canvas id="main-canvas" width="480" height="480"></canvas>
+                            <img id="main-image" style="display:none;" >
+                            <img id="sprite-image" style="display:none;">
+                        </div>
+                        <div id="info_inspection" style="display:none;"></div>
+                        <div class="stone_number">
+                            <i class="stone_number_text xy">0:22:15</i>
+                        </div>
+                      </div>'
+      $(".stone_number", @element).remove() if(@element.attr("coordinates")=="false")
+    @element.css {width:"100%", height:"100%"}
     @element
 
   first_init : () =>
@@ -248,6 +255,8 @@ class FullInspection extends Viewer
     @first_init_defer
 
   full_init : () =>
+    if(@element.find('.no_stone').length > 0)
+      @element.trigger('noStone')
 
     _t = @
     start = (metadata) =>
@@ -626,6 +635,7 @@ class FullInspection extends Viewer
       @atomVersion = options.atomVersion
       @reset()
       @context = $('#main-canvas')[0].getContext("2d")
+      @view_mode_state = false
 
     reset: ->
       @stop()
@@ -1006,12 +1016,14 @@ class FullInspection extends Viewer
           permaZoom: true
         }
 
-        widgetContainer = $(".slider-wrap")
+        iframeContainer = $("body.loupe3DFullInspection")
+        widgetContainer = $(".slider-wrap.w2\\.0")
         dashboardContainer = $('.slide--loupe3d')
         magnifyImageContainer = $('#magnify-image-container')
         magnifyInstance = $('#magnify-image')
         closeButton = $('#closeMagnify')
         dashboardContent = dashboardContainer.find('.content')
+        iframeContent = iframeContainer.find('.loupe3DFullInspection')
         isFlipped = $('.viewport').hasClass('flip')
         if(magnifyImageContainer.length == 0)
           sliderHeight = $('.slider-wrap').last().height()
@@ -1036,18 +1048,33 @@ class FullInspection extends Viewer
               'height': dashboardContent.innerHeight()
             })
             dashboardContainer.append magnifyImageContainer
-            
+
             if (dashboardContent.innerWidth() < dashboardContent.innerHeight()) # portrait
               magnifySize = dashboardContent.innerWidth() - 15 # margins
-            else # landscape  
+            else # landscape 
               magnifySize = dashboardContent.innerHeight() - 30 - 15 # 30 is height of close
             
             magnifyInstance.css 'width', magnifySize + 'px'
             magnifyInstance.css 'height', magnifySize + 'px'
+          else if(iframeContainer.length)
+            magnifyImageContainer.attr('class', 'viewer')
+            magnifyImageContainer.css({
+              'height': iframeContent.innerHeight(),
+              'width': iframeContent.innerWidth()
+              'background-color': '#' + @viewer.metadata.background
+            })
+            $(".slider-wrap").append magnifyImageContainer
 
+            magnifySize = iframeContent.innerWidth() - 30 - 15 # 30 is height of close
+            magnifyInstance.css({
+              'height': magnifySize + 'px'
+              'width': magnifySize + 'px'
+              'margin': '0 0 0 22.5px'
+            })
 
         magnifyInstance.unbind 'cloudzoom_start_zoom'
-
+        closeButton.unbind 'click'
+        
         magnifyInstance.removeClass('flip180')
         if(isFlipped)
           magnifyInstance.addClass('flip180')
@@ -1084,6 +1111,8 @@ class FullInspection extends Viewer
           widgetContainer.not('#magnify-image-container').css('margin-top', '-5000px')
         else if(dashboardContainer.length > 0)
           dashboardContent.hide()
+        else if(iframeContainer.length > 0)
+          iframeContent.hide()
         magnifyImageContainer.show()
 
         $(window).on 'orientationchange', ((event) =>
@@ -1099,11 +1128,13 @@ class FullInspection extends Viewer
             widgetContainer.not('#magnify-image-container').css('margin-top': 0)
           else if(dashboardContainer.length > 0)
             dashboardContent.show()
+          else if(iframeContainer.length > 0)
+            iframeContent.show()
           magnifyImageContainer.hide()
           @viewer.inspection = false
           $('.cloudzoom-zoom-inside').remove()
           $('.cloudzoom-blank').remove()
-
+          @viewer.widget.trigger("magnify_out")
           return
         )
         return
@@ -1115,6 +1146,54 @@ class FullInspection extends Viewer
       if(@viewer.CloudZoom)
         @viewer.CloudZoom.destroy()
 
+    clickMagnify: ()->
+      if @viewer.inspection
+        #bindScroll()
+        @viewer.active = true
+        $('.inspect-stone').css("overflow", "hidden"); #Legacy
+        $(document).unbind("mouseup");
+
+        @deleteMagnify()
+        @inactivate_button $(".magnify")
+        $(".buttons li:not(.magnify)").removeClass("disabled");
+        @update_focus_buttons()
+        @viewer.widget.trigger("magnify_out")
+      else
+        @viewer.active = true
+        if(magnifierLibName == 'mglass')
+          $(document).mouseup (e)=>
+            container = $ ".mglass_viewer,.magnify"
+            if !container.is(e.target) and container.has(e.target).length == 0
+              mgTimer = setTimeout (=> 
+                  @clickMagnify()
+                  clearTimeout mgTimer 
+                ), 0
+
+        $(".buttons li:not(.magnify)").addClass("disabled");
+        $(".magnify").show();
+        #unbindScroll()
+        $('.inspect-stone').css("overflow", "visible");#Legacy
+
+        #@viewer.reset()
+        if $('mglass_wrapper').length == 0
+          image_source = @viewer.preloader.src(@viewer.x, @viewer.y, @viewer.focus,
+            height: 0,
+            width: 0,
+            quality: 70
+          ) 
+          #image_source = @viewer.preloader.src @viewer.x, @viewer.y, @viewer.focus
+          @initMagnify image_source
+
+        @inactivate_button $(".focus_out") 
+        @inactivate_button $(".focus_in")
+        @disable_button ".focus_out"
+        @disable_button ".focus_in" 
+
+        @activate_button $(".magnify")
+
+      @viewer.inspection = !@viewer.inspection
+      return
+      
     keyDownFunc : (e)=>  
 
         switch e.keyCode  
@@ -1260,12 +1339,26 @@ class FullInspection extends Viewer
       ).bind('xy',(e, data) =>
         $('.xy').html((if @viewer.metadata.multi_focus() then "#{@viewer.focus}:" else "") + "#{data.y}:#{data.x}")
         @update_focus_buttons()
+        if @viewer.view_mode_state
+          @viewer.widget.trigger('view_mode_out')
+          @viewer.view_mode_state = false
         @inactivate_button($('.buttons li'))
-        @activate_button($(".buttons .#{@viewer.view_mode()}")) if @viewer.view_mode()
+        if @viewer.view_mode()
+          @activate_button($(".buttons .#{@viewer.view_mode()}"))
+          @viewer.view_mode_state = true
+          @viewer.widget.trigger(@viewer.view_mode())
       ).bind('preload_xy', (e, data) =>
         $('.preload_xy').html("Preload center moved to #{data.y}:#{data.x}")
-      )
+       )
 
+      $('.viewer.loupe3DFullInspection').on('bottom_view middle_view top_view', (e, data) =>
+          $(document).mouseup()
+          $('#closeMagnify').click() if @viewer.inspection
+          @viewer[e.type]()
+        ).on('magnify', (e, data) =>
+          @clickMagnify()
+         )
+      
       $('.inspect-stone').css('background-color', "#" + @viewer.metadata.background)  #Legacy instead of canvas
       if @viewer.metadata.background != '000' && @viewer.metadata.background != '000000' && @viewer.metadata.background != 'black'
         $('.inspect-stone').addClass('dark')
@@ -1327,53 +1420,8 @@ class FullInspection extends Viewer
         return false
 
       $(".magnify").click =>
-
-        if @viewer.inspection
-          #bindScroll()
-          @viewer.active = true
-          $('.inspect-stone').css("overflow", "hidden"); #Legacy
-          $(document).unbind("mouseup");
-
-          @deleteMagnify()
-          @inactivate_button $(".magnify")
-          $(".buttons li:not(.magnify)").removeClass("disabled");
-          @update_focus_buttons()
-        else
-          @viewer.active = true
-          if(magnifierLibName == 'mglass')
-            $(document).mouseup (e)=>
-              container = $ ".mglass_viewer,.magnify"
-              if !container.is(e.target) and container.has(e.target).length == 0
-                mgTimer = setTimeout (=> 
-                  $(".magnify").click()
-                  clearTimeout mgTimer 
-                ), 0
-
-          $(".buttons li:not(.magnify)").addClass("disabled");
-          $(".magnify").show();
-          #unbindScroll()
-          $('.inspect-stone').css("overflow", "visible");#Legacy
-
-          #@viewer.reset()
-          if $('mglass_wrapper').length == 0
-            image_source = @viewer.preloader.src(@viewer.x, @viewer.y, @viewer.focus,
-              height: 0,
-              width: 0,
-              quality: 70
-            ) 
-            #image_source = @viewer.preloader.src @viewer.x, @viewer.y, @viewer.focus
-            @initMagnify image_source
-
-          @inactivate_button $(".focus_out") 
-          @inactivate_button $(".focus_in")
-          @disable_button ".focus_out"
-          @disable_button ".focus_in" 
-
-          @activate_button $(".magnify")
-
-        @viewer.inspection = !@viewer.inspection
-        return
-
+        @clickMagnify()
+       
       if @viewer.metadata.initial_zoom == 'small'
         @viewer.zoom_small(callbackRunViewerBI)
       else
