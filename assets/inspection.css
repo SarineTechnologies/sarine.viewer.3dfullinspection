@@ -455,3 +455,6 @@ img.flip180 {
     -ms-transform: rotate(180deg);
     transform: rotate(180deg);
 }  
+.cloudzoom-blank div+div+div{
+    display: none !important;
+}
