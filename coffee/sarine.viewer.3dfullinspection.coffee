@@ -31,6 +31,13 @@ class FullInspection extends Viewer
       { element: 'link', src: '3dfullinspection/inspection.css?' + @atomVersion }
     ]
     @loupe3dConfig = if window.configuration.experiences then window.configuration.experiences.filter((i)-> return i.atom == 'loupe3DFullInspection')[0] else null
+
+    super(options)
+    { @jsonsrc, @src } = options
+    
+    if(@cdn_subdomains.length && !isBucket && !isLocal) 
+      @src = options.src.replace(/\/[^.]*/, '//' + @cdn_subdomains[0])
+    
     @setMagnifierLibName()
     
     @first_init_defer = $.Deferred()
@@ -44,11 +51,7 @@ class FullInspection extends Viewer
     else if(magnifierLibName == 'mglass')
       @resources.push { element: 'script', src: '3dfullinspection/mglass.js?' + @atomVersion }
       
-    super(options)
-    { @jsonsrc, @src } = options
-    
-    if(@cdn_subdomains.length && !isBucket && !isLocal) 
-      @src = options.src.replace(/\/[^.]*/, '//' + @cdn_subdomains[0])
+   
 
   isSupportedMagnifier: (libName) ->
     return [ 'mglass', 'cloudzoom' ].filter((libItem)->
@@ -58,10 +61,12 @@ class FullInspection extends Viewer
   setMagnifierLibName: () ->
     magnifierLibName = 'mglass'
 
-    if(@loupe3dConfig && @loupe3dConfig.magnifierLibName && @isSupportedMagnifier(@loupe3dConfig.magnifierLibName))
-
-      magnifierLibName = @loupe3dConfig.magnifierLibName
-      return
+    if(@element.attr("magnifierLibName") && @isSupportedMagnifier(@element.attr("magnifierLibName")))
+        magnifierLibName = @element.attr("magnifierLibName")
+    else
+      if(@loupe3dConfig && @loupe3dConfig.magnifierLibName && @isSupportedMagnifier(@loupe3dConfig.magnifierLibName))
+        magnifierLibName = @loupe3dConfig.magnifierLibName
+    return
 
   preloadAssets: (callback)=>
 
