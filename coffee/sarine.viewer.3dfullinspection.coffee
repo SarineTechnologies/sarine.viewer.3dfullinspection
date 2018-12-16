@@ -8,6 +8,8 @@ class FullInspection extends Viewer
   supportedExtentions = {"webp" : ".webp" , "jpg" : ".jpg"}
   imageExtension = supportedExtentions.jpg
   spriteSrc = undefined
+  useWebp = false
+  
 
   constructor: (options) -> 
     
@@ -197,7 +199,7 @@ class FullInspection extends Viewer
           $("#info_inspection").css('background-image' ,  'url('+ spriteSrc+ ')')
           _t.first_init_defer.resolve(@)
         
-        if isWebpSupported
+        if isWebpSupported && useWebp
           imageExtension = supportedExtentions.webp
 
         img.onerror = =>
