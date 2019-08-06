@@ -1,56 +1,23 @@
-###!
-sarine.viewer.3dfullinspection - v0.38.0 -  Monday, July 25th, 2016, 1:12:13 PM 
- The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
-###
-
-class Viewer
-  rm = ResourceManager.getInstance();
-  constructor: (options) ->
-    console.log("")
-    @first_init_defer = $.Deferred()
-    @full_init_defer = $.Deferred()
-    {@src, @element,@autoPlay,@callbackPic} = options
-    @id = @element[0].id;
-    @element = @convertElement()
-    Object.getOwnPropertyNames(Viewer.prototype).forEach((k)-> 
-      if @[k].name == "Error" 
-          console.error @id, k, "Must be implement" , @
-    ,
-      @)
-    @element.data "class", @
-    @element.on "play", (e)-> $(e.target).data("class").play.apply($(e.target).data("class"),[true])
-    @element.on "stop", (e)-> $(e.target).data("class").stop.apply($(e.target).data("class"),[true])
-    @element.on "cancel", (e)-> $(e.target).data("class").cancel().apply($(e.target).data("class"),[true])
-  error = () ->
-    console.error(@id,"must be implement" )
-  first_init: Error
-  full_init: Error
-  play: Error
-  stop: Error
-  convertElement : Error
-  cancel : ()-> rm.cancel(@)
-  loadImage : (src)-> rm.loadImage.apply(@,[src])
-  setTimeout : (delay,callback)-> rm.setTimeout.apply(@,[@delay,callback]) 
-    
-@Viewer = Viewer 
-
-class FullInspection extends Viewer
+class FullInspection extends Viewer 
   isLocal = false
   qs = undefined
   magnifierLibName = null
-
+  isBucket = window.location.pathname.indexOf('/bucket') isnt -1
+  reqsPerHostAllowed = 6; # Requests per Hostname 
+  
   constructor: (options) -> 
     qs = new queryString()
     isLocal = qs.getValue("isLocal") == "true" 
     @resourcesPrefix = options.baseUrl + "atomic/v1/assets/"
     @setMagnifierLibName()
+    @cdn_subdomains = if typeof window.cdn_subdomains isnt 'undefined' then window.cdn_subdomains else []
     @resources = [
       {element:'script',src:'jquery-ui.js'},
       {element:'script',src:'jquery.ui.ipad.altfix.js'},
       {element:'script',src:'momentum.js'},
       {element:'link',src:'inspection.css'}
     ]
-
+    
     if(magnifierLibName == 'cloudzoom')
       @resources.push {element:'script',src:'cloudzoom.js'}
     else if(magnifierLibName == 'mglass')
@@ -66,8 +33,11 @@ class FullInspection extends Viewer
 
   setMagnifierLibName: () ->
     magnifierLibName = 'mglass'
-    currentExperience = configuration.experiences.filter (exper)->
-      return exper.atom == 'loupe3DFullInspection'
+    currentExperience = []
+
+    if configuration.experiences
+      currentExperience = configuration.experiences.filter (exper)->
+        return exper.atom == 'loupe3DFullInspection'
 
     if(currentExperience.length == 1 && currentExperience[0].magnifierLibName && @isSupportedMagnifier(currentExperience[0].magnifierLibName))
       magnifierLibName = currentExperience[0].magnifierLibName
@@ -333,10 +303,17 @@ class FullInspection extends Viewer
       @images = {}
       @totals = {}
       @stone = options.stone
-      @cdn_subdomain = options.cdn_subdomain && window.location.protocol == 'http:' && !config.local
+      @cdn_subdomains = if typeof window.cdn_subdomains isnt 'undefined' then window.cdn_subdomains else []
       @density = options.density || 1
       @fetchTimer
-
+      
+      @shard_imgs_loaded = {'all': 0}
+      if (@cdn_subdomains.length && !isBucket && !isLocal)
+        @shard_imgs_loaded = @cdn_subdomains.reduce(((o, v, i) ->
+          o[v] = 0
+          o
+        ), {})
+      
     cache_key: ->
       @trans
 
@@ -856,18 +833,85 @@ class FullInspection extends Viewer
           closeButton = $('<a id="closeMagnify">&times;</a>')
           magnifyImageContainer.append closeButton
           magnifyImageContainer.append magnifyInstance
-          sliderWrap.before magnifyImageContainer
+          magnifyInstance.css 'width', '100%'
+          if(widgetContainer.length == 1)
+            magnifyImageContainer.attr('class', 'slider-wrap')
+            widgetContainer.before magnifyImageContainer
+          else if(dashboardContainer.length == 1)
+            magnifyInstance.css('margin', 0)
+            magnifyImageContainer.attr('class', 'content')
+            magnifyImageContainer.css({
+              'padding': 0,
+              'height': dashboardContent.innerHeight()
+            })
+            dashboardContainer.append magnifyImageContainer
+            
+            if (dashboardContent.innerWidth() < dashboardContent.innerHeight()) # portrait
+              magnifySize = dashboardContent.innerWidth() - 15 # margins
+            else # landscape  
+              magnifySize = dashboardContent.innerHeight() - 30 - 15 # 30 is height of close
+            
+            magnifyInstance.css 'width', magnifySize + 'px'
+            magnifyInstance.css 'height', magnifySize + 'px'
+
+
+        magnifyInstance.unbind 'cloudzoom_start_zoom'
+
+        magnifyInstance.removeClass('flip180')
+        if(isFlipped)
+          magnifyInstance.addClass('flip180')
+
+        magnifyInstance.bind 'cloudzoom_start_zoom', (=>
+          hasRemovedTrasform = false
+          setTimeout (=>
+            if(!hasRemovedTrasform)
+              
+              # fix of Bug 87323:Magnifier has a white line on Safari Mac
+              $('.cloudzoom-tint').css('background-color': 'transparent')
+
+              magnifyImage = $('.cloudzoom-zoom-inside img')
+
+              if(magnifyImage.length > 0)
+                magnifyImage.removeClass 'flip180'
+                if(isFlipped)
+                  currentStyle = magnifyImage.attr('style')
+                  currentStyle = currentStyle.replace 'transform: translateZ(0px); ', ''
+                  magnifyImage.attr 'style', currentStyle
+                  magnifyImage.attr 'class', 'flip180'
+                  hasRemovedTrasform = true
+          ), 300
+          return
+        )
+
 
         magnifyInstance.attr 'src', image_source
         @viewer.CloudZoom = new CloudZoom $('#magnify-image'), magnifyOptions
-        sliderWrap.css 'display', 'none'
-        magnifyImageContainer.css 'display', 'block'
 
+        if(widgetContainer.length > 0)
+          # "hide" widget
+          widgetContainer.not('#magnify-image-container').css('margin-top', '-5000px')
+        else if(dashboardContainer.length > 0)
+          dashboardContent.hide()
+        magnifyImageContainer.show()
 
-        closeButton.on 'click', (=>
+        $(window).on 'orientationchange', ((event) =>
+          if (@viewer.CloudZoom)
+            @viewer.CloudZoom.closeZoom()
+        )
+        
+        closeButton.on 'click', (=> 
           @viewer.CloudZoom.closeZoom()
-          sliderWrap.css 'display', 'block'
-          magnifyImageContainer.css 'display', 'none'
+          @viewer.CloudZoom.destroy()
+          if(widgetContainer.length > 0)
+            # "show" widget
+            widgetContainer.not('#magnify-image-container').css('margin-top': 0)
+          else if(dashboardContainer.length > 0)
+            dashboardContent.show()
+          magnifyImageContainer.hide()
+          @viewer.inspection = false
+          $('.cloudzoom-zoom-inside').remove()
+          $('.cloudzoom-blank').remove()
+
           return
         )
         return
@@ -1105,7 +1149,7 @@ class FullInspection extends Viewer
           $(".buttons li:not(.magnify)").removeClass("disabled");
           @update_focus_buttons()
         else
-          @viewer.active = false
+          @viewer.active = true
           if(magnifierLibName == 'mglass')
             $(document).mouseup (e)=>
               container = $ ".mglass_viewer,.magnify"
@@ -1194,7 +1238,5 @@ class queryStringImpl
       canonicalParams[key.toLowerCase()] = value
       count += 1
     return [params, canonicalParams, count]
-
-
 
 

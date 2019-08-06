@@ -1,0 +1,37 @@
+<!-- saved from url=(0088)http://dev.sarineplatform.com/qa4/content/viewers/atomic/v1/assets/3dfullinspection.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252"></head><body><div class="inspect-stone">
+    <ul class="buttons close">
+        <li class="icon menu" onclick="$(this).parent().removeClass(&#39;close&#39;); $(this).parent().addClass(&#39;open&#39;)"><i></i></li>
+        <li class="icon arrow-right" onclick="$(this).parent().addClass(&#39;close&#39;); $(this).parent().removeClass(&#39;open&#39;)"><i></i></li>
+        <li class="icon top selected" data-button="top_view">
+            <i data-button="top_view"></i>
+        </li>
+
+        <li class="icon side" data-button="middle_view">
+            <i data-button="middle_view"></i>
+        </li>
+        <li class="icon bottom" data-button="bottom_view">
+            <i class="icon" data-button="bottom_view"></i>
+        </li>
+        <li class="icon focus_in">
+            <i></i>
+        </li>
+        <li class="icon focus_out disabled selected">
+            <i></i>
+        </li>
+       <li class="icon magnify" data-button="magnify">
+            <i></i>
+        </li>
+        <li class="icon arrow-left" onclick="$(this).parent().removeClass(&#39;close&#39;); $(this).parent().addClass(&#39;open&#39;)"><i></i></li>
+    </ul>
+    <div class="viewport">
+        <!-- 480 is default size -->
+        <canvas id="main-canvas" width="480" height="480"></canvas>
+        <img id="main-image" style="display:none;" >
+        <img id="sprite-image" style="display:none;">
+    </div>
+        <div id="info_inspection" style="display:none;"></div>
+    <div class="stone_number">
+        <i class="stone_number_text xy">0:22:15</i>
+    </div>
+</div></body></html>

@@ -1,6 +1,6 @@
 
 /*!
-sarine.viewer.3dfullinspection - v0.38.0 -  Monday, July 25th, 2016, 1:12:13 PM 
+sarine.viewer - v0.3.6 -  Wednesday, May 9th, 2018, 5:42:44 PM 
  The source code, name, and look and feel of the software are Copyright © 2015 Sarine Technologies Ltd. All Rights Reserved. You may not duplicate, copy, reuse, sell or otherwise exploit any portion of the code, content or visual design elements without express written permission from Sarine Technologies Ltd. The terms and conditions of the sarine.com website (http://sarine.com/terms-and-conditions/) apply to the access and use of this software.
  */
 
@@ -61,8 +61,50 @@ sarine.viewer.3dfullinspection - v0.38.0 -  Monday, July 25th, 2016, 1:12:13 PM
       return rm.loadImage.apply(this, [src]);
     };
 
+    Viewer.prototype.loadAssets = function(resources, onScriptLoadEnd, version) {
+      var element, resource, resourceVersion, scripts, scriptsLoaded, _i, _len, _t;
+      if (resources !== null && resources.length > 0) {
+        scripts = [];
+        resourceVersion = version || cacheAssetsVersion || cacheVersion;
+        if (resourceVersion.indexOf("?") < 0) {
+          resourceVersion = "?" + resourceVersion;
+        }
+        for (_i = 0, _len = resources.length; _i < _len; _i++) {
+          resource = resources[_i];
+          if (resource.element === 'script') {
+            scripts.push(resource.src + resourceVersion);
+          } else {
+            element = document.createElement(resource.element);
+            element.href = resource.src + resourceVersion;
+            element.rel = "stylesheet";
+            element.type = "text/css";
+            $(document.head).prepend(element);
+          }
+        }
+        scriptsLoaded = 0;
+        _t = this;
+        scripts.forEach(function(script) {
+          return _t.loadScriptAndCache(script, {}, function() {
+            if (++scriptsLoaded === scripts.length) {
+              return onScriptLoadEnd();
+            }
+          });
+        });
+      }
+    };
+
     Viewer.prototype.setTimeout = function(delay, callback) {
       return rm.setTimeout.apply(this, [this.delay, callback]);
+    };
+
+    Viewer.prototype.loadScriptAndCache = function(url, options, success) {
+      options = $.extend(options || {}, {
+        dataType: "script",
+        cache: true,
+        url: url,
+        success: success
+      });
+      return jQuery.ajax(options);
     };
 
     return Viewer;
@@ -91,30 +133,32 @@ sarine.viewer.3dfullinspection - v0.38.0 -  Monday, July 25th, 2016, 1:12:13 PM
       isLocal = qs.getValue("isLocal") === "true";
       this.resourcesPrefix = options.baseUrl + "atomic/v1/assets/";
       this.setMagnifierLibName();
+      this.cdn_subdomains = typeof window.cdn_subdomains !== 'undefined' ? window.cdn_subdomains : [];
+      this.atomVersion = options.atomVersion;
       this.resources = [
         {
           element: 'script',
-          src: 'jquery-ui.js'
+          src: 'jquery-ui.js?' + cacheAssetsVersion
         }, {
           element: 'script',
-          src: 'jquery.ui.ipad.altfix.js'
+          src: 'jquery.ui.ipad.altfix.js?' + cacheAssetsVersion
         }, {
           element: 'script',
-          src: 'momentum.js'
+          src: '3dfullinspection/momentum.js?' + this.atomVersion
         }, {
           element: 'link',
-          src: 'inspection.css'
+          src: '3dfullinspection/inspection.css?' + this.atomVersion
         }
       ];
       if (magnifierLibName === 'cloudzoom') {
         this.resources.push({
           element: 'script',
-          src: 'cloudzoom.js'
+          src: 'cloudzoom.js?' + cacheAssetsVersion
         });
       } else if (magnifierLibName === 'mglass') {
         ({
           element: 'script',
-          src: 'mglass.js'
+          src: '3dfullinspection/mglass.js?' + this.atomVersion
         });
       }
       FullInspection.__super__.constructor.call(this, options);
@@ -130,9 +174,12 @@ sarine.viewer.3dfullinspection - v0.38.0 -  Monday, July 25th, 2016, 1:12:13 PM
     FullInspection.prototype.setMagnifierLibName = function() {
       var currentExperience;
       magnifierLibName = 'mglass';
-      currentExperience = configuration.experiences.filter(function(exper) {
-        return exper.atom === 'loupe3DFullInspection';
-      });
+      currentExperience = [];
+      if (configuration.experiences) {
+        currentExperience = configuration.experiences.filter(function(exper) {
+          return exper.atom === 'loupe3DFullInspection';
+        });
+      }
       if (currentExperience.length === 1 && currentExperience[0].magnifierLibName && this.isSupportedMagnifier(currentExperience[0].magnifierLibName)) {
         magnifierLibName = currentExperience[0].magnifierLibName;
       }
@@ -179,7 +226,7 @@ sarine.viewer.3dfullinspection - v0.38.0 -  Monday, July 25th, 2016, 1:12:13 PM
 
     FullInspection.prototype.convertElement = function() {
       var url;
-      url = this.resourcesPrefix + "3dfullinspection.html" + cacheVersion;
+      url = this.resourcesPrefix + "3dfullinspection/3dfullinspection.html?" + this.atomVersion;
       $.get(url, (function(_this) {
         return function(innerHtml) {
           var compiled;
@@ -538,9 +585,18 @@ sarine.viewer.3dfullinspection - v0.38.0 -  Monday, July 25th, 2016, 1:12:13 PM
         this.images = {};
         this.totals = {};
         this.stone = options.stone;
-        this.cdn_subdomain = options.cdn_subdomain && window.location.protocol === 'http:' && !config.local;
+        this.cdn_subdomains = typeof window.cdn_subdomains !== 'undefined' ? window.cdn_subdomains : [];
         this.density = options.density || 1;
         this.fetchTimer;
+        this.shard_imgs_loaded = {
+          'all': 0
+        };
+        if (this.cdn_subdomains.length && !isBucket && !isLocal) {
+          this.shard_imgs_loaded = this.cdn_subdomains.reduce((function(o, v, i) {
+            o[v] = 0;
+            return o;
+          }), {});
+        }
       }
 
       Preloader.prototype.cache_key = function() {
@@ -1334,17 +1390,87 @@ sarine.viewer.3dfullinspection - v0.38.0 -  Monday, July 25th, 2016, 1:12:13 PM
             closeButton = $('<a id="closeMagnify">&times;</a>');
             magnifyImageContainer.append(closeButton);
             magnifyImageContainer.append(magnifyInstance);
-            sliderWrap.before(magnifyImageContainer);
+            magnifyInstance.css('width', '100%');
+            if (widgetContainer.length === 1) {
+              magnifyImageContainer.attr('class', 'slider-wrap');
+              widgetContainer.before(magnifyImageContainer);
+            } else if (dashboardContainer.length === 1) {
+              magnifyInstance.css('margin', 0);
+              magnifyImageContainer.attr('class', 'content');
+              magnifyImageContainer.css({
+                'padding': 0,
+                'height': dashboardContent.innerHeight()
+              });
+              dashboardContainer.append(magnifyImageContainer);
+              if (dashboardContent.innerWidth() < dashboardContent.innerHeight()) {
+                magnifySize = dashboardContent.innerWidth() - 15;
+              } else {
+                magnifySize = dashboardContent.innerHeight() - 30 - 15;
+              }
+              magnifyInstance.css('width', magnifySize + 'px');
+              magnifyInstance.css('height', magnifySize + 'px');
+            }
           }
+          magnifyInstance.unbind('cloudzoom_start_zoom');
+          magnifyInstance.removeClass('flip180');
+          if (isFlipped) {
+            magnifyInstance.addClass('flip180');
+          }
+          magnifyInstance.bind('cloudzoom_start_zoom', ((function(_this) {
+            return function() {
+              var hasRemovedTrasform;
+              hasRemovedTrasform = false;
+              setTimeout((function() {
+                var currentStyle, magnifyImage;
+                if (!hasRemovedTrasform) {
+                  $('.cloudzoom-tint').css({
+                    'background-color': 'transparent'
+                  });
+                  magnifyImage = $('.cloudzoom-zoom-inside img');
+                  if (magnifyImage.length > 0) {
+                    magnifyImage.removeClass('flip180');
+                    if (isFlipped) {
+                      currentStyle = magnifyImage.attr('style');
+                      currentStyle = currentStyle.replace('transform: translateZ(0px); ', '');
+                      magnifyImage.attr('style', currentStyle);
+                      magnifyImage.attr('class', 'flip180');
+                      return hasRemovedTrasform = true;
+                    }
+                  }
+                }
+              }), 300);
+            };
+          })(this)));
           magnifyInstance.attr('src', image_source);
           this.viewer.CloudZoom = new CloudZoom($('#magnify-image'), magnifyOptions);
-          sliderWrap.css('display', 'none');
-          magnifyImageContainer.css('display', 'block');
+          if (widgetContainer.length > 0) {
+            widgetContainer.not('#magnify-image-container').css('margin-top', '-5000px');
+          } else if (dashboardContainer.length > 0) {
+            dashboardContent.hide();
+          }
+          magnifyImageContainer.show();
+          $(window).on('orientationchange', ((function(_this) {
+            return function(event) {
+              if (_this.viewer.CloudZoom) {
+                return _this.viewer.CloudZoom.closeZoom();
+              }
+            };
+          })(this)));
           closeButton.on('click', ((function(_this) {
             return function() {
               _this.viewer.CloudZoom.closeZoom();
-              sliderWrap.css('display', 'block');
-              magnifyImageContainer.css('display', 'none');
+              _this.viewer.CloudZoom.destroy();
+              if (widgetContainer.length > 0) {
+                widgetContainer.not('#magnify-image-container').css({
+                  'margin-top': 0
+                });
+              } else if (dashboardContainer.length > 0) {
+                dashboardContent.show();
+              }
+              magnifyImageContainer.hide();
+              _this.viewer.inspection = false;
+              $('.cloudzoom-zoom-inside').remove();
+              $('.cloudzoom-blank').remove();
             };
           })(this)));
         }
@@ -1656,7 +1782,7 @@ sarine.viewer.3dfullinspection - v0.38.0 -  Monday, July 25th, 2016, 1:12:13 PM
               $(".buttons li:not(.magnify)").removeClass("disabled");
               _this.update_focus_buttons();
             } else {
-              _this.viewer.active = false;
+              _this.viewer.active = true;
               if (magnifierLibName === 'mglass') {
                 $(document).mouseup(function(e) {
                   var container;
