@@ -41,10 +41,10 @@ function MGlass(imageId, largeImageSrc, configObject, deleteCallback) {
         var x = (e.clientX - document.body.scrollLeft + pageOffset.x - imagePosition.x);
         var y = (e.clientY - document.body.scrollTop + pageOffset.y - imagePosition.y); 
         y = y - (img.clientHeight / 4); //move the cursor to the lower part of the magnifier
-        if (0 <= x &&
+        if (e.clickZoom ||  (0 <= x &&
             0 <= y &&
             img.clientWidth >= x &&
-            img.clientHeight >= y) {
+            img.clientHeight >= y)) {
            
             if (this.parentElement.className.indexOf("flip") > -1) {
                 x = img.clientWidth - x;
@@ -147,7 +147,7 @@ function MGlass(imageId, largeImageSrc, configObject, deleteCallback) {
     //viewerElement.style.backgroundImage = "url('load.gif')";
     viewerElement.style.backgroundColor = "#878787";
     viewerElement.style.backgroundRepeat = "no-repeat";
-    wrapperElement.onmousemove({clientX: 240 - MGlass.getPageOffset().x + MGlass.getElementPosition(wrapperElement.childNodes[1]).x, clientY: 240 - MGlass.getPageOffset().y + MGlass.getElementPosition(wrapperElement.childNodes[1]).y})
+    wrapperElement.onmousemove({clientX: 240 - MGlass.getPageOffset().x + MGlass.getElementPosition(wrapperElement.childNodes[1]).x, clientY: 240 - MGlass.getPageOffset().y + MGlass.getElementPosition(wrapperElement.childNodes[1]).y,clickZoom: true})
     viewerElement.style.backgroundPosition = "center center";
     viewerElement.style.left = (wrapperElement.clientWidth - viewerElement.clientWidth)/this.aspect + "px"
     viewerElement.style.top = (wrapperElement.clientHeight - viewerElement.clientHeight)/this.aspect + "px"
