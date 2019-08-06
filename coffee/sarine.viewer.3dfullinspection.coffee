@@ -1142,6 +1142,7 @@ class FullInspection extends Viewer
           $('.cloudzoom-zoom-inside').remove()
           $('.cloudzoom-blank').remove()
           @viewer.widget.trigger("magnify_out")
+          magnifyImageContainer.remove()
           return
         )
         return
