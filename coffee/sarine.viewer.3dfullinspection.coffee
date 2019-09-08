@@ -62,12 +62,13 @@ class FullInspection extends Viewer
 
   setMagnifierLibName: () ->
     magnifierLibName = 'mglass'
-
-    if(@element.attr("magnifierLibName") && @isSupportedMagnifier(@element.attr("magnifierLibName")))
+  
+    if(@loupe3dConfig && @loupe3dConfig.magnifierLibName && @isSupportedMagnifier(@loupe3dConfig.magnifierLibName))
+      magnifierLibName = @loupe3dConfig.magnifierLibName
+    else 
+      if(@element.attr("magnifierLibName") && @isSupportedMagnifier(@element.attr("magnifierLibName")))
         magnifierLibName = @element.attr("magnifierLibName")
-    else
-      if(@loupe3dConfig && @loupe3dConfig.magnifierLibName && @isSupportedMagnifier(@loupe3dConfig.magnifierLibName))
-        magnifierLibName = @loupe3dConfig.magnifierLibName
+      
     return
 
   preloadAssets: (callback)=>
