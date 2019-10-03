@@ -946,6 +946,9 @@ class FullInspection extends Viewer
   class UI
     constructor: (@viewer, options) ->
       @auto_play = options.auto_play
+      $('body').on 'click', (=>
+        $('#closeMagnify').click()
+      )
 
     disable_button: (buttons) ->
       $(buttons).each((index, button) =>
