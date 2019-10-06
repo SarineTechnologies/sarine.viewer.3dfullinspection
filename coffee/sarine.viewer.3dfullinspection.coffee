@@ -946,7 +946,8 @@ class FullInspection extends Viewer
   class UI
     constructor: (@viewer, options) ->
       @auto_play = options.auto_play
-      $('body').on 'click', (=>
+      $('.sdk.loupe3DFullInspection').on 'click', ((event) =>
+        event.stopPropagation() 
         $('#closeMagnify').click()
       )
 
